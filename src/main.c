@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
     
     while (!done) {
 
-        done = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT);
+        done = IsKeyPressed(KEY_ESCAPE) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT);
         UpdateCamera( &camera, CAMERA_ORBITAL);
 
         BeginDrawing();

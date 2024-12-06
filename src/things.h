@@ -27,4 +27,6 @@ typedef struct {
     
 } Actor;
 
+void Thing_move(Thing *thing, Vector2 offset);
+
 #endif /* ENTITIES_H */
