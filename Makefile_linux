@@ -1,0 +1,29 @@
+CC = gcc
+CFLAGS = -Wall -Wextra -pedantic
+CCFLAGS = -I/usr/local/include -L/usr/local/lib -lraylib -lGL -lm
+
+PROJECTNAME = face-off
+
+SRCDIR          = src
+OBJDIR          = obj
+
+TARGET   = $(PROJECTNAME)
+CSOURCES = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.c)))
+OBJS     = $(CSOURCES:%.c=$(OBJDIR)/%.o) 
+
+all: rm-elf prepare $(TARGET)
+
+clean: rm-elf
+	-rm -f $(OBJS)
+
+rm-elf:
+	-rm -f $(TARGET)
+
+$(OBJDIR)/%.o: $(SRCDIR)/%.c
+	$(CC) $(CFLAGS) $(CCFLAGS) -c -o $@ $<
+
+$(TARGET): $(OBJS)
+	$(CC) -o $(TARGET) $(OBJS) $(CFLAGS) $(CCFLAGS) 
+
+prepare:
+	mkdir -p $(OBJDIR)

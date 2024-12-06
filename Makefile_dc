@@ -1,0 +1,44 @@
+#
+# Cubic map Raylib program
+# Copyright (C) 2024
+#   
+
+KOSCCFLAGS += -lraylib -lGL -lkosutils
+
+PROJECTNAME = face-off
+
+SRCDIR          = src
+OBJDIR          = obj
+KOS_ROMDISK_DIR = romdisk
+
+TARGET   = $(PROJECTNAME).elf
+CSOURCES = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.cc)))
+OBJS     = $(CSOURCES:%.c=$(OBJDIR)/%.o) 
+
+KOS_CFLAGS += -I${KOS_PORTS}/include/raylib
+
+all: rm-elf prepare $(TARGET)
+	
+include $(KOS_BASE)/Makefile.rules
+
+clean: rm-elf
+	-rm -f $(OBJS)
+
+rm-elf:
+	-rm -f $(TARGET) romdisk.*
+
+$(OBJDIR)/%.o: $(SRCDIR)/%.cc
+	kos-cc $(KOSCCFLAGS) -c -o $@ $<
+
+$(TARGET): $(OBJS)
+	kos-cc -o $(TARGET) $(OBJS) $(KOSCCFLAGS) 
+
+run: $(TARGET)
+	$(KOS_LOADER) $(TARGET)
+
+dist: $(TARGET)
+	-rm -f $(OBJS) romdisk.img
+	$(KOS_STRIP) $(TARGET)
+
+prepare:
+	mkdir -p $(OBJDIR)
