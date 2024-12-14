@@ -14,6 +14,7 @@
 #endif
 
 typedef struct {
+    struct Player *players[4];
 } Gamestate;
 
 #endif /* FACE_OFF_H */

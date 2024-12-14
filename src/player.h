@@ -1,15 +1,15 @@
-#define PLAYER_H
 #ifndef PLAYER_H
+#define PLAYER_H
 
-#indlude "things.h"
+#include "things.h"
 
-typedef struct {
+typedef struct Player{
     Actor  _;
     Camera camera;
     int    controller;
 } Player;
 
-void Player_new();
+Player *Player_new(Vector2 position, float rotation, float radius, int controller);
 
 void Player_update(Player *player, float delta);
 

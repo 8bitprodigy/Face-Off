@@ -25,6 +25,8 @@
 *******************************************************************************/
 #include <raylib.h>
 #include "face-off.h"
+#include "things.h"
+#include "player.h"
 
 
 static bool done = false;
@@ -40,13 +42,21 @@ int main(int argc, char** argv) {
     camera.fovy       = 45.0f;
     camera.projection = CAMERA_PERSPECTIVE;
 
+    struct Player *player = Player_new(
+        (Vector2){ 0.0f, 0.0f },
+        0.0f, 0.5f, 0
+    );
+
+    float delta = 0.0f;
+
     SetTargetFPS(60);
     
     while (!done) {
-
+        delta = GetFrameTime();
         done = IsKeyPressed(KEY_ESCAPE) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT);
-        UpdateCamera( &camera, CAMERA_ORBITAL);
-
+        //UpdateCamera( &camera, CAMERA_ORBITAL);
+        Player_update(&player, delta);
+        camera = player->camera;
         BeginDrawing();
 
             ClearBackground(RAYWHITE);

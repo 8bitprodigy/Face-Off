@@ -2,24 +2,26 @@
 #define ENTITIES_H
 
 #include <raylib.h>
+#include <raymath.h>
 
 #define NAME_MAX_CHARS 8
 
-typedef struct {
+typedef struct Thing{
     Vector2 position;
-    Vector2 prev_pos;
     float   rotation;
-    float   sin_rotation;
-    float   cos_rotation;
+    float   sin_rot;
+    float   cos_rot;
     float   radius;
     char    name[NAME_MAX_CHARS];
 } Thing;
 
-typedef struct {
+typedef struct Actor{
     Thing   _;
+    Vector2 prev_pos;
+    Vector2 velocity;
     float   speed;
     float   turn_speed;
-    Vector2 velocity;
+    float   prev_rot;
     float   angular_velocity;
     Mesh    *body;
     Color   color_body;
@@ -27,6 +29,10 @@ typedef struct {
     
 } Actor;
 
-void Thing_move(Thing *thing, Vector2 offset);
+void Thing_new();
+
+void Actor_new();
+void Actor_rotate(Actor *actor, float delta);
+void Actor_move(Actor *actor, float delta);
 
 #endif /* ENTITIES_H */
