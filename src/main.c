@@ -54,9 +54,9 @@ int main(int argc, char** argv) {
     while (!done) {
         delta = GetFrameTime();
         done = IsKeyPressed(KEY_ESCAPE) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT);
-        //UpdateCamera( &camera, CAMERA_ORBITAL);
+        UpdateCamera( &camera, CAMERA_ORBITAL);
         Player_update(&player, delta);
-        camera = player->camera;
+        //camera = player->camera;
         BeginDrawing();
 
             ClearBackground(RAYWHITE);

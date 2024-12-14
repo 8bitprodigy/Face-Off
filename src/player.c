@@ -37,11 +37,11 @@ void Player_update(Player *player, float delta){
     Vector2 offset;
 
     rotate = (
-        (int)IsGamePadButtonPressed(
+        (int)IsGamepadButtonPressed(
         player->controller,
         GAMEPAD_BUTTON_RIGHT_FACE_RIGHT) 
         * actor->turn_speed) - (
-        (int)IsGamePadButtonPressed(
+        (int)IsGamepadButtonPressed(
         player->controller,
         GAMEPAD_BUTTON_RIGHT_FACE_LEFT)
         * actor->turn_speed
@@ -51,21 +51,21 @@ void Player_update(Player *player, float delta){
     Actor_rotate(actor, delta);
     
     move.x = (
-        (int)IsGamePadButtonPressed(
+        (int)IsGamepadButtonPressed(
         player->controller,
         GAMEPAD_BUTTON_LEFT_FACE_RIGHT)
         * actor->speed) - (
-        (int)IsGamePadButtonPressed(
+        (int)IsGamepadButtonPressed(
         player->controller,
         GAMEPAD_BUTTON_LEFT_FACE_LEFT)
         * actor->speed
     );
     move.y = (
-        (int)IsGamePadButtonPressed(
+        (int)IsGamepadButtonPressed(
         player->controller,
         GAMEPAD_BUTTON_LEFT_FACE_UP)
         * actor->speed) - (
-        (int)IsGamePadButtonPressed(
+        (int)IsGamepadButtonPressed(
         player->controller,
         GAMEPAD_BUTTON_LEFT_FACE_DOWN)
         * actor->speed
@@ -74,5 +74,19 @@ void Player_update(Player *player, float delta){
     actor->velocity = Vector2Rotate(move,thing->rotation);
 
     Actor_move(actor, delta);
+
+    player->camera.position   = (Vector3){ 
+        thing->position.x, 
+        0.75f, 
+        thing->position.y
+    };
+    player->camera.target     = (Vector3){ 
+        thing->position.x + thing->cos_rot,
+        0.75f,
+        thing->position.y + thing->sin_rot
+    };
+    player->camera.up         = (Vector3){ 0.0f, 1.0f,  0.0f};
+    player->camera.fovy       = 45.0f;
+    player->camera.projection = CAMERA_PERSPECTIVE;
 }
 
