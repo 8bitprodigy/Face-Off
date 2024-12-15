@@ -13,8 +13,10 @@
     #define SCREEN_HEIGHT 480
 #endif
 
-typedef struct {
+typedef struct 
+GameState
+{
     struct Player *players[4];
-} Gamestate;
+} GameState;
 
 #endif /* FACE_OFF_H */

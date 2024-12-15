@@ -27,11 +27,14 @@
 #include "face-off.h"
 #include "things.h"
 #include "player.h"
+#include "defs.h"
 
 
 static bool done = false;
 
-int main(int argc, char** argv) {
+int 
+main(int argc, char** argv) 
+{
 
     InitWindow (SCREEN_WIDTH, SCREEN_HEIGHT, "Face-Off!");
 
@@ -43,7 +46,7 @@ int main(int argc, char** argv) {
     camera.projection = CAMERA_PERSPECTIVE;
 
     struct Player *player = Player_new(
-        (Vector2){ 0.0f, 0.0f },
+        Vector2Zero(),
         0.0f, 0.5f, 0
     );
 
@@ -53,21 +56,21 @@ int main(int argc, char** argv) {
     
     while (!done) {
         delta = GetFrameTime();
-        done = IsKeyPressed(KEY_ESCAPE) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT);
-        UpdateCamera( &camera, CAMERA_ORBITAL);
-        Player_update(&player, delta);
-        //camera = player->camera;
+        done = Key_Or_Button_Down(0, GAMEPAD_BUTTON_MIDDLE_RIGHT, KEY_ESCAPE);
+        //UpdateCamera( &camera, CAMERA_ORBITAL);
+        Player_update(player, delta);
+        camera = player->camera;
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
 
             BeginMode3D(camera);
 
-                DrawGrid(10, 1.0f);
-                DrawCube((Vector3){ 10.0f, 0.5f,   0.0f},1.0f,1.0f,1.0f, RED);
-                DrawCube((Vector3){  0.0f, 0.5f,  10.0f},1.0f,1.0f,1.0f, GREEN);
-                DrawCube((Vector3){-10.0f, 0.5f,   0.0f},1.0f,1.0f,1.0f, BLUE);
-                DrawCube((Vector3){  0.0f, 0.5f, -10.0f},1.0f,1.0f,1.0f, YELLOW);
+                DrawGrid(16, 1.0f);
+                DrawCube((Vector3){  8.5f, 0.5f,  0.0f},  1.0f, 1.0f, 16.0f, RED);
+                DrawCube((Vector3){  0.0f, 0.5f,  8.5f}, 16.0f, 1.0f,  1.0f, GREEN);
+                DrawCube((Vector3){ -8.5f, 0.5f,  0.0f},  1.0f, 1.0f, 16.0f, BLUE);
+                DrawCube((Vector3){  0.0f, 0.5f, -8.5f}, 16.0f, 1.0f,  1.0f, YELLOW);
                 
             EndMode3D();
             

@@ -6,7 +6,9 @@
 
 #define NAME_MAX_CHARS 8
 
-typedef struct Thing{
+typedef struct 
+Thing
+{
     Vector2 position;
     float   rotation;
     float   sin_rot;
@@ -15,7 +17,9 @@ typedef struct Thing{
     char    name[NAME_MAX_CHARS];
 } Thing;
 
-typedef struct Actor{
+typedef struct 
+Actor
+{
     Thing   _;
     Vector2 prev_pos;
     Vector2 velocity;

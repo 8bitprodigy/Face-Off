@@ -22,7 +22,7 @@ case "$argument" in
         ;;
     dc)
         echo "Building for DreamCast...\n"
-        source $KOS_BASE/environ.sh
+        #source $KOS_BASE/environ.sh
         make -f Makefile_dc
         #mkdcdisc -e face-off.elf -o face-off.cdi
         ;;
