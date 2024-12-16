@@ -12,8 +12,8 @@ OBJDIR          = obj
 KOS_ROMDISK_DIR = romdisk
 
 TARGET   = $(PROJECTNAME).elf
-CSOURCES = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.cc)))
-OBJS     = $(CSOURCES:%.c=$(OBJDIR)/%.o) 
+CSOURCES = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.c)))
+OBJS     = $(CSOURCES:%.c=$(OBJDIR)/%.o)
 
 KOS_CFLAGS += -I${KOS_PORTS}/include/raylib
 
@@ -27,7 +27,7 @@ clean: rm-elf
 rm-elf:
 	-rm -f $(TARGET) romdisk.*
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.cc
+$(OBJDIR)/%.o: $(SRCDIR)/%.c
 	kos-cc $(KOSCCFLAGS) -c -o $@ $<
 
 $(TARGET): $(OBJS)
