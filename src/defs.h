@@ -1,3 +1,9 @@
+/**********************
+*                     *
+*    D E F I N E S    *
+*                     *
+**********************/
+
 #ifndef DEFS_H
 #define DEFS_H
 
@@ -6,11 +12,11 @@
 
 /* Common Input Operations */
 #define Get_Key_Or_Button_Down( Controller, Button, Key ) (int)(IsGamepadButtonDown(Controller, Button) || IsKeyDown(Key))
-#define Get_Key_Or_Button_Axis( Controller, Btn_Pos, Key_Pos, Btn_Neg, Key_Neg) (\
+#define Get_Key_Or_Button_Axis( Controller, Btn_Pos, Key_Pos, Btn_Neg, Key_Neg ) (\
         Get_Key_Or_Button_Down( Controller, Btn_Pos, Key_Pos ) - \
         Get_Key_Or_Button_Down( Controller, Btn_Neg, Key_Neg )   \
     )
-#define Get_Key_Or_Button_Vector( Controller, Btn_Pos_X, Key_Pos_X, Btn_Neg_X, Key_Neg_X, Btn_Pos_Y, Key_Pos_Y, Btn_Neg_Y, Key_Neg_Y) \
+#define Get_Key_Or_Button_Vector( Controller, Btn_Pos_X, Key_Pos_X, Btn_Neg_X, Key_Neg_X, Btn_Pos_Y, Key_Pos_Y, Btn_Neg_Y, Key_Neg_Y ) \
     (Vector2){ \
         Get_Key_Or_Button_Axis( Controller, Btn_Pos_X, Key_Pos_X, Btn_Neg_X, Key_Neg_X ), \
         Get_Key_Or_Button_Axis( Controller, Btn_Pos_Y, Key_Pos_Y, Btn_Neg_Y, Key_Neg_Y )  \
@@ -25,7 +31,7 @@
          (int)(IsGamepadButtonDown(Controller, Btn_Pos) - \
          (int)(IsGamepadButtonDown(Controller, Btn_Neg)   \
     )
-#define Get_Button_Vector( Controller, Btn_Pos_X, Btn_Neg_X, Btn_Pos_Y, Btn_Neg_Y) \
+#define Get_Button_Vector( Controller, Btn_Pos_X, Btn_Neg_X, Btn_Pos_Y, Btn_Neg_Y ) \
     (Vector2){ \
         Get_Button_Axis( Controller, Btn_Pos_X, Btn_Neg_X ), \
         Get_Button_Axis( Controller, Btn_Pos_Y, Btn_Neg_Y ), \

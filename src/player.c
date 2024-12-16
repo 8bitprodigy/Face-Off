@@ -56,13 +56,14 @@ Player_update(Player *player, float delta)
 
     Vector2 move;
     Vector2 offset;
+    Vector2 target;
 
     rotate = Get_Key_Or_Button_Axis(
-            player->controller,
-            GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,
-            KEY_RIGHT,
-            GAMEPAD_BUTTON_RIGHT_FACE_LEFT,
-            KEY_LEFT ) * actor->turn_speed;
+        player->controller,
+        GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,
+        KEY_RIGHT,
+        GAMEPAD_BUTTON_RIGHT_FACE_LEFT,
+        KEY_LEFT ) * actor->turn_speed;
 
     actor->angular_velocity = rotate;
     Actor_rotate(actor, delta);
@@ -79,25 +80,14 @@ Player_update(Player *player, float delta)
             GAMEPAD_BUTTON_LEFT_FACE_LEFT,
             KEY_A 
         ), 
-        actor->speed
-    );
+        actor->speed );
 
     actor->velocity = Vector2Rotate(move,thing->rotation);
 
     Actor_move(actor, delta);
 
-    player->camera.position   = (Vector3){ 
-        thing->position.x, 
-        CAMERA_HEIGHT, 
-        thing->position.y
-    };
-    player->camera.target     = (Vector3){ 
-        thing->position.x + thing->cos_rot,
-        CAMERA_HEIGHT,
-        thing->position.y + thing->sin_rot
-    };
-    player->camera.up         = (Vector3){ 0.0f, 1.0f,  0.0f};
-    player->camera.fovy       = 45.0f;
-    player->camera.projection = CAMERA_PERSPECTIVE;
+    player->camera.position   = Vector2_To_3( thing->position, CAMERA_HEIGHT );
+    target = Vector2Add(thing->position, (Vector2){ thing->cos_rot, thing->sin_rot });
+    player->camera.target     = Vector2_To_3( target, CAMERA_HEIGHT );
 }
 
