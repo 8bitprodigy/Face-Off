@@ -57,45 +57,29 @@ Player_update(Player *player, float delta)
     Vector2 move;
     Vector2 offset;
 
-    rotate = (
-        Key_Or_Button_Down(
+    rotate = Get_Key_Or_Button_Axis(
             player->controller,
             GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,
-            KEY_RIGHT
-        ) * actor->turn_speed) - (
-        Key_Or_Button_Down(
-            player->controller,
+            KEY_RIGHT,
             GAMEPAD_BUTTON_RIGHT_FACE_LEFT,
-            KEY_LEFT
-        ) * actor->turn_speed
-    );
+            KEY_LEFT ) * actor->turn_speed;
 
     actor->angular_velocity = rotate;
     Actor_rotate(actor, delta);
     
-    move.x = (
-        Key_Or_Button_Down(
-            player->controller,
-            GAMEPAD_BUTTON_LEFT_FACE_RIGHT,
-            KEY_W
-        ) * actor->speed) - (
-        Key_Or_Button_Down(
-            player->controller,
-            GAMEPAD_BUTTON_LEFT_FACE_LEFT,
-            KEY_S
-        ) * actor->speed
-    );
-    move.y = (
-        Key_Or_Button_Down(
+    move = Vector2Scale(
+        Get_Key_Or_Button_Vector(
             player->controller,
             GAMEPAD_BUTTON_LEFT_FACE_UP,
-            KEY_D
-        ) * actor->speed) - (
-        Key_Or_Button_Down(
-            player->controller,
+            KEY_W,
             GAMEPAD_BUTTON_LEFT_FACE_DOWN,
-            KEY_A
-        ) * actor->speed
+            KEY_S,
+            GAMEPAD_BUTTON_LEFT_FACE_RIGHT,
+            KEY_D,
+            GAMEPAD_BUTTON_LEFT_FACE_LEFT,
+            KEY_A 
+        ), 
+        actor->speed
     );
 
     actor->velocity = Vector2Rotate(move,thing->rotation);
