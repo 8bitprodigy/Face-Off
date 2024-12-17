@@ -12,7 +12,7 @@
 
 /* Common Input Operations */
 #define Get_Key_Or_Button_Down( Controller, Button, Key ) (int)(IsGamepadButtonDown(Controller, Button) || IsKeyDown(Key))
-#define Get_Key_Or_Button_Axis( Controller, Btn_Pos, Key_Pos, Btn_Neg, Key_Neg ) (\
+#define Get_Key_Or_Button_Axis( Controller, Btn_Pos, Key_Pos, Btn_Neg, Key_Neg ) ( \
         Get_Key_Or_Button_Down( Controller, Btn_Pos, Key_Pos ) - \
         Get_Key_Or_Button_Down( Controller, Btn_Neg, Key_Neg )   \
     )
@@ -27,7 +27,7 @@
         Get_Key_Axis( Key_Pos_X, Key_Neg_X ), \
         Get_Key_Axis( Key_Pos_Y, Key_Neg_Y )  \
     }
-#define Get_Button_Axis( Controller, Btn_Pos, Btn_Neg ) (\
+#define Get_Button_Axis( Controller, Btn_Pos, Btn_Neg ) ( \
          (int)(IsGamepadButtonDown(Controller, Btn_Pos) - \
          (int)(IsGamepadButtonDown(Controller, Btn_Neg)   \
     )

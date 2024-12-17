@@ -25,7 +25,6 @@
 *******************************************************************************/
 #include <raylib.h>
 #include "face-off.h"
-#include "things.h"
 #include "player.h"
 #include "defs.h"
 
