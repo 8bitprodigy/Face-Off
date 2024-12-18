@@ -40,10 +40,20 @@ Player
         position.y + thing.sin_rot
     };
     player->camera.up         = (Vector3){ 0.0f, 1.0f,  0.0f};
-    player->camera.fovy       = 45.0f;
+    player->fov               = PI/4;
+    player->camera.fovy       = 2 * atan(
+        tan(player->fov / 2) * 
+        (4.0f / 3.0f)
+    ) * 180 / PI;
     player->camera.projection = CAMERA_PERSPECTIVE;
 
     return player;
+}
+
+void
+Player_free(Player *player)
+{
+    free(player);
 }
 
 void 
