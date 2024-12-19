@@ -10,6 +10,11 @@
 
 #include <stdio.h>
 
+/****************
+    T Y P E S    
+****************/
+#define uint unsigned int
+
 /************************
     V A R I A B L E S    
 ************************/

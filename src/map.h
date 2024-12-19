@@ -3,7 +3,6 @@
 
 #include <raylib.h>
 #include "defs.h"
-#include "player.h"
 
 #define Map_Get_Index( map, position ) \
     (Index2D) { \
@@ -20,13 +19,13 @@ typedef enum {
 } 
 Cardinals;
 
-const Color 
+/*const Color 
 colors[] = {
     RED,
     GREEN,
     BLUE,
     YELLOW
-};
+};*/
 
 typedef enum {
     NONE,
@@ -75,11 +74,11 @@ Map
 {
     char name[MAP_NAME_MAX_CHARS];
     uint size;
-    Cell (*cells)[];
+    Cell **cells;
     uint cell_width;
 } Map;
 
-Map *Map_new(char name, uint size, uint cell_width);
+Map *Map_new(const char *name, uint size, uint cell_width);
 void Map_free(Map *map);
 
 void Map_render(Map *map, Player *player);

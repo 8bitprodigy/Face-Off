@@ -9,7 +9,7 @@ Player
     Player *player = malloc(sizeof(Player));
     if (!player) {
         Error_Out("Failed to allocate memory for Player.");
-        return Null;
+        return NULL;
     }
 
     Thing thing = (Thing){

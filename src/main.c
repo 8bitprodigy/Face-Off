@@ -26,6 +26,7 @@
 #include <raylib.h>
 #include "face-off.h"
 #include "player.h"
+#include "map.h"
 #include "defs.h"
 
 
@@ -44,11 +45,13 @@ main(int argc, char** argv)
     camera.fovy       = 45.0f;
     camera.projection = CAMERA_PERSPECTIVE;
 
-    struct Player *player = Player_new(
+    Player *player = Player_new(
         Vector2Zero(),
         0.0f, 0.5f, 0
     );
 
+    Map *map = Map_new("test", 16, 2);
+    
     float delta = 0.0f;
 
     SetTargetFPS(60);
@@ -70,6 +73,7 @@ main(int argc, char** argv)
                 DrawCube((Vector3){  0.0f, 0.5f,  8.5f}, 16.0f, 1.0f,  1.0f, GREEN);
                 DrawCube((Vector3){ -8.5f, 0.5f,  0.0f},  1.0f, 1.0f, 16.0f, BLUE);
                 DrawCube((Vector3){  0.0f, 0.5f, -8.5f}, 16.0f, 1.0f,  1.0f, YELLOW);
+                Map_render(map, player);
                 
             EndMode3D();
             
@@ -78,6 +82,9 @@ main(int argc, char** argv)
     }
 
     CloseWindow();
+
+    Player_free(player);
+    Map_free(map);
     
     return 0;
 } /* main */
