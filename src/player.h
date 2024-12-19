@@ -6,11 +6,16 @@
 typedef struct Player{
     Actor  _;
     Camera camera;
+    float  fov;
     int    controller;
 } Player;
 
+/* Constructor */
 Player *Player_new(Vector2 position, float rotation, float radius, int controller);
+/* Destructor */
+void Player_free(Player *player);
 
+/* Player Methods */
 void Player_update(Player *player, float delta);
 
 #endif /* PLAYER_H */

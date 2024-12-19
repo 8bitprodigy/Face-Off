@@ -1,11 +1,16 @@
+#include <stdlib.h>
 #include <math.h>
-#include "player.h"
 #include "defs.h"
+#include "player.h"
 
 Player 
 *Player_new(Vector2 position, float rotation, float radius, int controller)
 {
     Player *player = malloc(sizeof(Player));
+    if (!player) {
+        Error_Out("Failed to allocate memory for Player.");
+        return Null;
+    }
 
     Thing thing = (Thing){
         .position = position,
@@ -40,11 +45,21 @@ Player
         position.y + thing.sin_rot
     };
     player->camera.up         = (Vector3){ 0.0f, 1.0f,  0.0f};
-    player->camera.fovy       = 45.0f;
+    player->fov               = PI/4;
+    player->camera.fovy       = 2 * atan(
+        tan(player->fov / 2) * 
+        (4.0f / 3.0f)
+    ) * 180 / PI;
     player->camera.projection = CAMERA_PERSPECTIVE;
 
     return player;
-}
+} /* Player_new */
+
+void
+Player_free(Player *player)
+{
+    free(player);
+} /* Player_free */
 
 void 
 Player_update(Player *player, float delta)
@@ -89,5 +104,5 @@ Player_update(Player *player, float delta)
     player->camera.position   = Vector2_To_3( thing->position, CAMERA_HEIGHT );
     target = Vector2Add(thing->position, (Vector2){ thing->cos_rot, thing->sin_rot });
     player->camera.target     = Vector2_To_3( target, CAMERA_HEIGHT );
-}
+} /* Player_update */
 

@@ -3,8 +3,7 @@
 
 #include <raylib.h>
 #include <raymath.h>
-
-#define NAME_MAX_CHARS 8
+#include "defs.h"
 
 typedef struct 
 Thing
@@ -33,9 +32,7 @@ Actor
     
 } Actor;
 
-void Thing_new();
-
-void Actor_new();
+/* Actor Methods */
 void Actor_rotate(Actor *actor, float delta);
 void Actor_move(Actor *actor, float delta);
 
