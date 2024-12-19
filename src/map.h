@@ -3,6 +3,7 @@
 
 #include <raylib.h>
 #include "defs.h"
+#include "player.h"
 
 #define Map_Get_Index( map, position ) \
     (Index2D) { \

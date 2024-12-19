@@ -1,7 +1,7 @@
+#include <raylib.h>
 #include <stdlib.h>
 #include <string.h>
 #include "map.h"
-#include "player.h"
 
 
 Map
@@ -61,11 +61,11 @@ Map_free(Map *map)
 } /* Map_free */
 
 void 
-Cell_render(Cell *cell, uint cell_width)
+Cell_render(Cell cell, uint cell_width)
 {
     DrawPlane(
-        Vector2_To_3(cell->center, FLOOR_HEIGHT), 
-        (Vector2){0.5f,0.5f}, 
+        Vector2_To_3(cell.center, FLOOR_HEIGHT), 
+        (Vector2){cell_width,cell_width},
         GRAY
     );
 } /* Cell_render */
@@ -78,7 +78,7 @@ Map_render(Map *map, Player *player)
     Index2D index = Map_Get_Index(map, thing->position);
 
     printf("Index | X: %d \tY: %d\n",index.x,index.y);
-    Cell_render(&map->cells[index.x][index.y], map->cell_width);
+    Cell_render(map->cells[index.x][index.y], map->cell_width);
     
 } /* Map_render */
 
