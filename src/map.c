@@ -4,6 +4,23 @@
 #include "map.h"
 
 
+Cell
+Cell_new()
+{
+    int i;
+    Cell cell;
+    for ( i = 0; i < 4; i++ ) {
+        cell.walls[i] = (Wall){
+            ORANGE,
+            NONE,
+            0.
+        };
+        cell.neighbors[i] = NULL;
+        cell.corners[i] = Vector2Zero();
+    }
+    cell.center = Vector2Zero();
+}
+
 Map
 *Map_new(const char *name, uint size, uint cell_width)
 {
@@ -38,6 +55,7 @@ Map
 
     for ( i = 0; i < size; i++ ) {
         for ( j = 0; j < size; j++ ) {
+            map->cells[i][j] = Cell_new();
             map->cells[i][j].center = (Vector2){
                 i * cell_width + half_cell_width - half_size,
                 j * cell_width + half_cell_width - half_size
@@ -61,10 +79,10 @@ Map_free(Map *map)
 } /* Map_free */
 
 void 
-Cell_render(Cell cell, uint cell_width)
+Cell_render(Cell *cell, uint cell_width)
 {
     DrawPlane(
-        Vector2_To_3(cell.center, FLOOR_HEIGHT), 
+        Vector2_To_3(cell->center, FLOOR_HEIGHT), 
         (Vector2){cell_width,cell_width},
         GRAY
     );
@@ -78,7 +96,7 @@ Map_render(Map *map, Player *player)
     Index2D index = Map_Get_Index(map, thing->position);
 
     printf("Index | X: %d \tY: %d\n",index.x,index.y);
-    Cell_render(map->cells[index.x][index.y], map->cell_width);
+    Cell_render(&map->cells[index.x][index.y], map->cell_width);
     
 } /* Map_render */
 

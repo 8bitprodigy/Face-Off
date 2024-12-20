@@ -20,8 +20,8 @@ typedef enum {
 } 
 Cardinals;
 
-/*const Color 
-colors[] = {
+/*Color 
+WALL_COLORS[] = {
     RED,
     GREEN,
     BLUE,
@@ -78,6 +78,8 @@ Map
     Cell **cells;
     uint cell_width;
 } Map;
+
+Cell Cell_new();
 
 Map *Map_new(const char *name, uint size, uint cell_width);
 void Map_free(Map *map);
