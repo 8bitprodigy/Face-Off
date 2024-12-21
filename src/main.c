@@ -59,7 +59,7 @@ main(int argc, char** argv)
     
     while (!done) {
         delta = GetFrameTime();
-        done = Get_Key_Or_Button_Down(0, GAMEPAD_BUTTON_MIDDLE_RIGHT, KEY_ESCAPE);
+        done = GET_KEY_OR_BUTTON_DOWN(0, GAMEPAD_BUTTON_MIDDLE_RIGHT, KEY_ESCAPE);
         //UpdateCamera( &camera, CAMERA_ORBITAL);
         Player_update(player, delta);
         camera = player->camera;

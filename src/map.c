@@ -180,8 +180,8 @@ Map_render(Map *map, Player *player)
     Index2D render_buffer[MAX_RENDERABLE_CELLS];
     uint    *buffer_size = 1;
     Index2D index       = Map_get_index(map, thing->position);
-    float   r_fov_edge  = thing->rotation - player->half_fov;
-    float   l_fov_edge  = thing->rotation + player->half_fov;
+    float   r_fov_edge  = NORMALIZE(thing->rotation - player->half_fov);
+    float   l_fov_edge  = NORMALIZE(thing->rotation + player->half_fov);
     
     render_buffer[0] = index;
 

@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <raylib.h>
 
 /****************
     T Y P E S    
@@ -25,6 +26,7 @@
 #define CAMERA_HEIGHT           0.5f
 #define FLOOR_HEIGHT            0.0f
 #define MAX_RENDERABLE_CELLS 1024
+#define MAX_DRAW_DISTANCE     362.0f
 #define HALF_PI              (PI/2.0f)
 #define TAU                  (PI*2)
 
@@ -54,53 +56,56 @@
 
 /*** Common Input Operations ***/
 
-#define Get_Key_Or_Button_Down( Controller, Button, Key ) (int)(IsGamepadButtonDown(Controller, Button) || IsKeyDown(Key))
+#define GET_KEY_OR_BUTTON_DOWN( Controller, Button, Key ) (int)(IsGamepadButtonDown(Controller, Button) || IsKeyDown(Key))
 
-#define Get_Key_Or_Button_Axis( Controller, Btn_Pos, Key_Pos, Btn_Neg, Key_Neg ) ( \
-        Get_Key_Or_Button_Down( Controller, Btn_Pos, Key_Pos ) - \
-        Get_Key_Or_Button_Down( Controller, Btn_Neg, Key_Neg )   \
+#define GET_KEY_OR_BUTTON_AXIS( Controller, Btn_Pos, Key_Pos, Btn_Neg, Key_Neg ) ( \
+        GET_KEY_OR_BUTTON_DOWN( Controller, Btn_Pos, Key_Pos ) - \
+        GET_KEY_OR_BUTTON_DOWN( Controller, Btn_Neg, Key_Neg )   \
     )
 
-#define Get_Key_Or_Button_Vector( Controller, Btn_Pos_X, Key_Pos_X, Btn_Neg_X, Key_Neg_X, Btn_Pos_Y, Key_Pos_Y, Btn_Neg_Y, Key_Neg_Y ) \
+#define GET_KEY_OR_BUTTON_VECTOR( Controller, Btn_Pos_X, Key_Pos_X, Btn_Neg_X, Key_Neg_X, Btn_Pos_Y, Key_Pos_Y, Btn_Neg_Y, Key_Neg_Y ) \
     (Vector2){ \
-        Get_Key_Or_Button_Axis( Controller, Btn_Pos_X, Key_Pos_X, Btn_Neg_X, Key_Neg_X ), \
-        Get_Key_Or_Button_Axis( Controller, Btn_Pos_Y, Key_Pos_Y, Btn_Neg_Y, Key_Neg_Y )  \
+        GET_KEY_OR_BUTTON_AXIS( Controller, Btn_Pos_X, Key_Pos_X, Btn_Neg_X, Key_Neg_X ), \
+        GET_KEY_OR_BUTTON_AXIS( Controller, Btn_Pos_Y, Key_Pos_Y, Btn_Neg_Y, Key_Neg_Y )  \
     }
 
-#define Get_Key_Axis( Key_Pos, Key_Neg )  ((int)IsKeyDown(Key_Pos) - (int)IsKeyDown(Key_Neg))
+#define GET_KEY_AXIS( Key_Pos, Key_Neg )  ((int)IsKeyDown(Key_Pos) - (int)IsKeyDown(Key_Neg))
 
-#define Get_Key_Vector( Key_Pos_X, Key_Neg_X, Key_Pos_Y, Key_Neg_Y ) \
+#define GET_KEY_VECTOR( Key_Pos_X, Key_Neg_X, Key_Pos_Y, Key_Neg_Y ) \
     (Vector2){ \
-        Get_Key_Axis( Key_Pos_X, Key_Neg_X ), \
-        Get_Key_Axis( Key_Pos_Y, Key_Neg_Y )  \
+        GET_KEY_AXIS( Key_Pos_X, Key_Neg_X ), \
+        GET_KEY_AXIS( Key_Pos_Y, Key_Neg_Y )  \
     }
 
-#define Get_Button_Axis( Controller, Btn_Pos, Btn_Neg ) ( \
-         (int)(IsGamepadButtonDown(Controller, Btn_Pos) - \
-         (int)(IsGamepadButtonDown(Controller, Btn_Neg)   \
+#define GET_BUTTON_AXIS( Controller, Btn_Pos, Btn_Neg ) ( \
+        (int)(IsGamepadButtonDown(Controller, Btn_Pos) - \
+        (int)(IsGamepadButtonDown(Controller, Btn_Neg)   \
     )
 
-#define Get_Button_Vector( Controller, Btn_Pos_X, Btn_Neg_X, Btn_Pos_Y, Btn_Neg_Y ) \
+#define GET_BUTTON_VECTOR( Controller, Btn_Pos_X, Btn_Neg_X, Btn_Pos_Y, Btn_Neg_Y ) \
     (Vector2){ \
-        Get_Button_Axis( Controller, Btn_Pos_X, Btn_Neg_X ), \
-        Get_Button_Axis( Controller, Btn_Pos_Y, Btn_Neg_Y ), \
+        GET_BUTTON_AXIS( Controller, Btn_Pos_X, Btn_Neg_X ), \
+        GET_BUTTON_AXIS( Controller, Btn_Pos_Y, Btn_Neg_Y ), \
     }
 
 
 /*** Common math functions ***/
 
-inline float 
-dot(float a, float b) 
-{
-    return cos(a-b);
-}
+/* Dot Product */
+#define DOT( a, b )        cos(a-b)
+/* Clamp angle to between 0 and TAU */
+#define NORMALIZE( angle ) fmod(angle + TAU, TAU)
+/* Cross Product */
+#define CROSS( a, b, c, d ) (a*d-b*c)
 
 
 /*** Common Vector Manipulation ***/
 
 /* Convert a Vector2 to a Vector3 */
-#define Vector2_To_3( Vector, Height ) (Vector3){Vector.x, Height, Vector.y}
+#define VECTOR2_TO_3( Vector, Height ) (Vector3){Vector.x, Height, Vector.y}
 /* Convert a Vector3 to a Vector2 */
-#define Vector3_To_2( Vector ) (Vector2){Vector.x, Vector.z}
+#define VECTOR3_TO_2( Vector ) (Vector2){Vector.x, Vector.z}
+/* Convert an angle to a Vector2 */
+#define ANGLE_TO_VECTOR2( Angle ) (Vector2){ cos( Angle ), sin( Angle ) }
 
 #endif /* DEFS_H */

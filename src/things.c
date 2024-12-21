@@ -1,4 +1,5 @@
-#include <stdio.h>
+//#include <stdio.h>
+#include "defs.h"
 #include "things.h"
 
 void 
@@ -8,7 +9,8 @@ Actor_rotate(Actor *actor, float delta)
 
     actor->prev_rot  = thing->rotation;
     
-    thing->rotation += actor->angular_velocity * delta;
+    thing->rotation  = NORMALIZE(actor->angular_velocity * delta + thing->rotation);
+    //printf("Rotation: %.4f\n", thing->rotation);
     thing->sin_rot   = sin(thing->rotation);
     thing->cos_rot   = cos(thing->rotation);
 } /* Actor_rotate */

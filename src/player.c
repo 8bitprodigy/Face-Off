@@ -74,7 +74,7 @@ Player_update(Player *player, float delta)
     Vector2 offset;
     Vector2 target;
 
-    rotate = Get_Key_Or_Button_Axis(
+    rotate = GET_KEY_OR_BUTTON_AXIS(
         player->controller,
         GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,
         KEY_RIGHT,
@@ -85,7 +85,7 @@ Player_update(Player *player, float delta)
     Actor_rotate(actor, delta);
     
     move = Vector2Scale(
-        Get_Key_Or_Button_Vector(
+        GET_KEY_OR_BUTTON_VECTOR(
             player->controller,
             GAMEPAD_BUTTON_LEFT_FACE_UP,
             KEY_W,
@@ -102,8 +102,8 @@ Player_update(Player *player, float delta)
 
     Actor_move(actor, delta);
 
-    player->camera.position   = Vector2_To_3( thing->position, CAMERA_HEIGHT );
+    player->camera.position   = VECTOR2_TO_3( thing->position, CAMERA_HEIGHT );
     target = Vector2Add(thing->position, (Vector2){ thing->cos_rot, thing->sin_rot });
-    player->camera.target     = Vector2_To_3( target, CAMERA_HEIGHT );
+    player->camera.target     = VECTOR2_TO_3( target, CAMERA_HEIGHT );
 } /* Player_update */
 
