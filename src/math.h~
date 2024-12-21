@@ -1,0 +1,10 @@
+#ifndef MATH_H
+#define MATH_H
+
+#include <math.h>
+#include <raylib.h>
+#include <raymath.h>
+
+bool check_segment_triangle_intersection(Vector2 seg_start, Vector2 seg_end, Vector2 tri_p1, Vector2 tri_p2, Vector2 tri_p3, Vector2 *inside1, Vector2  *inside2);
+
+#endif /* MATH_H */

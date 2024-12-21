@@ -52,8 +52,8 @@ typedef struct Cell Cell;
 typedef struct
 Index2D
 {
-    int x;
-    int y;
+    uint x;
+    uint y;
 } Index2D;
 
 typedef struct
@@ -61,6 +61,7 @@ Cell
 {
     Wall    walls[4];
     Cell    *neighbors[4];
+    Index2D index;
     Vector2 corners[4];
     Vector2 center;
 } Cell;
