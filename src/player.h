@@ -7,6 +7,7 @@ typedef struct Player{
     Actor  _;
     Camera camera;
     float  fov;
+    float  half_fov;
     int    controller;
 } Player;
 

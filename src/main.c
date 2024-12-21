@@ -49,8 +49,9 @@ main(int argc, char** argv)
         Vector2Zero(),
         0.0f, 0.5f, 0
     );
+    player->_._.position = (Vector2){0.0f,0.0f};
 
-    Map *map = Map_new("test", 16, 2);
+    Map *map = Map_new("test", 16, 4);
     
     float delta = 0.0f;
 
@@ -68,11 +69,11 @@ main(int argc, char** argv)
 
             BeginMode3D(camera);
 
-                DrawGrid(16, 1.0f);
-                DrawCube((Vector3){  8.5f, 0.5f,  0.0f},  1.0f, 1.0f, 16.0f, RED);
-                DrawCube((Vector3){  0.0f, 0.5f,  8.5f}, 16.0f, 1.0f,  1.0f, GREEN);
-                DrawCube((Vector3){ -8.5f, 0.5f,  0.0f},  1.0f, 1.0f, 16.0f, BLUE);
-                DrawCube((Vector3){  0.0f, 0.5f, -8.5f}, 16.0f, 1.0f,  1.0f, YELLOW);
+                DrawGrid(16, 4.0f);
+                DrawCube((Vector3){  16.5f, -0.5f,   0.0f},  1.0f, 1.0f, 32.0f, RED);
+                DrawCube((Vector3){   0.0f, -0.5f,  16.5f}, 32.0f, 1.0f,  1.0f, GREEN);
+                DrawCube((Vector3){ -16.5f, -0.5f,   0.0f},  1.0f, 1.0f, 32.0f, BLUE);
+                DrawCube((Vector3){   0.0f, -0.5f, -16.5f}, 32.0f, 1.0f,  1.0f, YELLOW);
                 Map_render(map, player);
                 
             EndMode3D();

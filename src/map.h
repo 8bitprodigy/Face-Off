@@ -5,20 +5,15 @@
 #include "defs.h"
 #include "player.h"
 
-#define Map_Get_Index( map, position ) \
-    (Index2D) { \
-        (int)((float)map->size / 2 + position.x / (float)map->cell_width), \
-        (int)((float)map->size / 2 + position.y / (float)map->cell_width)  \
-    }
 
 typedef enum {
-    EAST,  /* +X */
-    NORTH, /* -Z */
-    WEST,  /* -X */
-    SOUTH, /* +Z */
-    
+    EAST  = 0, /* +X */
+    NORTH = 1, /* -Z */
+    WEST  = 2, /* -X */
+    SOUTH = 3, /* +Z */
 } 
 Cardinals;
+
 
 /*Color 
 WALL_COLORS[] = {
@@ -57,8 +52,8 @@ typedef struct Cell Cell;
 typedef struct
 Index2D
 {
-    uint x;
-    uint y;
+    int x;
+    int y;
 } Index2D;
 
 typedef struct
@@ -84,6 +79,7 @@ Cell Cell_new();
 Map *Map_new(const char *name, uint size, uint cell_width);
 void Map_free(Map *map);
 
+inline Index2D Map_get_index(Map *map, Vector2 position);
 void Map_render(Map *map, Player *player);
 
 

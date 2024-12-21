@@ -46,8 +46,9 @@ Player
     };
     player->camera.up         = (Vector3){ 0.0f, 1.0f,  0.0f};
     player->fov               = PI/4;
+    player->half_fov              = player->fov/2.0f;
     player->camera.fovy       = 2 * atan(
-        tan(player->fov / 2) * 
+        tan(player->half_fov) * 
         (4.0f / 3.0f)
     ) * 180 / PI;
     player->camera.projection = CAMERA_PERSPECTIVE;

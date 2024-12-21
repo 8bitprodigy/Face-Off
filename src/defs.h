@@ -9,20 +9,24 @@
 
 
 #include <stdio.h>
+#include <math.h>
 
 /****************
     T Y P E S    
 ****************/
-#define uint unsigned int
+#define uint unsigned int 
 
 /************************
     V A R I A B L E S    
 ************************/
 /* Common Constant values */
-#define NAME_MAX_CHARS      8
-#define MAP_NAME_MAX_CHARS 16
-#define CAMERA_HEIGHT       0.5f
-#define FLOOR_HEIGHT        0.0f
+#define NAME_MAX_CHARS          8
+#define MAP_NAME_MAX_CHARS     16
+#define CAMERA_HEIGHT           0.5f
+#define FLOOR_HEIGHT            0.0f
+#define MAX_RENDERABLE_CELLS 1024
+#define HALF_PI              (PI/2.0f)
+#define TAU                  (PI*2)
 
 #ifdef PLATFORM_PSP
     #define SCREEN_WIDTH  480
@@ -40,11 +44,13 @@
 ************************/
 
 /*** Common Output Operations ***/
+
 #ifdef __linux__
     #define Error_Out( Error_Text ) perror( Error_Text )
 #else
     #define Error_Out( Error_Text )
 #endif
+
 
 /*** Common Input Operations ***/
 
@@ -79,6 +85,15 @@
         Get_Button_Axis( Controller, Btn_Pos_X, Btn_Neg_X ), \
         Get_Button_Axis( Controller, Btn_Pos_Y, Btn_Neg_Y ), \
     }
+
+
+/*** Common math functions ***/
+
+inline float 
+dot(float a, float b) 
+{
+    return cos(a-b);
+}
 
 
 /*** Common Vector Manipulation ***/
