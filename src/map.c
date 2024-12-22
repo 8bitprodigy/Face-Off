@@ -16,14 +16,14 @@ bool
 check_wall_frustum_intersection(Vector2 wall_start, Vector2 wall_end, Vector2 r_frust, Vector2 position, Vector2 l_frust, Vector2 *inside1, Vector2 *inside2)
 {
     bool is_in_triangle = false;
-    Vector2 dummy;
+    Vector2 *dummy;
     
     if (CheckCollisionPointTriangle(wall_start,r_frust,position,l_frust)) {
-        inside1        = wall_start;
+        *inside1        = wall_start;
         is_in_triangle = true;
     }
     if (CheckCollisionPointTriangle(wall_end,  r_frust,position,l_frust)) {
-        inside2        = wall_end;
+        *inside2        = wall_end;
         is_in_triangle = true;
     }
     if (is_in_triangle) return true;
@@ -44,6 +44,8 @@ static inline bool
 Buffer_contains_Index2D(Index2D *buffer, uint size, Index2D to_check)
 {
     int i;
+    if (size == 0) return false;
+    printf("Current buffer size: %u\n", size);
     for (i = 0; i < size; i++) {
         if (Index2D_equals(buffer[i], to_check)) return true;
     }
@@ -74,14 +76,17 @@ Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum,
     Thing   *thing      = &actor->_;
 
     Vector2 position = thing->position;
-    Vector2 inside1;
-    Vector2 inside2;
+    Vector2 *inside1;
+    Vector2 *inside2;
+    Vector2 *tmp_1;
+    Vector2 *tmp_2;
 
     if (Buffer_contains_Index2D(render_buffer,buffer_size,cell->index)) return;
-    render_buffer[buffer_size] = cell->index;
+    render_buffer[*buffer_size] = cell->index;
+    *buffer_size++; 
 
-    inside1 = NULL;
-    inside2 = NULL;
+    tmp_1 = NULL;
+    tmp_2 = NULL;
     if (cell->walls[EAST].type == NONE) {
         if (
             check_wall_frustum_intersection(
@@ -90,19 +95,19 @@ Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum,
                 r_frustum, 
                 position, 
                 l_frustum, 
-                inside1, 
-                inside2
+                &tmp_1, 
+                &tmp_2
             )
         ) {
-            if (inside1) inside1 = GET_FRUSTUM_EDGE(position, inside1);
-            else inside1 = r_frustum;
-            if (inside2) inside2 = GET_FRUSTUM_EDGE(position, inside2);
-            else inside2 = l_frustum;
-            Cell_check_vis(cell->neighbors[EAST],player,inside1,inside2,render_buffer,buffer_size++);
+            if (tmp_1) *inside1 = GET_FRUSTUM_EDGE(position, *tmp_1);
+            else       *inside1 = r_frustum;
+            if (tmp_2) *inside2 = GET_FRUSTUM_EDGE(position, *tmp_2);
+            else       *inside2 = l_frustum;
+            Cell_check_vis(cell->neighbors[EAST],player,*inside1,*inside2,&render_buffer,&buffer_size);
         }
     }
-    inside1 = NULL;
-    inside2 = NULL;
+    tmp_1 = NULL;
+    tmp_2 = NULL;
     if (cell->walls[NORTH].type == NONE) {
         if (
             check_wall_frustum_intersection(
@@ -111,19 +116,19 @@ Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum,
                 r_frustum, 
                 position, 
                 l_frustum, 
-                inside1, 
-                inside2
+                &tmp_1, 
+                &tmp_2
             )
         ) {
-            if (inside1) inside1 = GET_FRUSTUM_EDGE(position, inside1);
-            else inside1 = r_frustum;
-            if (inside2) inside2 = GET_FRUSTUM_EDGE(position, inside2);
-            else inside2 = l_frustum;
-            Cell_check_vis(cell->neighbors[NORTH],player,inside1,inside2,render_buffer,buffer_size++);
+            if (tmp_1) *inside1 = GET_FRUSTUM_EDGE(position, *tmp_1);
+            else       *inside1 = r_frustum;
+            if (tmp_2) *inside2 = GET_FRUSTUM_EDGE(position, *tmp_2);
+            else       *inside2 = l_frustum;
+            Cell_check_vis(cell->neighbors[NORTH],player,*inside1,*inside2,&render_buffer,&buffer_size);
         }
     }
-    inside1 = NULL;
-    inside2 = NULL;
+    tmp_1 = NULL;
+    tmp_2 = NULL;
     if (cell->walls[WEST].type == NONE) {
         if (
             check_wall_frustum_intersection(
@@ -132,19 +137,19 @@ Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum,
                 r_frustum, 
                 position, 
                 l_frustum, 
-                inside1, 
-                inside2
+                &inside1, 
+                &tmp_2
             )
         ) {
-            if (inside1) inside1 = GET_FRUSTUM_EDGE(position, inside1);
-            else inside1 = r_frustum;
-            if (inside2) inside2 = GET_FRUSTUM_EDGE(position, inside2);
-            else inside2 = l_frustum;
-            Cell_check_vis(cell->neighbors[WEST],player,inside1,inside2,render_buffer,buffer_size++);
+            if (tmp_1) *inside1 = GET_FRUSTUM_EDGE(position, *tmp_1);
+            else       *inside1 = r_frustum;
+            if (tmp_2) *inside2 = GET_FRUSTUM_EDGE(position, *tmp_2);
+            else       *inside2 = l_frustum;
+            Cell_check_vis(cell->neighbors[WEST],player,*inside1,*inside2,&render_buffer,&buffer_size);
         }
     }
-    inside1 = NULL;
-    inside2 = NULL;
+    tmp_1 = NULL;
+    tmp_2 = NULL;
     if (cell->walls[SOUTH].type == NONE) {
         if (
             check_wall_frustum_intersection(
@@ -153,15 +158,15 @@ Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum,
                 r_frustum, 
                 position, 
                 l_frustum, 
-                inside1, 
-                inside2
+                &tmp_1, 
+                &tmp_2
             )
         ) {
-            if (inside1) inside1 = GET_FRUSTUM_EDGE(position, inside1);
-            else inside1 = r_frustum;
-            if (inside2) inside2 = GET_FRUSTUM_EDGE(position, inside2);
-            else inside2 = l_frustum;
-            Cell_check_vis(cell->neighbors[SOUTH],player,inside1,inside2,render_buffer,buffer_size++);
+            if (tmp_1) *inside1 = GET_FRUSTUM_EDGE(position, *tmp_1);
+            else       *inside1 = r_frustum;
+            if (tmp_2) *inside2 = GET_FRUSTUM_EDGE(position, *tmp_2);
+            else       *inside2 = l_frustum;
+            Cell_check_vis(cell->neighbors[SOUTH],player,*inside1,*inside2,&render_buffer,&buffer_size);
         }
     }
 } /* Cell_check_vis */
