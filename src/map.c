@@ -81,7 +81,7 @@ Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum,
     Vector2 inside2;
 
     if (MAX_RENDERABLE_CELLS <= *buffer_size) {printf("too many!\n"); return;}
-    if (Buffer_contains_Index2D(render_buffer,buffer_size,cell->index)) {printf("rejected\n");return;}
+    if (Buffer_contains_Index2D(render_buffer,*buffer_size,cell->index)) {printf("rejected\n");return;}
     render_buffer[*buffer_size] = cell->index;
     (*buffer_size)++; 
     
@@ -104,7 +104,7 @@ Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum,
             else       inside1 = r_frustum;
             if (!IS_VECTOR2_NAN(inside2)) inside2 = GET_FRUSTUM_EDGE(position, inside2);
             else       inside2 = l_frustum;
-            Cell_check_vis(cell->neighbors[EAST],player,inside1,inside2,&render_buffer,&buffer_size);
+            Cell_check_vis(cell->neighbors[EAST],player,inside1,inside2,render_buffer,buffer_size);
         }
     }
     
@@ -126,7 +126,7 @@ Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum,
             else       inside1 = r_frustum;
             if (!IS_VECTOR2_NAN(inside2)) inside2 = GET_FRUSTUM_EDGE(position, inside2);
             else       inside2 = l_frustum;
-            Cell_check_vis(cell->neighbors[NORTH],player,inside1,inside2,&render_buffer,&buffer_size);
+            Cell_check_vis(cell->neighbors[NORTH],player,inside1,inside2,render_buffer,buffer_size);
         }
     }
     
@@ -148,7 +148,7 @@ Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum,
             else       inside1 = r_frustum;
             if (!IS_VECTOR2_NAN(inside2)) inside2 = GET_FRUSTUM_EDGE(position, inside2);
             else       inside2 = l_frustum;
-            Cell_check_vis(cell->neighbors[WEST],player,inside1,inside2,&render_buffer,&buffer_size);
+            Cell_check_vis(cell->neighbors[WEST],player,inside1,inside2,render_buffer,buffer_size);
         }
     }
     
@@ -170,7 +170,7 @@ Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum,
             else       inside1 = r_frustum;
             if (!IS_VECTOR2_NAN(inside2)) inside2 = GET_FRUSTUM_EDGE(position, inside2);
             else       inside2 = l_frustum;
-            Cell_check_vis(cell->neighbors[SOUTH],player,inside1,inside2,&render_buffer,&buffer_size);
+            Cell_check_vis(cell->neighbors[SOUTH],player,inside1,inside2,render_buffer,buffer_size);
         }
     }
 } /* Cell_check_vis */
@@ -274,10 +274,14 @@ Map
                 center.y - half_cell_width
             };
             
-            if (i < 0)    cell->neighbors[SOUTH] = &map->cells[i-1][j];
-            if (i > size) cell->neighbors[NORTH] = &map->cells[i+1][j];
-            if (j < 0)    cell->neighbors[WEST] = &map->cells[i][j-1];
-            if (j > size) cell->neighbors[EAST] = &map->cells[i][j+1];
+            if (0 < i)      cell->neighbors[SOUTH] = &map->cells[i-1][j];
+            else            cell->neighbors[SOUTH] = NULL;
+            if (i < size-1) cell->neighbors[NORTH] = &map->cells[i+1][j];
+            else            cell->neighbors[NORTH] = NULL;
+            if (0 < j)      cell->neighbors[WEST]  = &map->cells[i][j-1];
+            else            cell->neighbors[WEST] = NULL;
+            if (j < size-1) cell->neighbors[EAST]  = &map->cells[i][j+1];
+            else            cell->neighbors[EAST] = NULL;
         }
     }
     
