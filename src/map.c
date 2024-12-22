@@ -19,16 +19,18 @@ check_wall_frustum_intersection(Vector2 wall_start, Vector2 wall_end, Vector2 r_
     Vector2 *dummy;
     
     if (CheckCollisionPointTriangle(wall_start,r_frust,position,l_frust)) {
-        *inside1        = wall_start;
+        inside1->x     = wall_start.x;
+        inside1->y     = wall_start.y;
         is_in_triangle = true;
     }
     if (CheckCollisionPointTriangle(wall_end,  r_frust,position,l_frust)) {
-        *inside2        = wall_end;
+        inside2->x     = wall_end.x;
+        inside2->y     = wall_end.y;
         is_in_triangle = true;
     }
     if (is_in_triangle) return true;
 
-    if (CheckCollisionLines(wall_start, wall_end, r_frust, position, dummy)) return true;
+    if (CheckCollisionLines(wall_start, wall_end, position, r_frust, dummy)) return true;
     if (CheckCollisionLines(wall_start, wall_end, position, l_frust, dummy)) return true;
     
     return false;
@@ -44,6 +46,7 @@ static inline bool
 Buffer_contains_Index2D(Index2D *buffer, uint size, Index2D to_check)
 {
     int i;
+    
     if (size == 0) return false;
     printf("Current buffer size: %u\n", size);
     for (i = 0; i < size; i++) {
@@ -76,15 +79,16 @@ Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum,
     Thing   *thing      = &actor->_;
 
     Vector2 position = thing->position;
-    Vector2 *inside1;
-    Vector2 *inside2;
+    Vector2 inside1;
+    Vector2 inside2;
     Vector2 *tmp_1;
     Vector2 *tmp_2;
 
-    if (Buffer_contains_Index2D(render_buffer,buffer_size,cell->index)) return;
+    if (Buffer_contains_Index2D(render_buffer,*buffer_size,cell->index)) return;
     render_buffer[*buffer_size] = cell->index;
-    *buffer_size++; 
+    (*buffer_size)++; 
 
+   
     tmp_1 = NULL;
     tmp_2 = NULL;
     if (cell->walls[EAST].type == NONE) {
@@ -99,11 +103,11 @@ Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum,
                 &tmp_2
             )
         ) {
-            if (tmp_1) *inside1 = GET_FRUSTUM_EDGE(position, *tmp_1);
-            else       *inside1 = r_frustum;
-            if (tmp_2) *inside2 = GET_FRUSTUM_EDGE(position, *tmp_2);
-            else       *inside2 = l_frustum;
-            Cell_check_vis(cell->neighbors[EAST],player,*inside1,*inside2,&render_buffer,&buffer_size);
+            if (tmp_1) inside1 = GET_FRUSTUM_EDGE(position, *tmp_1);
+            else       inside1 = r_frustum;
+            if (tmp_2) inside2 = GET_FRUSTUM_EDGE(position, *tmp_2);
+            else       inside2 = l_frustum;
+            Cell_check_vis(cell->neighbors[EAST],player,inside1,inside2,&render_buffer,&buffer_size);
         }
     }
     tmp_1 = NULL;
@@ -120,11 +124,11 @@ Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum,
                 &tmp_2
             )
         ) {
-            if (tmp_1) *inside1 = GET_FRUSTUM_EDGE(position, *tmp_1);
-            else       *inside1 = r_frustum;
-            if (tmp_2) *inside2 = GET_FRUSTUM_EDGE(position, *tmp_2);
-            else       *inside2 = l_frustum;
-            Cell_check_vis(cell->neighbors[NORTH],player,*inside1,*inside2,&render_buffer,&buffer_size);
+            if (tmp_1) inside1 = GET_FRUSTUM_EDGE(position, *tmp_1);
+            else       inside1 = r_frustum;
+            if (tmp_2) inside2 = GET_FRUSTUM_EDGE(position, *tmp_2);
+            else       inside2 = l_frustum;
+            Cell_check_vis(cell->neighbors[NORTH],player,inside1,inside2,&render_buffer,&buffer_size);
         }
     }
     tmp_1 = NULL;
@@ -141,11 +145,11 @@ Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum,
                 &tmp_2
             )
         ) {
-            if (tmp_1) *inside1 = GET_FRUSTUM_EDGE(position, *tmp_1);
-            else       *inside1 = r_frustum;
-            if (tmp_2) *inside2 = GET_FRUSTUM_EDGE(position, *tmp_2);
-            else       *inside2 = l_frustum;
-            Cell_check_vis(cell->neighbors[WEST],player,*inside1,*inside2,&render_buffer,&buffer_size);
+            if (tmp_1) inside1 = GET_FRUSTUM_EDGE(position, *tmp_1);
+            else       inside1 = r_frustum;
+            if (tmp_2) inside2 = GET_FRUSTUM_EDGE(position, *tmp_2);
+            else       inside2 = l_frustum;
+            Cell_check_vis(cell->neighbors[WEST],player,inside1,inside2,&render_buffer,&buffer_size);
         }
     }
     tmp_1 = NULL;
@@ -162,11 +166,11 @@ Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum,
                 &tmp_2
             )
         ) {
-            if (tmp_1) *inside1 = GET_FRUSTUM_EDGE(position, *tmp_1);
-            else       *inside1 = r_frustum;
-            if (tmp_2) *inside2 = GET_FRUSTUM_EDGE(position, *tmp_2);
-            else       *inside2 = l_frustum;
-            Cell_check_vis(cell->neighbors[SOUTH],player,*inside1,*inside2,&render_buffer,&buffer_size);
+            if (tmp_1) inside1 = GET_FRUSTUM_EDGE(position, *tmp_1);
+            else       inside1 = r_frustum;
+            if (tmp_2) inside2 = GET_FRUSTUM_EDGE(position, *tmp_2);
+            else       inside2 = l_frustum;
+            Cell_check_vis(cell->neighbors[SOUTH],player,inside1,inside2,&render_buffer,&buffer_size);
         }
     }
 } /* Cell_check_vis */
@@ -208,7 +212,7 @@ Map
 {
     Map    *map            = malloc(sizeof(Map));
     Cell   *cell;
-    int    i, j;
+    int    i, j, k;
     float  map_width       = size * cell_width;
     float  half_map_width  = map_width / 2.0f;
     float  half_cell_width = cell_width / 2.0f;
@@ -250,6 +254,8 @@ Map
                 j * cell_width + half_cell_width - half_map_width
             };
             cell->center     = center;
+
+            for (k = 0; k < 4; k++) cell->walls[k].type = NONE;
             
             cell->corners[0] = (Vector2) {
                 center.x + half_cell_width,
