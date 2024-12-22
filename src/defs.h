@@ -107,5 +107,9 @@
 #define VECTOR3_TO_2( Vector ) (Vector2){Vector.x, Vector.z}
 /* Convert an angle to a Vector2 */
 #define ANGLE_TO_VECTOR2( Angle ) (Vector2){ cos( Angle ), sin( Angle ) }
+/* Vector2 of NaN values */
+#define VECTOR2_NAN ((Vector2){NAN,NAN})
+/* Check if Vector2 is Vector2_NaN */
+#define IS_VECTOR2_NAN( Vector ) (isnan(Vector.x) && isnan(Vector.y))
 
 #endif /* DEFS_H */

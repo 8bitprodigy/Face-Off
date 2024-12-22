@@ -16,22 +16,20 @@ bool
 check_wall_frustum_intersection(Vector2 wall_start, Vector2 wall_end, Vector2 r_frust, Vector2 position, Vector2 l_frust, Vector2 *inside1, Vector2 *inside2)
 {
     bool is_in_triangle = false;
-    Vector2 *dummy;
+    Vector2 dummy;
     
     if (CheckCollisionPointTriangle(wall_start,r_frust,position,l_frust)) {
-        inside1->x     = wall_start.x;
-        inside1->y     = wall_start.y;
+        *inside1       = wall_start;
         is_in_triangle = true;
     }
     if (CheckCollisionPointTriangle(wall_end,  r_frust,position,l_frust)) {
-        inside2->x     = wall_end.x;
-        inside2->y     = wall_end.y;
+        *inside2       = wall_end;
         is_in_triangle = true;
     }
     if (is_in_triangle) return true;
 
-    if (CheckCollisionLines(wall_start, wall_end, position, r_frust, dummy)) return true;
-    if (CheckCollisionLines(wall_start, wall_end, position, l_frust, dummy)) return true;
+    if (CheckCollisionLines(wall_start, wall_end, position, r_frust, &dummy)) return true;
+    if (CheckCollisionLines(wall_start, wall_end, position, l_frust, &dummy)) return true;
     
     return false;
 }
@@ -81,16 +79,14 @@ Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum,
     Vector2 position = thing->position;
     Vector2 inside1;
     Vector2 inside2;
-    Vector2 *tmp_1;
-    Vector2 *tmp_2;
 
+    if (*buffer_size >= MAX_RENDERABLE_CELLS) return;
     if (Buffer_contains_Index2D(render_buffer,*buffer_size,cell->index)) return;
     render_buffer[*buffer_size] = cell->index;
     (*buffer_size)++; 
-
-   
-    tmp_1 = NULL;
-    tmp_2 = NULL;
+    
+    inside1 = VECTOR2_NAN;
+    inside2 = VECTOR2_NAN;
     if (cell->walls[EAST].type == NONE) {
         if (
             check_wall_frustum_intersection(
@@ -99,19 +95,20 @@ Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum,
                 r_frustum, 
                 position, 
                 l_frustum, 
-                &tmp_1, 
-                &tmp_2
+                &inside1, 
+                &inside2
             )
         ) {
-            if (tmp_1) inside1 = GET_FRUSTUM_EDGE(position, *tmp_1);
+            if (!IS_VECTOR2_NAN(inside1)) inside1 = GET_FRUSTUM_EDGE(position, inside1);
             else       inside1 = r_frustum;
-            if (tmp_2) inside2 = GET_FRUSTUM_EDGE(position, *tmp_2);
+            if (!IS_VECTOR2_NAN(inside2)) inside2 = GET_FRUSTUM_EDGE(position, inside2);
             else       inside2 = l_frustum;
             Cell_check_vis(cell->neighbors[EAST],player,inside1,inside2,&render_buffer,&buffer_size);
         }
     }
-    tmp_1 = NULL;
-    tmp_2 = NULL;
+    
+    inside1 = VECTOR2_NAN;
+    inside2 = VECTOR2_NAN;
     if (cell->walls[NORTH].type == NONE) {
         if (
             check_wall_frustum_intersection(
@@ -120,19 +117,20 @@ Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum,
                 r_frustum, 
                 position, 
                 l_frustum, 
-                &tmp_1, 
-                &tmp_2
+                &inside1, 
+                &inside2
             )
         ) {
-            if (tmp_1) inside1 = GET_FRUSTUM_EDGE(position, *tmp_1);
+            if (!IS_VECTOR2_NAN(inside1)) inside1 = GET_FRUSTUM_EDGE(position, inside1);
             else       inside1 = r_frustum;
-            if (tmp_2) inside2 = GET_FRUSTUM_EDGE(position, *tmp_2);
+            if (!IS_VECTOR2_NAN(inside2)) inside2 = GET_FRUSTUM_EDGE(position, inside2);
             else       inside2 = l_frustum;
             Cell_check_vis(cell->neighbors[NORTH],player,inside1,inside2,&render_buffer,&buffer_size);
         }
     }
-    tmp_1 = NULL;
-    tmp_2 = NULL;
+    
+    inside1 = VECTOR2_NAN;
+    inside2 = VECTOR2_NAN;
     if (cell->walls[WEST].type == NONE) {
         if (
             check_wall_frustum_intersection(
@@ -142,18 +140,19 @@ Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum,
                 position, 
                 l_frustum, 
                 &inside1, 
-                &tmp_2
+                &inside2
             )
         ) {
-            if (tmp_1) inside1 = GET_FRUSTUM_EDGE(position, *tmp_1);
+            if (!IS_VECTOR2_NAN(inside1)) inside1 = GET_FRUSTUM_EDGE(position, inside1);
             else       inside1 = r_frustum;
-            if (tmp_2) inside2 = GET_FRUSTUM_EDGE(position, *tmp_2);
+            if (!IS_VECTOR2_NAN(inside2)) inside2 = GET_FRUSTUM_EDGE(position, inside2);
             else       inside2 = l_frustum;
             Cell_check_vis(cell->neighbors[WEST],player,inside1,inside2,&render_buffer,&buffer_size);
         }
     }
-    tmp_1 = NULL;
-    tmp_2 = NULL;
+    
+    inside1 = VECTOR2_NAN;
+    inside2 = VECTOR2_NAN;
     if (cell->walls[SOUTH].type == NONE) {
         if (
             check_wall_frustum_intersection(
@@ -162,13 +161,13 @@ Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum,
                 r_frustum, 
                 position, 
                 l_frustum, 
-                &tmp_1, 
-                &tmp_2
+                &inside1, 
+                &inside2
             )
         ) {
-            if (tmp_1) inside1 = GET_FRUSTUM_EDGE(position, *tmp_1);
+            if (!IS_VECTOR2_NAN(inside1)) inside1 = GET_FRUSTUM_EDGE(position, inside1);
             else       inside1 = r_frustum;
-            if (tmp_2) inside2 = GET_FRUSTUM_EDGE(position, *tmp_2);
+            if (!IS_VECTOR2_NAN(inside2)) inside2 = GET_FRUSTUM_EDGE(position, inside2);
             else       inside2 = l_frustum;
             Cell_check_vis(cell->neighbors[SOUTH],player,inside1,inside2,&render_buffer,&buffer_size);
         }
