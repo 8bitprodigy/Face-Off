@@ -44,7 +44,7 @@ static inline bool
 Buffer_contains_Index2D(Index2D *buffer, uint size, Index2D to_check)
 {
     int i;
-    
+    if (MAX_RENDERABLE_CELLS <= size) return true;
     if (size == 0) return false;
     printf("Current buffer size: %u\n", size);
     for (i = 0; i < size; i++) {
@@ -80,8 +80,8 @@ Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum,
     Vector2 inside1;
     Vector2 inside2;
 
-    if (*buffer_size >= MAX_RENDERABLE_CELLS) return;
-    if (Buffer_contains_Index2D(render_buffer,*buffer_size,cell->index)) return;
+    if (MAX_RENDERABLE_CELLS <= *buffer_size) {printf("too many!\n"); return;}
+    if (Buffer_contains_Index2D(render_buffer,buffer_size,cell->index)) {printf("rejected\n");return;}
     render_buffer[*buffer_size] = cell->index;
     (*buffer_size)++; 
     
@@ -99,6 +99,7 @@ Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum,
                 &inside2
             )
         ) {
+            //printf("East Inside: { X: %.4f,\tY: %.4f }\n", inside1.x, inside1.y );
             if (!IS_VECTOR2_NAN(inside1)) inside1 = GET_FRUSTUM_EDGE(position, inside1);
             else       inside1 = r_frustum;
             if (!IS_VECTOR2_NAN(inside2)) inside2 = GET_FRUSTUM_EDGE(position, inside2);
@@ -323,10 +324,12 @@ Map_render(Map *map, Player *player)
     if (index.x < 0 || map->size <= index.x || index.y < 0 || map->size <= index.y) return;
     //printf("Index : { X: %u, \tY: %u }\n",index.x,index.y);
     Cell_check_vis(&map->cells[index.x][index.y], player, r_frustum, l_frustum, &render_buffer, &buffer_size);
-
+    printf("Buffer size: %u\n",buffer_size);
     for (i = 0; i < buffer_size; i++) {
+        printf("%u, ",i);
         Cell_render(&map->cells[render_buffer[i].x][render_buffer[i].y], map->cell_width);
     }
+    printf("frame over.\n\n");
     
 } /* Map_render */
 
