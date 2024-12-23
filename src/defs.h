@@ -12,6 +12,7 @@
 #include <math.h>
 #include <raylib.h>
 
+
 /****************
     T Y P E S    
 ****************/
@@ -48,11 +49,16 @@
 /*** Common Output Operations ***/
 
 #ifdef __linux__
-    #define Error_Out( Error_Text ) perror( Error_Text )
+    #define ERROR_OUT( Error_Text ) perror( "[ERROR] " Error_Text "\n" )
 #else
-    #define Error_Out( Error_Text )
+    #define ERROR_OUT( Error_Text )
 #endif
 
+#ifdef DEBUG
+    #define DBG_OUT( Text, ... ) printf( "[DEBUG] " Text "\n", ##__VA_ARGS__ )
+#else
+    #define DBG_OUT( Text, ... )
+#endif
 
 /*** Common Input Operations ***/
 

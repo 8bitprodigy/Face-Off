@@ -8,7 +8,7 @@ Player
 {
     Player *player = malloc(sizeof(Player));
     if (!player) {
-        Error_Out("Failed to allocate memory for Player.");
+        ERROR_OUT("Failed to allocate memory for Player.");
         return NULL;
     }
 
@@ -34,11 +34,8 @@ Player
 
     player->controller = controller;
 
-    player->camera.position   = (Vector3){ 
-        position.x, 
-        CAMERA_HEIGHT, 
-        position.y
-    };
+    player->camera.position   = (Vector3){ 0.0f, 25.0f, 0.0f };
+    
     player->camera.target     = (Vector3){ 
         position.x + thing.cos_rot,
         CAMERA_HEIGHT,
@@ -102,7 +99,7 @@ Player_update(Player *player, float delta)
 
     Actor_move(actor, delta);
 
-    player->camera.position   = VECTOR2_TO_3( thing->position, CAMERA_HEIGHT );
+    //player->camera.position   = VECTOR2_TO_3( thing->position, CAMERA_HEIGHT );
     target = Vector2Add(thing->position, (Vector2){ thing->cos_rot, thing->sin_rot });
     player->camera.target     = VECTOR2_TO_3( target, CAMERA_HEIGHT );
 } /* Player_update */

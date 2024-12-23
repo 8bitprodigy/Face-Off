@@ -2,6 +2,11 @@
 #define MAP_H
 
 #include <raylib.h>
+
+/* Uncomment the following #define to turn debug output on.
+   It gets #define'd BEFORE "#include "defs.h". */
+#define DEBUG
+
 #include "defs.h"
 #include "player.h"
 
@@ -80,7 +85,7 @@ Cell Cell_new();
 Map *Map_new(const char *name, uint size, uint cell_width);
 void Map_free(Map *map);
 
-inline Index2D Map_get_index(Map *map, Vector2 position);
+static inline Index2D Map_get_index(Map *map, Vector2 position);
 void Map_render(Map *map, Player *player);
 
 

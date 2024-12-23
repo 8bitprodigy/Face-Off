@@ -70,11 +70,12 @@ main(int argc, char** argv)
             BeginMode3D(camera);
 
                 DrawGrid(16, 4.0f);
-                DrawCube((Vector3){  16.5f, -0.5f,   0.0f},  1.0f, 1.0f, 32.0f, RED);
-                DrawCube((Vector3){   0.0f, -0.5f,  16.5f}, 32.0f, 1.0f,  1.0f, GREEN);
-                DrawCube((Vector3){ -16.5f, -0.5f,   0.0f},  1.0f, 1.0f, 32.0f, BLUE);
-                DrawCube((Vector3){   0.0f, -0.5f, -16.5f}, 32.0f, 1.0f,  1.0f, YELLOW);
+                DrawCube((Vector3){  16.5f, -0.55f,   0.0f},  1.0f, 1.0f, 32.0f, RED);
+                DrawCube((Vector3){   0.0f, -0.55f,  16.5f}, 32.0f, 1.0f,  1.0f, GREEN);
+                DrawCube((Vector3){ -16.5f, -0.55f,   0.0f},  1.0f, 1.0f, 32.0f, BLUE);
+                DrawCube((Vector3){   0.0f, -0.55f, -16.5f}, 32.0f, 1.0f,  1.0f, YELLOW);
                 Map_render(map, player);
+                DrawSphere(VECTOR2_TO_3( player->_._.position, CAMERA_HEIGHT ),0.5f,YELLOW);
                 
             EndMode3D();
             
