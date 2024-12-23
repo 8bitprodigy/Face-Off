@@ -51,7 +51,7 @@ Cell_new()
 } /* Cell_new */
 
 bool
-check_wall_frustum_intersection(Vector2 wall_start, Vector2 wall_end, Vector2 r_frust, Vector2 position, Vector2 l_frust, Vector2 *inside1, Vector2 *inside2)
+check_wall_frustum_intersection(Vector2 wall_start, Vector2 wall_end, Vector2 position, Vector2 r_frust, Vector2 l_frust, Vector2 *inside1, Vector2 *inside2)
 {
     bool is_in_triangle = false;
     Vector2 dummy;
@@ -72,54 +72,10 @@ check_wall_frustum_intersection(Vector2 wall_start, Vector2 wall_end, Vector2 r_
     return false;
 } /*check_wall_frustum_intersection */
 
-void 
-Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum, Index2D *render_buffer, uint *buffer_size)
-{
-    uint i;
-    Actor   *actor   = &player->_;
-    Thing   *thing   = &actor->_;
-
-    Vector2 position = thing->position;
-    Vector2 inside1;
-    Vector2 inside2;
-
-    if (!cell) return;
-    if (MAX_RENDERABLE_CELLS <= *buffer_size) {DBG_OUT("too many!"); return;}
-    if (Buffer_contains_Index2D(render_buffer,*buffer_size,cell->index)) {DBG_OUT("rejected");return;}
-    render_buffer[*buffer_size] = cell->index;
-    (*buffer_size)++; 
-
-    for (i = 0; i < 4; i++) {
-        inside1 = VECTOR2_NAN;
-        inside2 = VECTOR2_NAN;
-        if (cell->walls[EAST].type == NONE) {
-            if (
-                check_wall_frustum_intersection(
-                    cell->corners[i], 
-                    cell->corners[i+1%4], 
-                    r_frustum, 
-                    position, 
-                    l_frustum, 
-                    &inside1, 
-                    &inside2
-                )
-            ) {
-                
-                //DBG_OUT("East Inside: { X: %.4f,\tY: %.4f }\n", inside1.x, inside1.y );
-                if (!IS_VECTOR2_NAN(inside1)) {DBG_OUT("Wall RIGHT corner in frustum.");      inside1 = GET_FRUSTUM_EDGE(position, inside1);}
-                else                          {DBG_OUT("Wall RIGHT corner outside frustum."); inside1 = r_frustum;}
-                if (!IS_VECTOR2_NAN(inside2)) {DBG_OUT("Wall LEFT corner in frustum.");       inside2 = GET_FRUSTUM_EDGE(position, inside2);}
-                else                          {DBG_OUT("Wall LEFT corner outside frustum.");  inside2 = l_frustum;}
-                //inside1 = r_frustum; inside2 = l_frustum;
-                Cell_check_vis(cell->neighbors[i],player,inside1,inside2,render_buffer,buffer_size);
-            }
-        }
-    }
-} /* Cell_check_vis */
-
 void
 Cell_render(Cell *cell, uint cell_width)
 {
+    if (!cell) return;
     Wall *wall_east  = &cell->walls[EAST];
     Wall *wall_north = &cell->walls[NORTH];
     Wall *wall_west  = &cell->walls[WEST];
@@ -148,6 +104,66 @@ Cell_render(Cell *cell, uint cell_width)
         0.1f, 0.1f, 0.1f, YELLOW
     );
 } /* Cell_render */
+
+void 
+Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum, Index2D *render_buffer, uint *buffer_size)
+{
+    if (!cell) return;
+    
+    uint i;
+    Actor   *actor   = &player->_;
+    Thing   *thing   = &actor->_;
+
+    Vector2 position = thing->position;
+    Vector2 inside1;
+    Vector2 inside2;
+
+    if (MAX_RENDERABLE_CELLS <= *buffer_size) return;
+    if (Buffer_contains_Index2D(render_buffer,*buffer_size,cell->index)) return;
+    render_buffer[*buffer_size] = cell->index;
+    (*buffer_size)++; 
+    DBG_OUT("Cell Index: { X: %u,\tY: %u }", cell->index.x, cell->index.y);
+    Cell_render(cell,4);
+
+    for (i = 0; i < 4; i++) {
+        if (cell->neighbors[i] == NULL) {
+            //DrawLine3D(VECTOR2_TO_3(thing->position,0.1f), VECTOR2_TO_3(cell->corners[i],0.1f), RED);
+            continue;
+        }
+        inside1 = VECTOR2_NAN;
+        inside2 = VECTOR2_NAN;
+        if (cell->walls[i].type == NONE) {
+            if (
+                check_wall_frustum_intersection(
+                    cell->corners[i], 
+                    cell->corners[i+1%4], 
+                    position, 
+                    r_frustum, 
+                    l_frustum, 
+                    &inside1, 
+                    &inside2
+                )
+                /*CheckCollisionPointTriangle(
+                    cell->center,
+                    position,
+                    r_frustum,
+                    l_frustum
+                )*/
+            ) {
+                
+                //DBG_OUT("East Inside: { X: %.4f,\tY: %.4f }\n", inside1.x, inside1.y );
+                if (!IS_VECTOR2_NAN(inside1)) inside1 = GET_FRUSTUM_EDGE(position, inside1);
+                else                          inside1 = r_frustum;
+                if (!IS_VECTOR2_NAN(inside2)) inside2 = GET_FRUSTUM_EDGE(position, inside2);
+                else                          inside2 = l_frustum;
+                inside1 = r_frustum; inside2 = l_frustum;
+                
+                Cell_check_vis(cell->neighbors[i],player,inside1,inside2, render_buffer, buffer_size);
+            }
+            else DrawLine3D(VECTOR2_TO_3(thing->position,0.2f), VECTOR2_TO_3(cell->corners[i],0.0f), RED);
+        }
+    }
+} /* Cell_check_vis */
 
 Map
 *Map_new(const char *name, uint size, uint cell_width)
@@ -265,16 +281,17 @@ Map_render(Map *map, Player *player)
     float   l_fov_edge  = NORMALIZE(thing->rotation + player->half_fov);
     Vector2 r_frustum   = Vector2Add(thing->position, Vector2Scale(ANGLE_TO_VECTOR2(r_fov_edge),MAX_DRAW_DISTANCE));
     Vector2 l_frustum   = Vector2Add(thing->position, Vector2Scale(ANGLE_TO_VECTOR2(l_fov_edge),MAX_DRAW_DISTANCE));
-    
+
+    DrawTriangle3D(VECTOR2_TO_3(r_frustum,0.1f),VECTOR2_TO_3(thing->position,0.1f),VECTOR2_TO_3(l_frustum,0.1f), BLUE);
 
     if (map->size <= index.x || map->size <= index.y) return;
     //DBG_OUT("Index : { X: %u, \tY: %u }\n",index.x,index.y);
     Cell_check_vis(&map->cells[index.x][index.y], player, r_frustum, l_frustum, render_buffer, &buffer_size);
-    DBG_OUT("Buffer size: %u",buffer_size);
-    for (i = 0; i < buffer_size; i++) {
+    //DBG_OUT("Buffer size: %u",buffer_size);
+    /*for (i = 0; i < buffer_size; i++) {
         //printf("%u, ",i);
         Cell_render(&map->cells[render_buffer[i].x][render_buffer[i].y], map->cell_width);
-    }
+    }*/
     DBG_OUT("frame over.\n");
     
 } /* Map_render */

@@ -42,11 +42,11 @@ Player
         position.y + thing.sin_rot
     };
     player->camera.up         = (Vector3){ 0.0f, 1.0f,  0.0f};
-    player->fov               = PI/4;
-    player->half_fov              = player->fov/2.0f;
+    player->fov               = PI/2.0f;;
+    player->half_fov          = player->fov/2.0f;
     player->camera.fovy       = 2 * atan(
-        tan(player->half_fov) * 
-        (4.0f / 3.0f)
+        tan(player->half_fov) /
+        ((float)SCREEN_WIDTH / (float)SCREEN_HEIGHT)
     ) * 180 / PI;
     player->camera.projection = CAMERA_PERSPECTIVE;
 
