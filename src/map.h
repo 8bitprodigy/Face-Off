@@ -29,7 +29,7 @@ WALL_COLORS[] = {
 };*/
 
 typedef enum {
-    NONE,
+    PORTAL,
     SOLID,
     BREAKABLE,
     LOCKED,

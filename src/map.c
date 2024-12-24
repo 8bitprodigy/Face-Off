@@ -39,7 +39,7 @@ Cell_new()
     for ( i = 0; i < 4; i++ ) {
         cell.walls[i] = (Wall){
             .color  = ORANGE,
-            .type   = NONE,
+            .type   = PORTAL,
             .health = 0.0f
         };
         cell.neighbors[i] = NULL;
@@ -55,7 +55,9 @@ check_wall_frustum_intersection(Vector2 wall_start, Vector2 wall_end, Vector2 po
 {
     bool is_in_triangle = false;
     Vector2 dummy;
-    
+
+    //DBG_OUT("Wall Start: { X: %.4f,\tY: %.4f }", wall_start.x, wall_start.y);
+    //DBG_OUT("Wall End:   { X: %.4f,\tY: %.4f }", wall_end.x,   wall_end.y);
     if (CheckCollisionPointTriangle(wall_start,r_frust,position,l_frust)) {
         *inside1       = wall_start;
         is_in_triangle = true;
@@ -68,6 +70,7 @@ check_wall_frustum_intersection(Vector2 wall_start, Vector2 wall_end, Vector2 po
 
     if (CheckCollisionLines(wall_start, wall_end, position, r_frust, &dummy)) return true;
     if (CheckCollisionLines(wall_start, wall_end, position, l_frust, &dummy)) return true;
+    if (CheckCollisionLines(wall_start, wall_end, r_frust,  l_frust, &dummy)) return true;
     
     return false;
 } /*check_wall_frustum_intersection */
@@ -111,19 +114,22 @@ Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum,
     if (!cell) return;
     
     uint i;
-    Actor   *actor   = &player->_;
-    Thing   *thing   = &actor->_;
+    Actor   *actor     = &player->_;
+    Thing   *thing     = &actor->_;
 
-    Vector2 position = thing->position;
+    uint    order      = *buffer_size;
+    bool    is_visible = false;
+
+    Vector2 position   = thing->position;
     Vector2 inside1;
     Vector2 inside2;
 
     if (MAX_RENDERABLE_CELLS <= *buffer_size) return;
     if (Buffer_contains_Index2D(render_buffer,*buffer_size,cell->index)) return;
+    //DBG_OUT("Cell Index: { X: %u,\tY: %u }", cell->index.x, cell->index.y);
+    //Cell_render(cell,4);
     render_buffer[*buffer_size] = cell->index;
-    (*buffer_size)++; 
-    DBG_OUT("Cell Index: { X: %u,\tY: %u }", cell->index.x, cell->index.y);
-    Cell_render(cell,4);
+    (*buffer_size)++;
 
     for (i = 0; i < 4; i++) {
         if (cell->neighbors[i] == NULL) {
@@ -132,25 +138,21 @@ Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum,
         }
         inside1 = VECTOR2_NAN;
         inside2 = VECTOR2_NAN;
-        if (cell->walls[i].type == NONE) {
+        DBG_OUT("i: %u\ti+1%%4 : %u\t(i+1)%%4: %u", i, i+1%4, (i+1)%4);
+        if (cell->walls[i].type == PORTAL) {
             if (
                 check_wall_frustum_intersection(
                     cell->corners[i], 
-                    cell->corners[i+1%4], 
+                    cell->corners[(i+1)%4], 
                     position, 
                     r_frustum, 
                     l_frustum, 
                     &inside1, 
                     &inside2
                 )
-                /*CheckCollisionPointTriangle(
-                    cell->center,
-                    position,
-                    r_frustum,
-                    l_frustum
-                )*/
             ) {
-                
+                is_visible = true;
+                DBG_OUT("Wall %u is visible.",i);
                 //DBG_OUT("East Inside: { X: %.4f,\tY: %.4f }\n", inside1.x, inside1.y );
                 if (!IS_VECTOR2_NAN(inside1)) inside1 = GET_FRUSTUM_EDGE(position, inside1);
                 else                          inside1 = r_frustum;
@@ -160,8 +162,14 @@ Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum,
                 
                 Cell_check_vis(cell->neighbors[i],player,inside1,inside2, render_buffer, buffer_size);
             }
-            else DrawLine3D(VECTOR2_TO_3(thing->position,0.2f), VECTOR2_TO_3(cell->corners[i],0.0f), RED);
+            else {
+                DBG_OUT("Wall %u is NOT visible.",i);
+                 DrawLine3D(VECTOR2_TO_3(thing->position,0.2f), VECTOR2_TO_3(cell->corners[i],0.0f), RED);
+            }
         }
+    }
+    if (is_visible) {
+        Cell_render(cell,4);
     }
 } /* Cell_check_vis */
 
@@ -213,7 +221,7 @@ Map
             };
             cell->center     = center;
 
-            for (k = 0; k < 4; k++) cell->walls[k].type = NONE;
+            //for (k = 0; k < 4; k++) cell->walls[k].type = PORTAL;
             
             cell->corners[0] = (Vector2) {
                 center.x + half_cell_width,
@@ -282,14 +290,17 @@ Map_render(Map *map, Player *player)
     Vector2 r_frustum   = Vector2Add(thing->position, Vector2Scale(ANGLE_TO_VECTOR2(r_fov_edge),MAX_DRAW_DISTANCE));
     Vector2 l_frustum   = Vector2Add(thing->position, Vector2Scale(ANGLE_TO_VECTOR2(l_fov_edge),MAX_DRAW_DISTANCE));
 
-    DrawTriangle3D(VECTOR2_TO_3(r_frustum,0.1f),VECTOR2_TO_3(thing->position,0.1f),VECTOR2_TO_3(l_frustum,0.1f), BLUE);
-
+    //DrawTriangle3D(VECTOR2_TO_3(r_frustum,0.1f),VECTOR2_TO_3(thing->position,0.1f),VECTOR2_TO_3(l_frustum,0.1f), BLUE);
+    DrawLine3D(VECTOR2_TO_3(r_frustum,0.1f),VECTOR2_TO_3(thing->position,0.1f),BLUE);
+    DrawLine3D(VECTOR2_TO_3(thing->position,0.1f),VECTOR2_TO_3(l_frustum,0.1f),BLUE);
+    DrawLine3D(VECTOR2_TO_3(l_frustum,0.1f),VECTOR2_TO_3(r_frustum,0.1f),BLUE);
+    
     if (map->size <= index.x || map->size <= index.y) return;
     //DBG_OUT("Index : { X: %u, \tY: %u }\n",index.x,index.y);
     Cell_check_vis(&map->cells[index.x][index.y], player, r_frustum, l_frustum, render_buffer, &buffer_size);
-    //DBG_OUT("Buffer size: %u",buffer_size);
-    /*for (i = 0; i < buffer_size; i++) {
-        //printf("%u, ",i);
+    /*DBG_OUT("Buffer size: %u",buffer_size);
+    for (i=0; i < buffer_size; i++) {
+        printf("%u, ",i);
         Cell_render(&map->cells[render_buffer[i].x][render_buffer[i].y], map->cell_width);
     }*/
     DBG_OUT("frame over.\n");

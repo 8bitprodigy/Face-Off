@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <raylib.h>
+#include <raymath.h>
 
 
 /****************
@@ -98,9 +99,9 @@
 /*** Common math functions ***/
 
 /* Dot Product */
-#define DOT( a, b )        cos(a-b)
+#define DOT( a, b )         cos(a-b)
 /* Clamp angle to between 0 and TAU */
-#define NORMALIZE( angle ) fmod(angle + TAU, TAU)
+#define NORMALIZE( angle )  fmod(angle + TAU, TAU)
 /* Cross Product */
 #define CROSS( a, b, c, d ) (a*d-b*c)
 
