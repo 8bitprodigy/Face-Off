@@ -85,7 +85,6 @@ Cell Cell_new();
 Map *Map_new(const char *name, uint size, uint cell_width);
 void Map_free(Map *map);
 
-static inline Index2D Map_get_index(Map *map, Vector2 position);
 void Map_render(Map *map, Player *player);
 
 

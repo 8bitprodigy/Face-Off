@@ -57,8 +57,10 @@
 
 #ifdef DEBUG
     #define DBG_OUT( Text, ... ) printf( "[DEBUG] " Text "\n", ##__VA_ARGS__ )
+    #define DBG_LINE( vec2_1, vec2_2, height, color ) DrawLine3D(VECTOR2_TO_3( vec2_1, height ), VECTOR2_TO_3( vec2_2, height ), color)
 #else
     #define DBG_OUT( Text, ... )
+    #define DBG_LINE( vec2_1, vec2_2, height, color )
 #endif
 
 /*** Common Input Operations ***/
@@ -85,8 +87,8 @@
     }
 
 #define GET_BUTTON_AXIS( Controller, Btn_Pos, Btn_Neg ) ( \
-        (int)(IsGamepadButtonDown(Controller, Btn_Pos) - \
-        (int)(IsGamepadButtonDown(Controller, Btn_Neg)   \
+        (int)IsGamepadButtonDown(Controller, Btn_Pos) - \
+        (int)IsGamepadButtonDown(Controller, Btn_Neg)   \
     )
 
 #define GET_BUTTON_VECTOR( Controller, Btn_Pos_X, Btn_Neg_X, Btn_Pos_Y, Btn_Neg_Y ) \

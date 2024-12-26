@@ -3,7 +3,7 @@
 # Copyright (C) 2024
 #   
 
-KOSCCFLAGS += -lraylib -lGL -lkosutils
+KOSCCFLAGS += -lraylib -lGL -lkosutils #-O3
 
 PROJECTNAME = face-off
 
