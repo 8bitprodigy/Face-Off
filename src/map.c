@@ -57,7 +57,7 @@ Cell_new()
             .type   = PORTAL,
             .health = 0.0f
         };
-        cell.neighbors[i] = NULL;
+        cell.neighbors[i] = INDEX2D_NAN;
         cell.corners[i] = Vector2Zero();
     }
     cell.center = Vector2Zero();
@@ -76,11 +76,11 @@ check_wall_frustum_intersection(Vector2 wall_start, Vector2 wall_end, Vector2 po
 
     //DBG_OUT("Wall Start: { X: %.4f,\tY: %.4f }", wall_start.x, wall_start.y);
     //DBG_OUT("Wall End:   { X: %.4f,\tY: %.4f }", wall_end.x,   wall_end.y);
-    if (CheckCollisionPointTriangle(wall_start,r_frust,position,l_frust)) {
+    if (CheckCollisionPointTriangle(wall_start, position, r_frust, l_frust)) {
         *inside1       = wall_start;
         is_in_triangle = true;
     }
-    if (CheckCollisionPointTriangle(wall_end,  r_frust,position,l_frust)) {
+    if (CheckCollisionPointTriangle(wall_end, position, r_frust, l_frust)) {
         *inside2       = wall_end;
         is_in_triangle = true;
     }
@@ -127,30 +127,26 @@ Cell_render(Cell *cell, uint cell_width)
 } /* Cell_render */
 
 void 
-Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum, Cell **render_buffer, uint *buffer_size)
+Cell_check_vis(Map *map, Index2D index, Vector2 position, Vector2 r_frustum, Vector2 l_frustum, bool **render_buffer)
 {
-    if (!cell) return;
     
-    uint i;
-    Actor   *actor     = &player->_;
-    Thing   *thing     = &actor->_;
-
-    uint    order      = *buffer_size;
+    uint    i;
+    
+    Cell    *cell      = &map->cells[index.x][index.y];
     bool    is_visible = false;
 
-    Vector2 position   = thing->position;
     Vector2 inside1;
     Vector2 inside2;
 
-    if (MAX_RENDERABLE_CELLS <= *buffer_size) return;
-    if (Buffer_contains_Cell(render_buffer,*buffer_size,cell)) return;
+    DBG_OUT("\n\tChecking cell: { X: %u,\tY: %u }",index.x,index.y);
+    if (!cell) return;
+    if (render_buffer[index.x][index.y]) return;
     //DBG_OUT("Cell Index: { X: %u,\tY: %u }", cell->index.x, cell->index.y);
     //Cell_render(cell,4);
-    render_buffer[*buffer_size] = cell;
-    (*buffer_size)++;
+    render_buffer[index.x][index.y] = true;
 
     for (i = 0; i < 4; i++) {
-        if (cell->neighbors[i] == NULL) {
+        if (Index2D_equals(cell->neighbors[i], INDEX2D_NAN)) {
             //DBG_LINE(thing->position, cell->corners[i], 0.1f, YELLOW);
             continue;
         }
@@ -179,14 +175,14 @@ Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum,
                     inside2 = GET_FRUSTUM_EDGE(position, inside2);
                 }
                 //inside1 = r_frustum; inside2 = l_frustum;
-                DBG_LINE(thing->position, inside1,0.1f, GREEN);
-                DBG_LINE(thing->position, inside2,0.2f, ORANGE);
-                Cell_check_vis(cell->neighbors[i],player,inside1,inside2, render_buffer, buffer_size);
+                DBG_LINE(position, inside1,0.1f, GREEN);
+                DBG_LINE(position, inside2,0.2f, ORANGE);
+                Cell_check_vis(map, cell->neighbors[i], position, inside1, inside2, render_buffer);
             }
 #ifdef DEBUG
             else {
                 DBG_OUT("Wall %u is NOT visible.",i);
-                DBG_LINE(thing->position, cell->corners[i],0.2f, RED);
+                DBG_LINE(position, cell->corners[i],0.2f, RED);
             }
 #endif /* DEBUG */
         }
@@ -200,17 +196,18 @@ Cell_check_vis(Cell *cell, Player *player, Vector2 r_frustum, Vector2 l_frustum,
 Map
 *Map_new(const char *name, uint size, uint cell_width)
 {
-    Map    *map            = malloc(sizeof(Map));
-    Cell   *cell;
-    uint   i, j, k, dir, ni, nj;
-    float  map_width       = size * cell_width;
-    float  half_map_width  = map_width / 2.0f;
-    float  half_cell_width = cell_width / 2.0f;
-    float  half_size       = size / 2.0f;
+    Map     *map            = malloc(sizeof(Map));
+    Cell    *cell;
+    Index2D (*neighbors)[4];
+    uint    i, j, k, dir, ni, nj;
+    float   map_width       = size * cell_width;
+    float   half_map_width  = map_width / 2.0f;
+    float   half_cell_width = cell_width / 2.0f;
+    float   half_size       = size / 2.0f;
     Vector2 center;
 
     if (!map) {
-        ERROR_OUT("Failed to allocate memory for Map");
+        ERR_OUT("Failed to allocate memory for Map");
         return NULL;
     }
     
@@ -219,14 +216,14 @@ Map
     map->size  = size;
     map->cells = malloc(size * sizeof(Cell *));
     if (!map->cells) {
-        ERROR_OUT("Failed to allocate memory for Map Cells.");
+        ERR_OUT("Failed to allocate memory for Map Cells.");
         free(map);
         return NULL;
     }
     for ( i = 0; i < size; i++ ) {
         map->cells[i] = malloc(size * sizeof(Cell));
         if (!map->cells[i]) {
-            ERROR_OUT("Failed to allocate memory for Map Cell Array.");
+            ERR_OUT("Failed to allocate memory for Map Cell Array.");
             Map_free(map);
             return NULL;
         }
@@ -237,6 +234,7 @@ Map
         for ( j = 0; j < size; j++ ) {
             map->cells[i][j] = Cell_new();
             cell = &map->cells[i][j];
+            neighbors = &cell->neighbors;
 
             cell->index = (Index2D){i,j};
             center = (Vector2){
@@ -264,14 +262,14 @@ Map
                 center.y - half_cell_width
             };
             
-            for (dir = 0; dir < 4; dir++) {
-                ni = i + (dir == NORTH) - (dir == SOUTH);
-                nj = j + (dir == EAST)  - (dir == WEST);
+            for ( dir = 0; dir < 4; dir++) {
+                ni = i + (int)(dir == SOUTH) - (int)(dir == NORTH);
+                nj = j + (int)(dir == WEST)  - (int)(dir == EAST);
                 
                 if (ni >= 0 && ni < size && nj >= 0 && nj < size) {
-                    cell->neighbors[dir] = &map->cells[ni][nj];
+                    cell->neighbors[dir] = (Index2D){.x=ni,.y=nj};
                 } else {
-                    cell->neighbors[dir] = NULL;
+                    cell->neighbors[dir] = INDEX2D_NAN;
                 }
             }
         }
@@ -305,17 +303,33 @@ void
 Map_render(Map *map, Player *player)
 {
     uint i;
-    Actor   *actor      = &player->_;
-    Thing   *thing      = &actor->_;
-    
-    Cell    *render_buffer[MAX_RENDERABLE_CELLS];
-    uint    buffer_size = 0;
-    Index2D index       = Map_get_index(map, thing->position);
-    float   r_fov_edge  = NORMALIZE(thing->rotation - player->half_fov);
-    float   l_fov_edge  = NORMALIZE(thing->rotation + player->half_fov);
-    Vector2 r_frustum   = Vector2Add(thing->position, Vector2Scale(ANGLE_TO_VECTOR2(r_fov_edge),MAX_DRAW_DISTANCE));
-    Vector2 l_frustum   = Vector2Add(thing->position, Vector2Scale(ANGLE_TO_VECTOR2(l_fov_edge),MAX_DRAW_DISTANCE));
+    Actor   *actor          = &player->_;
+    Thing   *thing          = &actor->_;
 
+    uint    size            = map->size;
+    bool    **render_buffer = malloc(size * size * sizeof(bool));
+    Index2D index           = Map_get_index(map, thing->position);
+    Vector2 position        = thing->position;
+    float   r_fov_edge      = NORMALIZE(thing->rotation + player->half_fov);
+    float   l_fov_edge      = NORMALIZE(thing->rotation - player->half_fov);
+    Vector2 r_frustum       = Vector2Add(thing->position, Vector2Scale(ANGLE_TO_VECTOR2(r_fov_edge),MAX_DRAW_DISTANCE));
+    Vector2 l_frustum       = Vector2Add(thing->position, Vector2Scale(ANGLE_TO_VECTOR2(l_fov_edge),MAX_DRAW_DISTANCE));
+
+    if (!render_buffer) {
+        ERR_OUT("Could not initialize render buffer.");
+        return;
+    }
+    for (i = 0; i < map->size; i++) {
+        render_buffer[i] = (bool*)malloc(size*sizeof(bool));
+        if (!render_buffer[i]) {
+            ERR_OUT("Could not initialize render buffer inner array.");
+            for(; i >= 0; i--) {
+                free(render_buffer[i]);
+            }
+            free(render_buffer);
+            return;
+        }
+    }
     //DrawTriangle3D(VECTOR2_TO_3(r_frustum,0.1f),VECTOR2_TO_3(thing->position,0.1f),VECTOR2_TO_3(l_frustum,0.1f), BLUE);
 #ifdef DEBUG
     DBG_LINE(r_frustum,thing->position,0.1f,BLUE);
@@ -324,7 +338,7 @@ Map_render(Map *map, Player *player)
 #endif /* DEBUG */
     if (map->size <= index.x || map->size <= index.y) return;
     //DBG_OUT("Index : { X: %u, \tY: %u }\n",index.x,index.y);
-    Cell_check_vis(&map->cells[index.x][index.y], player, r_frustum, l_frustum, render_buffer, &buffer_size);
+    Cell_check_vis(map, index, position, r_frustum, l_frustum, render_buffer);
     /*DBG_OUT("Buffer size: %u",buffer_size);
     for (i=0; i < buffer_size; i++) {
         printf("%u, ",i);

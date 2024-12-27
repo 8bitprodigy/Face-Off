@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -pedantic
-CCFLAGS = -I/usr/local/include -L/usr/local/lib -lraylib -lGL -lm -g
+CCFLAGS = -I/usr/local/include -L/usr/local/lib -lraylib -lGL -lm -g #-O3
 
 PROJECTNAME = face-off
 

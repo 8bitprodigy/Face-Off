@@ -2,7 +2,7 @@
 #define MAP_H
 
 #include <raylib.h>
-
+#include <limits.h>
 /* Uncomment the following #define to turn debug output on.
    It gets #define'd BEFORE "#include "defs.h". */
 #define DEBUG
@@ -10,6 +10,7 @@
 #include "defs.h"
 #include "player.h"
 
+#define INDEX2D_NAN (Index2D){.x=UINT_MAX,.y=UINT_MAX}
 
 typedef enum {
     EAST  = 0, /* +X */
@@ -65,7 +66,7 @@ typedef struct
 Cell
 {
     Wall    walls[4];
-    Cell    *neighbors[4];
+    Index2D neighbors[4];
     Index2D index;
     Vector2 corners[4];
     Vector2 center;

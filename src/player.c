@@ -8,7 +8,7 @@ Player
 {
     Player *player = malloc(sizeof(Player));
     if (!player) {
-        ERROR_OUT("Failed to allocate memory for Player.");
+        ERR_OUT("Failed to allocate memory for Player.");
         return NULL;
     }
 
