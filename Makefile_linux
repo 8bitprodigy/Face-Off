@@ -5,7 +5,7 @@ CCFLAGS = -I/usr/local/include -L/usr/local/lib -lraylib -lGL -lm -g -O3
 PROJECTNAME = face-off
 
 SRCDIR          = src
-OBJDIR          = obj
+OBJDIR          = obj/linux
 
 TARGET   = $(PROJECTNAME)
 CSOURCES = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.c)))

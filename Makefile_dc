@@ -8,7 +8,7 @@ KOSCCFLAGS += -lraylib -lGL -lkosutils #-O3
 PROJECTNAME = face-off
 
 SRCDIR          = src
-OBJDIR          = obj
+OBJDIR          = obj/dc
 KOS_ROMDISK_DIR = romdisk
 
 TARGET   = $(PROJECTNAME).elf
