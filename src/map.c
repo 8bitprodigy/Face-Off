@@ -174,18 +174,18 @@ Cell_check_vis(Map *map, Index2D index, Vector2 position, Vector2 r_frustum, Vec
                     &inside_r, 
                     &inside_l
                 )
-                || CheckCollisionPointTriangle(cell->center, position, r_frustum, l_frustum)
+                //|| CheckCollisionPointTriangle(cell->center, position, r_frustum, l_frustum)
             ) {
                 is_visible = true;
                 DBG_OUT("Wall %u is visible.",i);
                 //DBG_OUT("East Inside: { X: %.4f,\tY: %.4f }\n", inside_r.x, inside_r.y );
-                if (Vector2Equals(inside_r, r_frustum)) {
+                if (!Vector2Equals(inside_r, r_frustum)) {
                     inside_r = GET_FRUSTUM_EDGE(position, inside_r);
                 }
-                if (Vector2Equals(inside_l, l_frustum)) {
+                if (!Vector2Equals(inside_l, l_frustum)) {
                     inside_l = GET_FRUSTUM_EDGE(position, inside_l);
                 }
-                //inside_r = r_frustum; inside2 = l_frustum;
+                inside_r = r_frustum; inside_l = l_frustum;
                 DBG_LINE(position, inside_r,0.1f, GREEN);
                 DBG_LINE(position, inside_l,0.2f, ORANGE);
                 Cell_check_vis(map, neighbor, position, inside_r, inside_l, render_buffer);
@@ -200,7 +200,7 @@ Cell_check_vis(Map *map, Index2D index, Vector2 position, Vector2 r_frustum, Vec
     }
     if (is_visible) {
         Cell_render(cell,4);
-    }
+    } else DBG_LINE(position, cell->center, 0.3, PURPLE);
     DBG_OUT("Cell checked.\n");
 } /* Cell_check_vis */
 
