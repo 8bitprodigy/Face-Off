@@ -10,7 +10,7 @@
 #include "defs.h"
 #include "player.h"
 
-#define INDEX2D_NAN (Index2D){.x=UINT_MAX,.y=UINT_MAX}
+#define INDEX2D_NAN (Index2D){.x=INT_MAX,.y=INT_MAX}
 
 typedef enum {
     EAST  = 0, /* +X */
@@ -58,15 +58,14 @@ typedef struct Cell Cell;
 typedef struct
 Index2D
 {
-    uint x;
-    uint y;
+    int x;
+    int y;
 } Index2D;
 
 typedef struct
 Cell
 {
     Wall    walls[4];
-    Index2D neighbors[4];
     Index2D index;
     Vector2 corners[4];
     Vector2 center;
