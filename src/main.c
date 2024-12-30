@@ -27,6 +27,7 @@
 #include "face-off.h"
 #include "player.h"
 #include "map.h"
+#define DEBUG
 #include "defs.h"
 
 
@@ -49,7 +50,6 @@ main(int argc, char** argv)
         Vector2Zero(),
         0.0f, 0.5f, 0
     );
-    player->_._.position = (Vector2){0.0f,0.0f};
 
     Map *map = Map_new("test", 16, 4);
     
@@ -70,12 +70,16 @@ main(int argc, char** argv)
             BeginMode3D(camera);
 
                 DrawGrid(16, 4.0f);
+                /*
                 DrawCube((Vector3){  16.5f, -0.55f,   0.0f},  1.0f, 1.0f, 32.0f, RED);
                 DrawCube((Vector3){   0.0f, -0.55f,  16.5f}, 32.0f, 1.0f,  1.0f, GREEN);
                 DrawCube((Vector3){ -16.5f, -0.55f,   0.0f},  1.0f, 1.0f, 32.0f, BLUE);
                 DrawCube((Vector3){   0.0f, -0.55f, -16.5f}, 32.0f, 1.0f,  1.0f, YELLOW);
+                */
                 Map_render(map, player);
-                DrawSphere(VECTOR2_TO_3( player->_._.position, CAMERA_HEIGHT ),0.5f,YELLOW);
+                DrawSphere(VECTOR2_TO_3( player->_->_.position, CAMERA_HEIGHT ),0.5f,YELLOW);
+                DBG_LINE(player->_._.position, VECTOR3_TO_2(camera.target), CAMERA_HEIGHT, BLACK);
+                //DrawSphere(camera.target,0.25f,BLACK);
                 
             EndMode3D();
             

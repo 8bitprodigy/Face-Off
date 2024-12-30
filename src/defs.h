@@ -7,6 +7,15 @@
 #ifndef DEFS_H
 #define DEFS_H
 
+/* NOTES:
+    CARTESIAN COORDINATE SYSTEM NOTES:
+        - East  = +X
+        - North = -Z
+        - West  = -X
+        - South = +Z
+        - Rotations increase clockwise.
+*/
+
 
 #include <stdio.h>
 #include <math.h>
@@ -31,6 +40,8 @@
 #define MAX_DRAW_DISTANCE     362.0f
 #define HALF_PI              (PI/2.0f)
 #define TAU                  (PI*2)
+
+#define VECTOR3_UP (Vector3){.x=0.0f,.y=1.0f,.z=0.0f}
 
 #ifdef PLATFORM_PSP
     #define SCREEN_WIDTH  480
@@ -101,9 +112,13 @@
 /*** Common math functions ***/
 
 /* Dot Product */
-#define DOT( a, b )         cos(a-b)
+#define DOT( a, b )  \
+    Vector2DotProduct( \
+        (Vector2){.x=cos(a),.y=sin(a)}, \
+        (Vector2){.x=cos(b),.y=sin(b)}  \
+    )  
 /* Clamp angle to between 0 and TAU */
-#define NORMALIZE( angle )  fmod(angle + TAU, TAU)
+#define NORMALIZE_ANGLE( angle )  fmod(angle + TAU, TAU)
 /* Cross Product */
 #define CROSS( a, b, c, d ) (a*d-b*c)
 

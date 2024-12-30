@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <math.h>
+#define DEBUG
 #include "defs.h"
 #include "player.h"
 
@@ -22,27 +23,20 @@ Player
     thing.position.x = 0.0f;
     thing.position.y = 0.0f;
 
-    player->_ = (Actor){
-        ._          = thing,
-        .prev_pos   = position,
-        .velocity   = Vector2Zero(),
-        .speed      = 5.0f,
-        .turn_speed = 1.0f,
-        .prev_rot   = rotation,
-        .angular_velocity = 0.0f,
-    };
+    player->_ = Actor_new(PLAYER);
 
     player->controller = controller;
 
-    player->camera.position   = (Vector3){ 0.0f, 25.0f, 0.0f };
+    player->camera.position   = (Vector3){.x=0.0f,.y=30.0f,.z=0.0f};
     
     player->camera.target     = (Vector3){ 
-        position.x + thing.cos_rot,
-        CAMERA_HEIGHT,
-        position.y + thing.sin_rot
+        .x = position.x + thing.cos_rot,
+        .y = CAMERA_HEIGHT,
+        .z = position.y + thing.sin_rot
     };
-    player->camera.up         = (Vector3){ 0.0f, 1.0f,  0.0f};
-    player->fov               = PI/2.0f;;
+    DBG_OUT("Camera target: { X: %.4f,\tY: %.4f }", player->camera.target.x, player->camera.target.y);
+    player->camera.up         = VECTOR3_UP;
+    player->fov               = PI/2.0f;
     player->half_fov          = player->fov/2.0f;
     player->camera.fovy       = 2 * atan(
         tan(player->half_fov) /
@@ -62,7 +56,7 @@ Player_free(Player *player)
 void 
 Player_update(Player *player, float delta)
 {
-    Actor *actor = &player->_;
+    Actor *actor = player->_;
     Thing *thing = &actor->_;
     
     float rotate = 0;
@@ -77,7 +71,6 @@ Player_update(Player *player, float delta)
         KEY_RIGHT,
         GAMEPAD_BUTTON_RIGHT_FACE_LEFT,
         KEY_LEFT ) * actor->turn_speed;
-
     actor->angular_velocity = rotate;
     Actor_rotate(actor, delta);
     
@@ -103,4 +96,3 @@ Player_update(Player *player, float delta)
     target = Vector2Add(thing->position, (Vector2){ thing->cos_rot, thing->sin_rot });
     player->camera.target     = VECTOR2_TO_3( target, CAMERA_HEIGHT );
 } /* Player_update */
-

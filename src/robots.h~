@@ -1,0 +1,26 @@
+#ifndef ROBOTS_H
+#define ROBOTS_H
+
+#include <raylib.h>
+#include "things.h"
+
+typedef enum {
+    DERVISH,
+    ISOPOD,
+}
+RobotType;
+
+typedef struct Robot {
+    Actor     _;
+    RobotType type;
+} Robot;
+
+/* Constructor */
+Robot *Robot_new(RobotType type);
+/* Destructor */
+void Robot_free(Robot *robot);
+
+/* Robot Methods */
+void Robot_update(Robot *robot, float delta);
+
+#endif /* ROBOTS_H */

@@ -5,10 +5,13 @@
 #include <limits.h>
 /* Uncomment the following #define to turn debug output on.
    It gets #define'd BEFORE "#include "defs.h". */
-#define DEBUG
+//#define DEBUG
 
 #include "defs.h"
 #include "player.h"
+
+#define DEBUG_CHECK_VIS
+#define DEBUG_MAP_NEW
 
 #define INDEX2D_NAN (Index2D){.x=INT_MAX,.y=INT_MAX}
 
@@ -86,6 +89,7 @@ Map *Map_new(const char *name, uint size, uint cell_width);
 void Map_free(Map *map);
 
 void Map_render(Map *map, Player *player);
+bool Map_check_Actor_collision(Map *map, Actor *actor, Vector2 *collision_point);
 
 
 #endif /* MAP_H */

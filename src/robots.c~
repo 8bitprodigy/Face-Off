@@ -1,0 +1,14 @@
+#include <stdlib.h>
+#include "robots.h"
+
+Robot
+*Robot_new(RobotType type)
+{
+    Robot *robot = malloc(sizeof(Robot));
+    switch (type) {
+    case DERVISH:
+        
+    case ISOPOD:
+    }
+    return robot;
+}

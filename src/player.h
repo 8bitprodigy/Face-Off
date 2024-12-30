@@ -3,8 +3,8 @@
 
 #include "things.h"
 
-typedef struct Player{
-    Actor  _;
+typedef struct Player {
+    Actor  *_;
     Camera camera;
     float  fov;
     float  half_fov;
