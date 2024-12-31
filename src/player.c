@@ -27,7 +27,7 @@ Player
 
     player->controller = controller;
 
-    player->camera.position   = (Vector3){.x=0.0f,.y=30.0f,.z=0.0f};
+    player->camera.position   = (Vector3){.x=0.0f,.y=CAMERA_HEIGHT,.z=0.0f};
     
     player->camera.target     = (Vector3){ 
         .x = position.x + thing.cos_rot,
@@ -92,7 +92,7 @@ Player_update(Player *player, float delta)
 
     Actor_move(actor, delta);
 
-    //player->camera.position   = VECTOR2_TO_3( thing->position, CAMERA_HEIGHT );
+    player->camera.position   = VECTOR2_TO_3( thing->position, 30.0f );
     target = Vector2Add(thing->position, (Vector2){ thing->cos_rot, thing->sin_rot });
     player->camera.target     = VECTOR2_TO_3( target, CAMERA_HEIGHT );
 } /* Player_update */

@@ -1,7 +1,7 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
-#include "things.h"
+#include "actor.h"
 
 typedef struct Player {
     Actor  *_;
@@ -9,6 +9,8 @@ typedef struct Player {
     float  fov;
     float  half_fov;
     int    controller;
+    int    score;
+    int    team;
 } Player;
 
 /* Constructor */

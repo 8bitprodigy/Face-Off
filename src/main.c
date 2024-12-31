@@ -67,6 +67,7 @@ main(int argc, char** argv)
 
             ClearBackground(RAYWHITE);
 
+            DrawFPS(10,10);
             BeginMode3D(camera);
 
                 DrawGrid(16, 4.0f);

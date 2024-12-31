@@ -41,6 +41,11 @@
 #define HALF_PI              (PI/2.0f)
 #define TAU                  (PI*2)
 
+#define GAME_MAX_PLAYERS 4
+#define GAME_MAX_ACTORS  32
+#define GAME_MAX_ITEMS   32
+#define GAME_MAX_THINGS  (GAME_MAX_PLAYERS+GAME_MAX_ACTORS+GAME_MAX_ITEMS)
+
 #define VECTOR3_UP (Vector3){.x=0.0f,.y=1.0f,.z=0.0f}
 
 #ifdef PLATFORM_PSP
@@ -117,6 +122,8 @@
         (Vector2){.x=cos(a),.y=sin(a)}, \
         (Vector2){.x=cos(b),.y=sin(b)}  \
     )  
+/* Minimum value */
+#define MIN( a, b ) ((a<b)?a:b)
 /* Clamp angle to between 0 and TAU */
 #define NORMALIZE_ANGLE( angle )  fmod(angle + TAU, TAU)
 /* Cross Product */

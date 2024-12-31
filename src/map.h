@@ -5,7 +5,7 @@
 #include <limits.h>
 /* Uncomment the following #define to turn debug output on.
    It gets #define'd BEFORE "#include "defs.h". */
-//#define DEBUG
+#define DEBUG
 
 #include "defs.h"
 #include "player.h"
@@ -50,7 +50,7 @@ Wall
     Color    color;
     WallType type;
     union {
-        float health;
+        int   health;
         bool  locked;
         float timeout;
     };

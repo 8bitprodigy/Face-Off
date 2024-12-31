@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "things.h"
+#include "actor.h"
 
 Actor
 *Actor_new(ActorType type)
@@ -7,7 +7,7 @@ Actor
     Thing thing;
     Actor *actor = malloc(sizeof(Actor));
     if (!actor) {
-        ERR_OUT("Failed to allocate memory for Player.");
+        ERR_OUT("Failed to allocate memory for Actor.");
         return NULL;
     }
     
@@ -74,7 +74,7 @@ Actor_move(Actor *actor, float delta)
     //printf("New Position>\t x: %.4f | y: %.4f\n", new_position.x, new_position.y); 
     
     /* Todo... */
-    DBG_OUT("Player position: { X: %.4f,\tY: %.4f }",position.x,position.y);
+    DBG_OUT("Actor position: { X: %.4f,\tY: %.4f }",position.x,position.y);
     actor->prev_pos = position;
     thing->position = new_position;
 } /* Actor_move */

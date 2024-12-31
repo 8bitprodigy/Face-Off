@@ -27,6 +27,17 @@ Index2D Cell_Directions[4] = {
     (Index2D){ .x =  0, .y =  1 },
 };
 
+static inline bool
+is_angle_between(float angle, float l_angle, float r_angle)
+{
+    angle   = NORMALIZE_ANGLE(angle);
+    l_angle = NORMALIZE_ANGLE(l_angle);
+    r_angle = NORMALIZE_ANGLE(r_angle);
+
+    if (l_angle <= r_angle) return l_angle <= angle && angle <= r_angle;
+    else return l_angle <= angle || angle <= r_angle;
+}
+
 static inline Index2D
 Index2D_add(Index2D index_1, Index2D index_2)
 {
@@ -90,34 +101,27 @@ Cell_new()
 } /* Cell_new */
 
 bool
-check_wall_frustum_intersection(Vector2 wall_start, Vector2 wall_end, Vector2 position, Vector2 l_frust, Vector2 r_frust, Vector2 *inside2, Vector2 *inside1)
+check_wall_frustum_intersection(Vector2 wall_start, Vector2 wall_end, Vector2 position, float l_frust, float r_frust, float *inside_l, float *inside_r)
 {
-    bool is_in_triangle = false;
+    bool is_in_view = false;
     Vector2 dummy;
-    
-    //*inside1 = VECTOR2_NAN;
-    //*inside2 = VECTOR2_NAN;
 
-    //DBG_OUT("Wall Start: { X: %.4f,\tY: %.4f }", wall_start.x, wall_start.y);
-    //DBG_OUT("Wall End:   { X: %.4f,\tY: %.4f }", wall_end.x,   wall_end.y);
-    if (CheckCollisionPointTriangle(wall_end, position, r_frust, l_frust)) {
-        *inside1       = wall_end;
-        is_in_triangle = true;
-    }
-    if (CheckCollisionPointTriangle(wall_start, position, r_frust, l_frust)) {
-        *inside2       = wall_start;
-        is_in_triangle = true;
-    }
-    if (is_in_triangle) {
-        //DBG_LINE(wall_start, wall_end, 0.1f, MAGENTA);
-        return true;
-    }
+
+    float start_angle  = Vector2Angle(position, wall_start);
+    float end_angle    = Vector2Angle(position, wall_end);
     
-    if (CheckCollisionLines(wall_start, wall_end, position, r_frust, &dummy) ||
-        CheckCollisionLines(wall_start, wall_end, position, l_frust, &dummy)) {
-        //DBG_LINE(wall_start, wall_end, 0.1f, VIOLET);
-        return true;
+    if (is_angle_between(end_angle,   l_frust, r_frust)) {
+        *inside_l      = end_angle;
+        is_in_view = true;
     }
+    if (is_angle_between(start_angle, l_frust, r_frust)) {
+        *inside_r      = start_angle;
+        is_in_view = true;
+    }
+    if (is_in_view) return true;
+    
+    if (is_angle_between(l_frust, end_angle, start_angle) ||
+        is_angle_between(r_frust, end_angle, start_angle)) return true;
     
     return false;
 } /*check_wall_frustum_intersection */
@@ -268,13 +272,13 @@ Map
             } else if (i==size-1) {
                 cell->walls[EAST].type   = SOLID;
                 cell->walls[EAST].color  = RED;
-            } else {
+            }/*  else {
                 w = (uint)rand() >> 30;
                 cell->walls[WEST].type = w;
                 cell->walls[WEST].color = BLUE;
                 map->cells[i-1][j].walls[EAST].type = w;
                 map->cells[i-1][j].walls[EAST].color = RED;
-            } 
+            } */
             
             if (!j) {
                 cell->walls[NORTH].type  = SOLID;
@@ -282,13 +286,13 @@ Map
             } else if (j==size-1) {
                 cell->walls[SOUTH].type  = SOLID;
                 cell->walls[SOUTH].color = YELLOW;
-            } else {
+            }/*  else {
                 w = (uint)rand() >> 30;
                 cell->walls[NORTH].type = w;
                 cell->walls[NORTH].color = GREEN;
                 map->cells[i][j-1].walls[SOUTH].type = w;
                 map->cells[i][j-1].walls[SOUTH].color = RED;
-            } 
+            } */
         }
     }
     
@@ -318,7 +322,7 @@ Map_get_index(Map *map, Vector2 position)
 
 
 void 
-Map_check_vis(Map *map, Index2D index, Thing *thing, Vector2 l_frustum, Vector2 r_frustum, bool **render_buffer)
+Map_check_vis(Map *map, Index2D index, Thing *thing, float l_frustum, float r_frustum, bool **render_buffer)
 {
     uint    i, next, prev;
     
@@ -331,8 +335,8 @@ Map_check_vis(Map *map, Index2D index, Thing *thing, Vector2 l_frustum, Vector2 
     Vector2 position   = thing->position;
     float   rotation   = thing->rotation;
 
-    Vector2 inside_l;
-    Vector2 inside_r;
+    float inside_l;
+    float inside_r;
     Index2D neighbor;
 
     DBG_OUT("\n\tChecking cell: { X: %u,\tY: %u }",index.x,index.y);
@@ -348,8 +352,7 @@ Map_check_vis(Map *map, Index2D index, Thing *thing, Vector2 l_frustum, Vector2 
         prev     = (i-1)%4;
         
         
-        if ( Index2D_OOB(neighbor, map->size) ) {//|| (0 < DOT(rotation, Wall_Normals[i])) ) {
-            //DBG_LINE(thing->position, cell->corners[i], 0.1f, YELLOW);
+        if ( Index2D_OOB(neighbor, map->size) || (0 < DOT(rotation, Wall_Normals[i])) ) {
             continue;
         }
         DBG_OUT("i: %u\ti+1%%4 : %u\t(i+1)%%4: %u", i, i+1%4, (i+1)%4);
@@ -369,26 +372,18 @@ Map_check_vis(Map *map, Index2D index, Thing *thing, Vector2 l_frustum, Vector2 
         ) {
             is_visible = true;
             if (walls[i].type == PORTAL) {
-                //DBG_LINE(corners[i], corners[next], 0.1f, MAGENTA);
             
                 DBG_OUT("Wall %u is visible.",i);
                 //DBG_OUT("East Inside: { X: %.4f,\tY: %.4f }\n", inside_r.x, inside_r.y );
-                if (!Vector2Equals(inside_l, l_frustum) && !walls[prev].type) {
-                    inside_l = GET_FRUSTUM_EDGE(position, inside_l);
-                } else inside_l = l_frustum;
-                if (!Vector2Equals(inside_r, r_frustum) && !walls[next].type) {
-                    inside_r = GET_FRUSTUM_EDGE(position, inside_r);
-                } else inside_r = r_frustum;
+                if (walls[prev].type) inside_l = l_frustum;
+                if (walls[next].type) inside_r = r_frustum;
                 //if (walls[prev].type == PORTAL) inside_l = l_frustum;
                 //if (walls[next].type == PORTAL) inside_r = r_frustum;
-                inside_r = r_frustum; inside_l = l_frustum;
-                DBG_LINE(position, inside_l,0.2f, ORANGE);
-                DBG_LINE(position, inside_r,0.1f, GREEN);
+                //inside_r = r_frustum; inside_l = l_frustum;
                 Map_check_vis(map, neighbor, thing, inside_l, inside_r, render_buffer);
             }
             else {
                 DBG_OUT("Wall %u is NOT visible.",i);
-                //DBG_LINE(position, corners[i],0.2f, RED);
             }
         }
     }
@@ -411,8 +406,9 @@ Map_render(Map *map, Player *player)
     bool    **render_buffer = malloc(size * size * sizeof(bool));
     Index2D index           = Map_get_index(map, thing->position);
     Vector2 position        = thing->position;
-    float   r_fov_edge      = NORMALIZE_ANGLE(thing->rotation + player->half_fov);
-    float   l_fov_edge      = NORMALIZE_ANGLE(thing->rotation - player->half_fov);
+    float   rotation      = thing->rotation;
+    float   l_fov_edge      = NORMALIZE_ANGLE(rotation - player->half_fov);
+    float   r_fov_edge      = NORMALIZE_ANGLE(rotation + player->half_fov);
     Vector2 r_frustum       = Vector2Add(thing->position, Vector2Scale(ANGLE_TO_VECTOR2(r_fov_edge),MAX_DRAW_DISTANCE));
     Vector2 l_frustum       = Vector2Add(thing->position, Vector2Scale(ANGLE_TO_VECTOR2(l_fov_edge),MAX_DRAW_DISTANCE));
 
@@ -443,7 +439,7 @@ Map_render(Map *map, Player *player)
 #endif /* DEBUG */
     if (size <= index.x || size <= index.y) return;
     DBG_OUT("Index : { X: %u, \tY: %u }\n",index.x,index.y);
-    Map_check_vis(map, index, thing, l_frustum, r_frustum, render_buffer);
+    Map_check_vis(map, index, thing, l_fov_edge, r_fov_edge, render_buffer);
     /*DBG_OUT("Buffer size: %u",buffer_size);
     for (i=0; i < buffer_size; i++) {
         printf("%u, ",i);

@@ -11,7 +11,7 @@ SRCDIR          = src
 OBJDIR          = obj/dc
 KOS_ROMDISK_DIR = romdisk
 
-TARGET   = $(PROJECTNAME).elf
+TARGET   = $(PROJECTNAME).dc.elf
 CSOURCES = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.c)))
 OBJS     = $(CSOURCES:%.c=$(OBJDIR)/%.o)
 
