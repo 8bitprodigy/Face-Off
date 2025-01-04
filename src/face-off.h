@@ -18,25 +18,39 @@ typedef struct
 GameState
 {
     GameMode game_mode;
+    
+    Player   players;
     uint     num_players;
-    Player   players[GAME_MAX_PLAYERS];
+    
+    Actor    actors;
     uint     num_actors;
-    Actor    actors[GAME_MAX_ACTORS];
+    
+    Thing    things;
     uint     num_things;
-    Thing    things[GAME_MAX_THINGS];
+    
     Map      *map;
-    float    delta;
     bool     paused;
 } GameState;
 
 /* GameState Constructor */
-GameState *GameState_new(void);
+GameState *GameState_new(GameMode game_mode);
 /* GameState Destructor */
 void GameState_free(GameState *game_state);
 
+/* GameState Operations */
+/*    Add */
+void GameState_add_Player(GameState *game_state, Player *player);
+void GameState_add_Actor(GameState *game_state, Actor *actor);
+void GameState_add_Thing(GameState *game_state, Thing *thing);
+/*    Remove */
+void GameState_remove_Player(GameState *game_state, Player *player);
+void GameState_remove_Actor(GameState *game_state, Actor *actor);
+void GameState_remove_Thing(GameState *game_state, Thing *thing);
+
+
 /* GameState Update */
-void GameState_update(void);
+void GameState_update(GameState *game_state);
 /* GameState Render */
-void GameState_render(void);
+void GameState_render(GameState *game_state);
 
 #endif /* FACE_OFF_H */

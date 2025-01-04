@@ -1,5 +1,7 @@
 #include <stdlib.h>
+#include "face-off.h"
 #include "actor.h"
+#include "map.h"
 
 Actor
 *Actor_new(ActorType type)
@@ -45,15 +47,50 @@ Actor
         return NULL;
     }
     
-    actor->type = type;
+    actor->type   = type;
+    actor->update = &Actor_move;
     
     return actor;
 }
 
+
+void
+Actor_free(Actor *actor)
+{
+    Thing_pop(&actor->_);
+    Actor_pop(actor);
+    free(actor);
+} /* Actor_free */
+
+
+void
+Actor_push(Actor *actor1, Actor *actor2)
+{
+    Actor *actor3 = actor1->prev;
+
+    actor3->next = actor2;
+    actor1->prev = actor2;
+    
+    actor2->next = actor1;
+    actor2->prev = actor3;
+} /* Actor_push */
+
+
+void
+Actor_pop(Actor *actor)
+{
+    Actor *actor1 = actor->prev;
+    Actor *actor2 = actor->next;
+
+    actor1->next = actor2;
+    actor2->prev = actor1;
+} /* Actor_pop */
+
+
 void 
 Actor_rotate(Actor *actor, float delta)
 {
-    Thing *thing = &actor->_;
+    Thing *thing   = &actor->_;
     float rotation = thing->rotation;
 
     actor->prev_rot  = rotation;
@@ -66,13 +103,27 @@ Actor_rotate(Actor *actor, float delta)
 } /* Actor_rotate */
 
 void 
-Actor_move(Actor *actor, float delta)
+Actor_move(Actor *actor, float delta, GameState *game_state)
 {
-    Thing *thing         = &actor->_;
+    Thing   *thing       = &actor->_;
+    Map     *map         = game_state->map;
     Vector2 position     = thing->position;
     Vector2 new_position = Vector2Add(position, Vector2Scale(actor->velocity, delta));
+    Vector2 collision_point;
+    Vector2 collision_normal;
     //printf("New Position>\t x: %.4f | y: %.4f\n", new_position.x, new_position.y); 
-    
+    if (Map_check_collision(map,position, new_position, thing->radius, &collision_point, &collision_normal)) {
+        position = Vector2Add(
+            collision_point, 
+            Vector2Multiply(
+                position, 
+                (Vector2){
+                    .x = fabsf(collision_normal.y),
+                    .y = fabsf(collision_normal.x)
+                }
+            )
+        );
+    }
     /* Todo... */
     DBG_OUT("Actor position: { X: %.4f,\tY: %.4f }",position.x,position.y);
     actor->prev_pos = position;

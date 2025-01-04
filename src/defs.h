@@ -116,6 +116,8 @@
 
 /*** Common math functions ***/
 
+/* Cross Product */
+#define CROSS( a, b, c, d ) (a*d-b*c)
 /* Dot Product */
 #define DOT( a, b )  \
     Vector2DotProduct( \
@@ -126,8 +128,10 @@
 #define MIN( a, b ) ((a<b)?a:b)
 /* Clamp angle to between 0 and TAU */
 #define NORMALIZE_ANGLE( angle )  fmod(angle + TAU, TAU)
-/* Cross Product */
-#define CROSS( a, b, c, d ) (a*d-b*c)
+/* Get sign between two numbers */
+#define SIGN_BETWEEN( a, b ) ((a<b)-(b<a))
+/* Check if a number is between two others */
+#define IS_IN_BOUNDS( a, b, c ) (b<=a&&a<=c)
 
 
 /*** Common Vector Manipulation ***/
@@ -142,5 +146,6 @@
 #define VECTOR2_NAN ((Vector2){NAN,NAN})
 /* Check if Vector2 is Vector2_NaN */
 #define IS_VECTOR2_NAN( Vector ) (isnan(Vector.x) && isnan(Vector.y))
+
 
 #endif /* DEFS_H */

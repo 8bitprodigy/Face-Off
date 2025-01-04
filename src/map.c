@@ -404,7 +404,7 @@ void
 Map_render(Map *map, Player *player)
 {
     uint    i, j;
-    Actor   *actor          = player->_;
+    Actor   *actor          = &player->_;
     Thing   *thing          = &actor->_;
 
     uint    size            = map->size;
@@ -455,7 +455,59 @@ Map_render(Map *map, Player *player)
 
 
 bool
-Map_check_Actor_collision(Map *map, Actor *actor, Vector2 *collision_point)
+Map_check_collision(Map *map, Vector2 prev_pos, Vector2 new_pos, float radius, Vector2 *collision_point, Vector2 *collision_normal)
 {
+    int   i, j, next;
+
+    int   size = map->size; 
+    
+    Cell  **cells = map->cells;
+    Cell  *check_cells[4];
+    Cell  *cell;
+
+    Vector2 **corners;
+    Vector2 wall_start;
+    Vector2 wall_end;
+
+    Vector2 col_val;
+    
+    Index2D offset;
+    Index2D cell_index = Map_get_index(map, prev_pos);
+
+    if (!(IS_IN_BOUNDS(cell_index.x, 0, map->size-1)&&IS_IN_BOUNDS(cell_index.y, 0, size-1))) return false;
+
+    check_cells[0] = &cells[cell_index.x][cell_index.y];
+    
+    offset.x = SIGN_BETWEEN(prev_pos.x, check_cells[0]->center.x) + cell_index.x;
+    offset.y = SIGN_BETWEEN(prev_pos.y, check_cells[0]->center.y) + cell_index.y;
+
+    if (IS_IN_BOUNDS(offset.x, 0, size-1)) check_cells[1] = &cells[offset.x][cell_index.y];
+    else check_cells[1] = check_cells[0];
+    if (IS_IN_BOUNDS(offset.y, 0, size-1)) check_cells[2] = &cells[cell_index.x][offset.y];
+    else check_cells[2] = check_cells[0];
+    if (IS_IN_BOUNDS(offset.x, 0, size-1) && IS_IN_BOUNDS(offset.y, 0, size-1))
+        check_cells[3] = &cells[offset.x][offset.y];
+    else check_cells[3] = check_cells[0];
+
+    *collision_point = VECTOR2_NAN;
+
+    for (i = 0; i < 4; i++) {
+        cell    = check_cells[i];
+        if (!cell) continue;
+        
+        corners = cell->corners; 
+        if (!corners) continue;
+        
+        for (j = 0; j < 4; j++) {
+            next       = (j+1)%4;
+            if (!corners[j] || corners[next]) continue;
+            wall_start = Vector2Add(*corners[j],    Vector2Scale(Wall_Vec2_Normals[j],    radius));
+            wall_end   = Vector2Add(*corners[next], Vector2Scale(Wall_Vec2_Normals[j], radius));
+            CheckCollisionLines(prev_pos, new_pos, wall_start, wall_end, collision_point);
+            *collision_normal = Wall_Vec2_Normals[j];
+            if (!(isnan(collision_point->x)&&isnan(collision_point->y))) return true;
+        }
+    }
+    
     return false;
-}
+} /* Map_check_collision */

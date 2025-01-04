@@ -15,11 +15,23 @@ typedef enum {
 }
 ItemType;
 
+typedef union {
+    int   i;
+    float f;
+    void  *p;
+}
+ItemValue;
+
 typedef struct 
 Item {
-    Thing    _;
-    ItemType type;
-    int      value;
+    Thing       _;
+
+    struct Item *prev;
+    struct Item *next;
+    
+    ItemType    type;
+    ItemValue   value1;
+    ItemValue   value2;
 } Item;
 
 #endif

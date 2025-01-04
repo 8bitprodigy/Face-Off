@@ -23,7 +23,16 @@ Player
     thing.position.x = 0.0f;
     thing.position.y = 0.0f;
 
-    player->_ = Actor_new(PLAYER);
+    player->_ = (Actor){
+        .type             = PLAYER,
+        .prev_pos         = Vector2Zero(),
+        .velocity         = Vector2Zero(),
+        .speed            = 5.0f,
+        .turn_speed       = 1.0f,
+        .prev_rot         = 0.0f,
+        .angular_velocity = 0.0f,
+        .health           = 4,
+    };
 
     player->controller = controller;
 
@@ -47,16 +56,45 @@ Player
     return player;
 } /* Player_new */
 
+
 void
 Player_free(Player *player)
 {
+    Thing_pop(&player->_._);
+    Actor_pop(&player->_);
+    Player_pop(player);
     free(player);
 } /* Player_free */
 
-void 
-Player_update(Player *player, float delta)
+
+void
+Player_push(Player *player1, Player *player2)
 {
-    Actor *actor = player->_;
+    Player *player3 = player1->prev;
+
+    player3->next = player2;
+    player1->prev = player2;
+    
+    player2->next = player1;
+    player2->prev = player3;
+} /* Player_push */
+
+
+void
+Player_pop(Player *player)
+{
+    Player *player1 = player->prev;
+    Player *player2 = player->next;
+
+    player1->next = player2;
+    player2->prev = player1;
+} /* Player_pop */
+
+
+void 
+Player_update(Player *player, float delta, GameState *game_state)
+{
+    Actor *actor = &player->_;
     Thing *thing = &actor->_;
     
     float rotate = 0;
@@ -90,7 +128,7 @@ Player_update(Player *player, float delta)
 
     actor->velocity = Vector2Rotate(move,thing->rotation);
 
-    Actor_move(actor, delta);
+    Actor_move(actor, delta, game_state);
 
     player->camera.position   = VECTOR2_TO_3( thing->position, 30.0f );
     target = Vector2Add(thing->position, (Vector2){ thing->cos_rot, thing->sin_rot });

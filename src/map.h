@@ -10,6 +10,7 @@
 #include "defs.h"
 #include "player.h"
 
+
 #define DEBUG_CHECK_VIS
 #define DEBUG_MAP_NEW
 
@@ -83,13 +84,13 @@ Map
     uint cell_width;
 } Map;
 
-Cell Cell_new();
+Cell Cell_new(void);
 
 Map *Map_new(const char *name, uint size, uint cell_width);
 void Map_free(Map *map);
 
 void Map_render(Map *map, Player *player);
-bool Map_check_Actor_collision(Map *map, Actor *actor, Vector2 *collision_point);
+bool Map_check_collision(Map *map, Vector2 prev_pos, Vector2 new_pos, float radius, Vector2 *collision_point, Vector2 *collision_normal);
 
 
 #endif /* MAP_H */
