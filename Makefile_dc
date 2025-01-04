@@ -21,9 +21,9 @@ all: rm-elf prepare $(TARGET)
 	
 include $(KOS_BASE)/Makefile.rules
 
-clean: rm-elf
-	-rm -f $(OBJS)
-
+clean: 
+	rm -rf $(OBJDIR)
+		
 rm-elf:
 	-rm -f $(TARGET) romdisk.*
 
@@ -42,3 +42,7 @@ dist: $(TARGET)
 
 prepare:
 	mkdir -p $(OBJDIR)
+
+cdi: prepare $(TARGET)
+	@echo "Building DreamCast disc...\n"
+	mkdcdisc -e $(TARGET) -o $(PROJECTNAME).cdi

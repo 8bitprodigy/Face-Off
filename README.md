@@ -7,13 +7,13 @@ A clone of FaceBall 2000/Midi-Maze for DreamCast and Linux using raylib.
 ## Building:
 
 ```shell
-./build <platform name here>
+make <platform name here>
 ```
 
 To make a `.cdi` image for DreamCast, run:
 
 ```shell
-./build dc_cdi
+make dc cdi
 ```
 
 ---

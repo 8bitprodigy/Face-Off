@@ -13,11 +13,11 @@ OBJS     = $(CSOURCES:%.c=$(OBJDIR)/%.o)
 
 all: rm-elf prepare $(TARGET)
 
-clean: rm-elf
-	-rm -f $(OBJS)
+clean:
+	rm -rf $(OBJDIR)
 
 rm-elf:
-	#-rm -f $(TARGET)
+	-rm -f $(TARGET)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	$(CC) $(CFLAGS) $(CCFLAGS) -c -o $@ $<
