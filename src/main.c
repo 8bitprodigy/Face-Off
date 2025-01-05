@@ -164,7 +164,7 @@ GameState_update(GameState *game_state)
         player = player->next;
     }
     for (i = 0; i < game_state->num_actors; i++) {
-        actor->update(actor, delta, game_state);
+        //actor->update(actor, delta, game_state);
         actor = actor->next;
     }
 }

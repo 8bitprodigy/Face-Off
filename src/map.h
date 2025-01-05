@@ -24,15 +24,6 @@ typedef enum {
 } 
 Cardinals;
 
-
-/*Color 
-WALL_COLORS[] = {
-    RED,
-    GREEN,
-    BLUE,
-    YELLOW
-};*/
-
 typedef enum {
     PORTAL,
     SOLID,

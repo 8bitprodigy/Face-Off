@@ -73,6 +73,8 @@ Actor_push(Actor *actor1, Actor *actor2)
     
     actor2->next = actor1;
     actor2->prev = actor3;
+
+    //Thing_push(&actor1->_, &actor2->_);
 } /* Actor_push */
 
 
@@ -84,6 +86,8 @@ Actor_pop(Actor *actor)
 
     actor1->next = actor2;
     actor2->prev = actor1;
+
+    //Thing_pop(&actor->_);
 } /* Actor_pop */
 
 

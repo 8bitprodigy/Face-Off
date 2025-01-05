@@ -77,6 +77,8 @@ Player_push(Player *player1, Player *player2)
     
     player2->next = player1;
     player2->prev = player3;
+
+    //Actor_push(&player1->_, &player2->_);
 } /* Player_push */
 
 
@@ -88,6 +90,8 @@ Player_pop(Player *player)
 
     player1->next = player2;
     player2->prev = player1;
+
+    //Actor_pop(&player->_);
 } /* Player_pop */
 
 
