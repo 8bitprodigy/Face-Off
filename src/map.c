@@ -199,9 +199,9 @@ Map
 {
     uint    i, j, k, dir, ni, nj, w;
     
-    Map     *map            = malloc(sizeof(Map));
+    Map     *map   = malloc(sizeof(Map));
     Cell    *cell;
-    Wall    *walls     = cell->walls;
+    Wall    *walls = cell->walls;
     
     float   map_width       = size * cell_width;
     float   half_map_width  = map_width / 2.0f;
@@ -291,6 +291,20 @@ Map
             } 
         }
     }
+
+    map->render_buffer = malloc(size * size * sizeof(bool));
+    
+    for (i = 0; i < size; i++) {
+        map->render_buffer[i] = (bool*)malloc(size*sizeof(bool));
+        if (!map->render_buffer[i]) {
+            ERR_OUT("Could not initialize render buffer inner array.");
+            for(; i >= 0; i--) {
+                free(map->render_buffer[i]);
+            }
+            free(map->render_buffer);
+            return;
+        }
+    }
     
     return map;
 } /* Map_new */
@@ -318,15 +332,16 @@ Map_get_index(Map *map, Vector2 position)
 
 
 void 
-Map_check_vis(Map *map, Index2D index, Thing *thing, Vector2 l_frustum, Vector2 r_frustum, bool **render_buffer)
+Map_check_vis(Map *map, Index2D index, Thing *thing, Vector2 l_frustum, Vector2 r_frustum)
 {
     uint    i, next, prev;
     
-    Cell    *cell      = &map->cells[index.x][index.y];
-    Vector2 *corners   = cell->corners;
-    Vector2 center     = cell->center;
-    Wall    *walls     = cell->walls;
-    bool    is_visible = false;
+    Cell    *cell           = &map->cells[index.x][index.y];
+    bool    **render_buffer = map->render_buffer;
+    Vector2 *corners        = cell->corners;
+    Vector2 center          = cell->center;
+    Wall    *walls          = cell->walls;
+    bool    is_visible      = false;
 
     Vector2 position   = thing->position;
     float   rotation   = thing->rotation;
@@ -384,7 +399,7 @@ Map_check_vis(Map *map, Index2D index, Thing *thing, Vector2 l_frustum, Vector2 
                 inside_r = r_frustum; inside_l = l_frustum;
                 DBG_LINE(position, inside_l,0.2f, ORANGE);
                 DBG_LINE(position, inside_r,0.1f, GREEN);
-                Map_check_vis(map, neighbor, thing, inside_l, inside_r, render_buffer);
+                Map_check_vis(map, neighbor, thing, inside_l, inside_r);
             }
             else {
                 DBG_OUT("Wall %u is NOT visible.",i);
@@ -408,7 +423,7 @@ Map_render(Map *map, Player *player)
     Thing   *thing          = &actor->_;
 
     uint    size            = map->size;
-    bool    **render_buffer = malloc(size * size * sizeof(bool));
+    bool    **render_buffer = map->render_buffer;
     Index2D index           = Map_get_index(map, thing->position);
     Vector2 position        = thing->position;
     float   r_fov_edge      = NORMALIZE_ANGLE(thing->rotation + player->half_fov);
@@ -420,17 +435,7 @@ Map_render(Map *map, Player *player)
         ERR_OUT("Could not initialize render buffer.");
         return;
     }
-    for (i = 0; i < size; i++) {
-        render_buffer[i] = (bool*)malloc(size*sizeof(bool));
-        if (!render_buffer[i]) {
-            ERR_OUT("Could not initialize render buffer inner array.");
-            for(; i >= 0; i--) {
-                free(render_buffer[i]);
-            }
-            free(render_buffer);
-            return;
-        }
-    }
+    
     for (i = 0; i < size; i++) {
         for (j = 0; j < size; j++) {
             render_buffer[i][j] = false;
@@ -443,7 +448,7 @@ Map_render(Map *map, Player *player)
 #endif /* DEBUG */
     if (size <= index.x || size <= index.y) return;
     DBG_OUT("Index : { X: %u, \tY: %u }\n",index.x,index.y);
-    Map_check_vis(map, index, thing, l_frustum, r_frustum, render_buffer);
+    Map_check_vis(map, index, thing, l_frustum, r_frustum);
     /*DBG_OUT("Buffer size: %u",buffer_size);
     for (i=0; i < buffer_size; i++) {
         printf("%u, ",i);
@@ -501,6 +506,7 @@ Map_check_collision(Map *map, Vector2 prev_pos, Vector2 new_pos, float radius, V
         for (j = 0; j < 4; j++) {
             next       = (j+1)%4;
             if (!corners[j] || corners[next]) continue;
+            DBG_OUT("j: %d |\tnext: %d", j, next);
             wall_start = Vector2Add(*corners[j],    Vector2Scale(Wall_Vec2_Normals[j],    radius));
             wall_end   = Vector2Add(*corners[next], Vector2Scale(Wall_Vec2_Normals[j], radius));
             CheckCollisionLines(prev_pos, new_pos, wall_start, wall_end, collision_point);

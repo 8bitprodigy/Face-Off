@@ -81,6 +81,7 @@ Map
     char name[MAP_NAME_MAX_CHARS];
     uint size;
     Cell **cells;
+    bool **render_buffer;
     uint cell_width;
 } Map;
 
