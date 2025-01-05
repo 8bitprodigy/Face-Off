@@ -7,23 +7,26 @@
 Player 
 *Player_new(Vector2 position, float rotation, float radius, int controller)
 {
+    Thing  *thing;
+    Actor  *actor;
     Player *player = malloc(sizeof(Player));
     if (!player) {
         ERR_OUT("Failed to allocate memory for Player.");
         return NULL;
     }
 
-    Thing thing = (Thing){
+    actor = &player->_;
+    thing = &actor->_;
+    
+    *thing = (Thing){
         .position = position,
         .rotation = rotation,
         .sin_rot  = sin(rotation),
         .cos_rot  = cos(rotation),
         .radius   = radius,
     };
-    thing.position.x = 0.0f;
-    thing.position.y = 0.0f;
 
-    player->_ = (Actor){
+    *actor = (Actor){
         .type             = PLAYER,
         .prev_pos         = Vector2Zero(),
         .velocity         = Vector2Zero(),
@@ -32,6 +35,7 @@ Player
         .prev_rot         = 0.0f,
         .angular_velocity = 0.0f,
         .health           = 4,
+        .update           = &Actor_move,
     };
 
     player->controller = controller;
@@ -39,9 +43,9 @@ Player
     player->camera.position   = (Vector3){.x=0.0f,.y=CAMERA_HEIGHT,.z=0.0f};
     
     player->camera.target     = (Vector3){ 
-        .x = position.x + thing.cos_rot,
+        .x = position.x + thing->cos_rot,
         .y = CAMERA_HEIGHT,
-        .z = position.y + thing.sin_rot
+        .z = position.y + thing->sin_rot
     };
     DBG_OUT("Camera target: { X: %.4f,\tY: %.4f }", player->camera.target.x, player->camera.target.y);
     player->camera.up         = VECTOR3_UP;
@@ -131,9 +135,9 @@ Player_update(Player *player, float delta, GameState *game_state)
 
     actor->velocity = Vector2Rotate(move,thing->rotation);
 
-    Actor_move(actor, delta, game_state);
+    //Actor_move(actor, delta, game_state);
 
-    player->camera.position   = VECTOR2_TO_3( thing->position, 30.0f );
+    player->camera.position   = VECTOR2_TO_3( thing->position, CAMERA_HEIGHT );
     target = Vector2Add(thing->position, (Vector2){ thing->cos_rot, thing->sin_rot });
     player->camera.target     = VECTOR2_TO_3( target, CAMERA_HEIGHT );
 } /* Player_update */
