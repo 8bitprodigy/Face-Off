@@ -26,12 +26,12 @@
 #include <stdlib.h>
 #include <raylib.h>
 #include "face-off.h"
+#define DEBUG
+#include "defs.h"
 #include "thing.h"
 #include "actor.h"
 #include "player.h"
 #include "map.h"
-#define DEBUG
-#include "defs.h"
 
 
 static bool done = false;
@@ -145,25 +145,26 @@ GameState_remove_Thing(GameState *game_state, Thing *thing)
 void
 GameState_update(GameState *game_state)
 {
-    int i;
+    //int i;
     
     float delta;
     
     Player *player;
     Actor  *actor;
-    Thing  *thing;
+    //Thing  *thing;
 
     delta = GetFrameTime();
     
     player = game_state->players.next;
     actor  = game_state->actors.next;
-    thing  = game_state->things.next;
+    //thing  = game_state->things.next;
     
-    for (i = 0; i < game_state->num_players; i++) {
+    DBG_OUT("Actor: %u", actor);
+    while (player != &game_state->players) {
         Player_update(player, delta, game_state);
         player = player->next;
     }
-    for (i = 0; i < game_state->num_actors; i++) {
+    while (actor != &game_state->actors) {
         //actor->update(actor, delta, game_state);
         actor = actor->next;
     }
@@ -171,7 +172,7 @@ GameState_update(GameState *game_state)
 
 
 int 
-main(int argc, char** argv) 
+main(/*int argc, char** argv*/) 
 {
     Camera camera = {0};
     Player *player;
@@ -196,8 +197,6 @@ main(int argc, char** argv)
     game_state = GameState_new(CO_OP);
     GameState_add_Player(game_state, player);
     game_state->map = map;
-    
-    float delta = 0.0f;
 
     SetTargetFPS(60);
     

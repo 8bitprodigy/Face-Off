@@ -4,7 +4,6 @@
 #include "player.h"
 #include "item.h"
 #include "map.h"
-#include "defs.h"
 
 
 typedef enum {

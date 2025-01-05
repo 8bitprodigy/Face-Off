@@ -41,7 +41,7 @@ Index2D_equals(Index2D index1, Index2D index2)
 
 static inline bool
 Index2D_OOB(Index2D index, uint size){
-    return !(0 <= index.x && index.x < size && 0 <= index.y && index.y < size);
+    return !(0 <= index.x && index.x < (int)size && 0 <= index.y && index.y < (int)size);
 } /* Index2D_OOB */
 
 static inline Vector2 
@@ -197,16 +197,16 @@ Cell_render(Cell *cell, uint cell_width)
 Map
 *Map_new(const char *name, uint size, uint cell_width)
 {
-    uint    i, j, k, dir, ni, nj, w;
+    int    i, j, w;
     
     Map     *map   = malloc(sizeof(Map));
     Cell    *cell;
-    Wall    *walls = cell->walls;
+    Wall    *walls;
     
     float   map_width       = size * cell_width;
     float   half_map_width  = map_width / 2.0f;
     float   half_cell_width = cell_width / 2.0f;
-    float   half_size       = size / 2.0f;
+    //float   half_size       = size / 2.0f;
     Vector2 center;
 
     if (!map) {
@@ -223,7 +223,7 @@ Map
         free(map);
         return NULL;
     }
-    for ( i = 0; i < size; i++ ) {
+    for ( i = 0; i < (int)size; i++ ) {
         map->cells[i] = malloc(size * sizeof(Cell));
         if (!map->cells[i]) {
             ERR_OUT("Failed to allocate memory for Map Cell Array.");
@@ -233,10 +233,11 @@ Map
     }
     map->cell_width = cell_width;
     
-    for ( i = 0; i < size; i++ ) {
-        for ( j = 0; j < size; j++ ) {
+    for ( i = 0; i < (int)size; i++ ) {
+        for ( j = 0; j < (int)size; j++ ) {
             map->cells[i][j] = Cell_new();
-            cell = &map->cells[i][j];
+            cell  = &map->cells[i][j];
+            walls = cell->walls;
 
             cell->index = (Index2D){i,j};
             center = (Vector2){
@@ -263,29 +264,29 @@ Map
             };
 
             if (!i) {
-                cell->walls[WEST].type   = SOLID;
-                cell->walls[WEST].color  = BLUE;
-            } else if (i==size-1) {
-                cell->walls[EAST].type   = SOLID;
-                cell->walls[EAST].color  = RED;
+                walls[WEST].type   = SOLID;
+                walls[WEST].color  = BLUE;
+            } else if (i==(int)size-1) {
+                walls[EAST].type   = SOLID;
+                walls[EAST].color  = RED;
             } else {
                 w = (uint)rand() >> 30;
-                cell->walls[WEST].type = w;
-                cell->walls[WEST].color = BLUE;
+                walls[WEST].type = w;
+                walls[WEST].color = BLUE;
                 map->cells[i-1][j].walls[EAST].type = w;
                 map->cells[i-1][j].walls[EAST].color = RED;
             } 
             
             if (!j) {
-                cell->walls[NORTH].type  = SOLID;
-                cell->walls[NORTH].color = GREEN;
-            } else if (j==size-1) {
-                cell->walls[SOUTH].type  = SOLID;
-                cell->walls[SOUTH].color = YELLOW;
+                walls[NORTH].type  = SOLID;
+                walls[NORTH].color = GREEN;
+            } else if (j==(int)size-1) {
+                walls[SOUTH].type  = SOLID;
+                walls[SOUTH].color = YELLOW;
             } else {
                 w = (uint)rand() >> 30;
-                cell->walls[NORTH].type = w;
-                cell->walls[NORTH].color = GREEN;
+                walls[NORTH].type = w;
+                walls[NORTH].color = GREEN;
                 map->cells[i][j-1].walls[SOUTH].type = w;
                 map->cells[i][j-1].walls[SOUTH].color = RED;
             } 
@@ -294,15 +295,15 @@ Map
 
     map->render_buffer = malloc(size * size * sizeof(bool));
     
-    for (i = 0; i < size; i++) {
+    for (i = 0; i < (int)size; i++) {
         map->render_buffer[i] = (bool*)malloc(size*sizeof(bool));
         if (!map->render_buffer[i]) {
             ERR_OUT("Could not initialize render buffer inner array.");
-            for(; i >= 0; i--) {
+            for(; 0 <= i; i--) {
                 free(map->render_buffer[i]);
             }
             free(map->render_buffer);
-            return;
+            return NULL;
         }
     }
     
@@ -339,12 +340,12 @@ Map_check_vis(Map *map, Index2D index, Thing *thing, Vector2 l_frustum, Vector2 
     Cell    *cell           = &map->cells[index.x][index.y];
     bool    **render_buffer = map->render_buffer;
     Vector2 *corners        = cell->corners;
-    Vector2 center          = cell->center;
+    //Vector2 center          = cell->center;
     Wall    *walls          = cell->walls;
     bool    is_visible      = false;
 
     Vector2 position   = thing->position;
-    float   rotation   = thing->rotation;
+    //float   rotation   = thing->rotation;
 
     Vector2 inside_l;
     Vector2 inside_r;
@@ -418,18 +419,18 @@ Map_check_vis(Map *map, Index2D index, Thing *thing, Vector2 l_frustum, Vector2 
 void
 Map_render(Map *map, Player *player)
 {
-    uint    i, j;
-    Actor   *actor          = &player->_;
-    Thing   *thing          = &actor->_;
+    int    i, j;
+    Actor   *actor            = &player->_;
+    Thing   *thing            = &actor->_;
 
-    uint    size            = map->size;
-    bool    **render_buffer = map->render_buffer;
-    Index2D index           = Map_get_index(map, thing->position);
-    Vector2 position        = thing->position;
-    float   r_fov_edge      = NORMALIZE_ANGLE(thing->rotation + player->half_fov);
-    float   l_fov_edge      = NORMALIZE_ANGLE(thing->rotation - player->half_fov);
-    Vector2 r_frustum       = Vector2Add(thing->position, Vector2Scale(ANGLE_TO_VECTOR2(r_fov_edge),MAX_DRAW_DISTANCE));
-    Vector2 l_frustum       = Vector2Add(thing->position, Vector2Scale(ANGLE_TO_VECTOR2(l_fov_edge),MAX_DRAW_DISTANCE));
+    int    size               = map->size;
+    bool    **render_buffer   = map->render_buffer;
+    Index2D index             = Map_get_index(map, thing->position);
+    DBG_EXPR(Vector2 position = thing->position);
+    float   r_fov_edge        = NORMALIZE_ANGLE(thing->rotation + player->half_fov);
+    float   l_fov_edge        = NORMALIZE_ANGLE(thing->rotation - player->half_fov);
+    Vector2 r_frustum         = Vector2Add(thing->position, Vector2Scale(ANGLE_TO_VECTOR2(r_fov_edge),MAX_DRAW_DISTANCE));
+    Vector2 l_frustum         = Vector2Add(thing->position, Vector2Scale(ANGLE_TO_VECTOR2(l_fov_edge),MAX_DRAW_DISTANCE));
 
     if (!render_buffer) {
         ERR_OUT("Could not initialize render buffer.");
@@ -442,10 +443,10 @@ Map_render(Map *map, Player *player)
         }
     }
     //DrawTriangle3D(VECTOR2_TO_3(r_frustum,0.1f),VECTOR2_TO_3(thing->position,0.1f),VECTOR2_TO_3(l_frustum,0.1f), BLUE);
-#ifdef DEBUG
+
     DBG_LINE(r_frustum,thing->position,0.1f,BLUE);
     DBG_LINE(l_frustum,thing->position,0.1f,BLUE);
-#endif /* DEBUG */
+    
     if (size <= index.x || size <= index.y) return;
     DBG_OUT("Index : { X: %u, \tY: %u }\n",index.x,index.y);
     Map_check_vis(map, index, thing, l_frustum, r_frustum);
@@ -473,13 +474,11 @@ Map_check_collision(Map *map, Vector2 prev_pos, Vector2 new_pos, float radius, V
     Vector2 *corners;
     Vector2 wall_start;
     Vector2 wall_end;
-
-    Vector2 col_val;
     
     Index2D offset;
     Index2D cell_index = Map_get_index(map, prev_pos);
 
-    if (!(IS_IN_BOUNDS(cell_index.x, 0, map->size-1)&&IS_IN_BOUNDS(cell_index.y, 0, size-1))) return false;
+    if (!(IS_IN_BOUNDS(cell_index.x, 0, (int)map->size-1)&&IS_IN_BOUNDS(cell_index.y, 0, (int)size-1))) return false;
 
     check_cells[0] = &cells[cell_index.x][cell_index.y];
     

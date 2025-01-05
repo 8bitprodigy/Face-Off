@@ -104,7 +104,6 @@ Player_update(Player *player, float delta, GameState *game_state)
     float rotate = 0;
 
     Vector2 move;
-    Vector2 offset;
     Vector2 target;
 
     rotate = GET_KEY_OR_BUTTON_AXIS(

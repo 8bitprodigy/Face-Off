@@ -72,9 +72,11 @@
 #endif
 
 #ifdef DEBUG
+    #define DBG_EXPR( expression ) expression
     #define DBG_OUT( Text, ... ) printf( "[DEBUG] " Text "\n", ##__VA_ARGS__ )
     #define DBG_LINE( vec2_1, vec2_2, height, color ) DrawLine3D(VECTOR2_TO_3( vec2_1, height ), VECTOR2_TO_3( vec2_2, height ), color)
 #else
+    #define DBG_EXPR( expression ) 
     #define DBG_OUT( Text, ... )
     #define DBG_LINE( vec2_1, vec2_2, height, color )
 #endif
