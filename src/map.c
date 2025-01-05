@@ -470,7 +470,7 @@ Map_check_collision(Map *map, Vector2 prev_pos, Vector2 new_pos, float radius, V
     Cell  *check_cells[4];
     Cell  *cell;
 
-    Vector2 **corners;
+    Vector2 *corners;
     Vector2 wall_start;
     Vector2 wall_end;
 
@@ -505,10 +505,10 @@ Map_check_collision(Map *map, Vector2 prev_pos, Vector2 new_pos, float radius, V
         
         for (j = 0; j < 4; j++) {
             next       = (j+1)%4;
-            if (!corners[j] || corners[next]) continue;
+            //if (!corners[j] || corners[next]) continue;
             DBG_OUT("j: %d |\tnext: %d", j, next);
-            wall_start = Vector2Add(*corners[j],    Vector2Scale(Wall_Vec2_Normals[j],    radius));
-            wall_end   = Vector2Add(*corners[next], Vector2Scale(Wall_Vec2_Normals[j], radius));
+            wall_start = Vector2Add(corners[j],    Vector2Scale(Wall_Vec2_Normals[j],    radius));
+            wall_end   = Vector2Add(corners[next], Vector2Scale(Wall_Vec2_Normals[j], radius));
             CheckCollisionLines(prev_pos, new_pos, wall_start, wall_end, collision_point);
             *collision_normal = Wall_Vec2_Normals[j];
             if (!(isnan(collision_point->x)&&isnan(collision_point->y))) return true;
