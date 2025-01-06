@@ -2,7 +2,7 @@
 #include "actor_private.h"
 #include "gamestate.h"
 #include "map.h"
-#define DEBUG
+//#define DEBUG
 #include "defs.h"
 
 
@@ -143,7 +143,9 @@ Actor_move(Actor *actor, float delta, GameState *game_state)
     if (Map_check_Actor_collision(map, actor, new_position, &collision_point, &collision_normal)) {
         DBG_OUT("Wall collision!");
         new_position = Vector2Add(
-            collision_point, 
+            collision_point,
+            /* This should nullify the part of the coord that would find itself inside the wall
+            allowing the actor to slide along it. */
             Vector2Multiply(
                 new_position, 
                 VECTOR2(collision_normal.x, collision_normal.y)

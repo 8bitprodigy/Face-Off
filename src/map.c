@@ -6,7 +6,7 @@
 #include "map.h"
 /* Uncomment the following #define to turn debug output on.
    It gets #define'd BEFORE "#include "defs.h". */
-//#define DEBUG
+#define DEBUG
 #include "defs.h"
 
 #define INDEX2D( _x_, _y_ ) ((Index2D){.x=_x_,.y=_y_})
@@ -529,12 +529,12 @@ Map_check_Actor_collision(Map *map, Actor *actor, Vector2 new_pos, Vector2 *coll
     Index2D cell_index = Map_get_index(map, prev_pos);
 
     if (!(IS_IN_BOUNDS(cell_index.x, 0, (int)map->size-1)&&IS_IN_BOUNDS(cell_index.y, 0, (int)size-1))) return false;
-
+    /* First checked cell should ALWAYS be the one the actor's coordinates are actually in. */
     check_cells[0] = &cells[cell_index.x][cell_index.y];
     
     offset.x = SIGN_BETWEEN(prev_pos.x, check_cells[0]->center.x) + cell_index.x;
     offset.y = SIGN_BETWEEN(prev_pos.y, check_cells[0]->center.y) + cell_index.y;
-
+    /* Then we get adjacent cells(if applicable). */
     if (IS_IN_BOUNDS(offset.x, 0, size-1)) check_cells[1] = &cells[offset.x][cell_index.y];
     else check_cells[1] = check_cells[0];
     if (IS_IN_BOUNDS(offset.y, 0, size-1)) check_cells[2] = &cells[cell_index.x][offset.y];
@@ -549,7 +549,6 @@ Map_check_Actor_collision(Map *map, Actor *actor, Vector2 new_pos, Vector2 *coll
         cell    = check_cells[i];
         if (!cell) continue;
         walls   = &cell->walls;
-        
         corners = cell->corners; 
         if (!corners) continue;
         
@@ -558,9 +557,9 @@ Map_check_Actor_collision(Map *map, Actor *actor, Vector2 new_pos, Vector2 *coll
             next       = (j+1)%4;
             /* Push walls into the cell along their normal by the actor's radius 
             in order to create a minkowski distance */
-            wall_start = Vector2Add(corners[j],    Vector2Scale(Wall_Vec2_Normals[j], radius));
-            wall_end   = Vector2Add(corners[next], Vector2Scale(Wall_Vec2_Normals[j], radius));
-            
+            wall_start = Vector2Add(corners[j],    Vector2Scale(Wall_Vec2_Normals[j], radius*4));
+            wall_end   = Vector2Add(corners[next], Vector2Scale(Wall_Vec2_Normals[j], radius*4));
+            DBG_OUT("Wall Start: { X: %.4f |\tY: %.4f }\tWall End: { X: %.4f |\tY: %.4f }", wall_start.x, wall_start.y, wall_end.x, wall_end.y);
             CheckCollisionLines(prev_pos, new_pos, wall_start, wall_end, collision_point);
             *collision_normal = Wall_Vec2_Normals[j];
             if (!(isnan(collision_point->x)&&isnan(collision_point->y))) {
