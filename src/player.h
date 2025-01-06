@@ -3,25 +3,18 @@
 
 #include "actor.h"
 
-typedef struct Player {
-    Actor  _;
-
-    struct Player *prev;
-    struct Player *next;
-    
-    Camera camera;
-    bool   remote;
-    float  fov;
-    float  half_fov;
-    int    controller;
-    int    score;
-    int    team;
-} Player;
+typedef struct Player Player;
 
 /* Constructor */
 Player *Player_new(Vector2 position, float rotation, float radius, int controller);
 /* Destructor */
 void Player_free(Player *player);
+
+/* Getters */
+Actor   *Player_get_Actor(Player *player);
+Camera  *Player_get_Camera(Player *player);
+Vector2 Player_get_position(Player *player);
+float   Player_get_half_fov(Player *player);
 
 /* List Operations */
 void Player_push(Player *player1, Player *player2);

@@ -1,7 +1,10 @@
 #include <stdlib.h>
-#include "face-off.h"
-#include "actor.h"
+#include "actor_private.h"
+#include "gamestate.h"
 #include "map.h"
+//#define DEBUG
+#include "defs.h"
+
 
 Actor
 *Actor_new(ActorType type)
@@ -21,7 +24,7 @@ Actor
         .radius   = 0.5f,
     };
     
-    actor->_                = thing;
+    actor->base             = thing;
     actor->prev_pos         = Vector2Zero();
     actor->velocity         = Vector2Zero();
     
@@ -57,10 +60,21 @@ Actor
 void
 Actor_free(Actor *actor)
 {
-    Thing_pop(&actor->_);
+    Thing_pop(&actor->base);
     Actor_pop(actor);
     free(actor);
 } /* Actor_free */
+
+
+/**********************
+*    G E T T E R S    *
+**********************/
+
+Thing
+*Actor_get_Thing(Actor *actor)
+{
+    return &actor->base;
+}
 
 
 void
@@ -74,7 +88,6 @@ Actor_push(Actor *actor1, Actor *actor2)
     actor2->next = actor1;
     actor2->prev = actor3;
 
-    //Thing_push(&actor1->_, &actor2->_);
 } /* Actor_push */
 
 
@@ -87,14 +100,13 @@ Actor_pop(Actor *actor)
     actor1->next = actor2;
     actor2->prev = actor1;
 
-    //Thing_pop(&actor->_);
 } /* Actor_pop */
 
 
 void 
 Actor_rotate(Actor *actor, float delta)
 {
-    Thing *thing   = &actor->_;
+    Thing *thing   = &actor->base;
     float rotation = thing->rotation;
 
     actor->prev_rot  = rotation;
@@ -109,14 +121,15 @@ Actor_rotate(Actor *actor, float delta)
 void 
 Actor_move(Actor *actor, float delta, GameState *game_state)
 {
-    Thing   *thing       = &actor->_;
-    Map     *map         = game_state->map;
+    Thing   *thing       = &actor->base;
+    Map     *map         = GameState_get_Map(game_state);
     Vector2 position     = thing->position;
     Vector2 new_position = Vector2Add(position, Vector2Scale(actor->velocity, delta));
     Vector2 collision_point;
     Vector2 collision_normal;
     //printf("New Position>\t x: %.4f | y: %.4f\n", new_position.x, new_position.y); 
     if (Map_check_collision(map,position, new_position, thing->radius, &collision_point, &collision_normal)) {
+        DBG_OUT("Wall collision!");
         position = Vector2Add(
             collision_point, 
             Vector2Multiply(

@@ -1,10 +1,16 @@
 #include <stdlib.h>
+#include <limits.h>
 #include <raylib.h>
 #include <string.h>
 #include <float.h>
-#include "map.h"
+#include "map_private.h"
+/* Uncomment the following #define to turn debug output on.
+   It gets #define'd BEFORE "#include "defs.h". */
+#define DEBUG
+#include "defs.h"
 
 #define GET_FRUSTUM_EDGE( Position, Point )  (Vector2Add(Vector2Scale(Vector2Normalize(Vector2Subtract(Point, Position)),MAX_DRAW_DISTANCE),Position))
+
 
 float Wall_Normals[4] = {
     PI,
@@ -26,6 +32,7 @@ Index2D Cell_Directions[4] = {
     (Index2D){ .x = -1, .y =  0 },
     (Index2D){ .x =  0, .y =  1 },
 };
+
 
 static inline Index2D
 Index2D_add(Index2D index_1, Index2D index_2)
@@ -344,7 +351,7 @@ Map_check_vis(Map *map, Index2D index, Thing *thing, Vector2 l_frustum, Vector2 
     Wall    *walls          = cell->walls;
     bool    is_visible      = false;
 
-    Vector2 position   = thing->position;
+    Vector2 position   = Thing_get_position(thing);
     //float   rotation   = thing->rotation;
 
     Vector2 inside_l;
@@ -420,17 +427,17 @@ void
 Map_render(Map *map, Player *player)
 {
     int    i, j;
-    Actor   *actor            = &player->_;
-    Thing   *thing            = &actor->_;
+    Actor   *actor            = Player_get_Actor(player);
+    Thing   *thing            = Actor_get_Thing(actor);
 
     int    size               = map->size;
     bool    **render_buffer   = map->render_buffer;
-    Index2D index             = Map_get_index(map, thing->position);
+    Index2D index             = Map_get_index(map, Thing_get_position(thing));
     DBG_EXPR(Vector2 position = thing->position);
-    float   r_fov_edge        = NORMALIZE_ANGLE(thing->rotation + player->half_fov);
-    float   l_fov_edge        = NORMALIZE_ANGLE(thing->rotation - player->half_fov);
-    Vector2 r_frustum         = Vector2Add(thing->position, Vector2Scale(ANGLE_TO_VECTOR2(r_fov_edge),MAX_DRAW_DISTANCE));
-    Vector2 l_frustum         = Vector2Add(thing->position, Vector2Scale(ANGLE_TO_VECTOR2(l_fov_edge),MAX_DRAW_DISTANCE));
+    float   r_fov_edge        = NORMALIZE_ANGLE(Thing_get_rotation(thing) + Player_get_half_fov(player));
+    float   l_fov_edge        = NORMALIZE_ANGLE(Thing_get_rotation(thing) - Player_get_half_fov(player));
+    Vector2 r_frustum         = Vector2Add(Thing_get_position(thing), Vector2Scale(ANGLE_TO_VECTOR2(r_fov_edge),MAX_DRAW_DISTANCE));
+    Vector2 l_frustum         = Vector2Add(Thing_get_position(thing), Vector2Scale(ANGLE_TO_VECTOR2(l_fov_edge),MAX_DRAW_DISTANCE));
 
     if (!render_buffer) {
         ERR_OUT("Could not initialize render buffer.");
@@ -470,6 +477,7 @@ Map_check_collision(Map *map, Vector2 prev_pos, Vector2 new_pos, float radius, V
     Cell  **cells = map->cells;
     Cell  *check_cells[4];
     Cell  *cell;
+    Wall  *walls;
 
     Vector2 *corners;
     Vector2 wall_start;
@@ -498,11 +506,13 @@ Map_check_collision(Map *map, Vector2 prev_pos, Vector2 new_pos, float radius, V
     for (i = 0; i < 4; i++) {
         cell    = check_cells[i];
         if (!cell) continue;
+        walls   = &cell->walls;
         
         corners = cell->corners; 
         if (!corners) continue;
         
         for (j = 0; j < 4; j++) {
+            if (!walls[j].type) continue;
             next       = (j+1)%4;
             //if (!corners[j] || corners[next]) continue;
             DBG_OUT("j: %d |\tnext: %d", j, next);

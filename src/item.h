@@ -3,9 +3,6 @@
 
 #include <raylib.h>
 #include <raymath.h>
-#include "thing.h"
-//#define DEBUG
-#include "defs.h"
 
 
 typedef enum {
@@ -22,16 +19,6 @@ typedef union {
 }
 ItemValue;
 
-typedef struct 
-Item {
-    Thing       _;
-
-    struct Item *prev;
-    struct Item *next;
-    
-    ItemType    type;
-    ItemValue   value1;
-    ItemValue   value2;
-} Item;
+typedef struct Item Item;
 
 #endif

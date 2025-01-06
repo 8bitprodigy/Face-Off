@@ -2,19 +2,14 @@
 #define MAP_H
 
 #include <raylib.h>
-#include <limits.h>
-/* Uncomment the following #define to turn debug output on.
-   It gets #define'd BEFORE "#include "defs.h". */
-//#define DEBUG
-
-#include "defs.h"
-#include "player.h"
+#include "gamestate.h"
 
 
 #define DEBUG_CHECK_VIS
 #define DEBUG_MAP_NEW
 
 #define INDEX2D_NAN (Index2D){.x=INT_MAX,.y=INT_MAX}
+
 
 typedef enum {
     EAST  = 0, /* +X */
@@ -36,19 +31,12 @@ typedef enum {
 }
 WallType;
 
-typedef struct
-Wall
-{
-    Color    color;
-    WallType type;
-    union {
-        int   health;
-        bool  locked;
-        float timeout;
-    };
-} Wall;
+
+typedef struct Wall Wall;
 
 typedef struct Cell Cell;
+
+typedef struct Map Map;
 
 typedef struct
 Index2D
@@ -57,24 +45,6 @@ Index2D
     int y;
 } Index2D;
 
-typedef struct
-Cell
-{
-    Wall    walls[4];
-    Index2D index;
-    Vector2 corners[4];
-    Vector2 center;
-} Cell;
-
-typedef struct
-Map
-{
-    char name[MAP_NAME_MAX_CHARS];
-    uint size;
-    Cell **cells;
-    uint cell_width;
-    bool **render_buffer;
-} Map;
 
 Cell Cell_new(void);
 

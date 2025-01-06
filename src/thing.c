@@ -1,5 +1,7 @@
 #include <stdlib.h>
-#include "thing.h"
+#include "thing_private.h"
+#define DEBUG
+#include "defs.h"
 
 
 Thing
@@ -43,6 +45,24 @@ Thing_free(Thing *thing)
     Thing_pop(thing);
     free(thing);
 } /* Thing_free */
+
+
+/**********************
+*    G E T T E R S    *
+**********************/
+
+Vector2
+Thing_get_position(Thing *thing)
+{
+    return thing->position;
+} /* Thing_get_position */
+
+float
+Thing_get_rotation(Thing *thing)
+{
+    return thing->rotation;
+} /* Thing_get_rotation */
+
 
 
 void

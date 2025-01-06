@@ -1,8 +1,8 @@
 #include <stdlib.h>
 #include <math.h>
+#include "player_private.h"
 #define DEBUG
 #include "defs.h"
-#include "player.h"
 
 Player 
 *Player_new(Vector2 position, float rotation, float radius, int controller)
@@ -15,8 +15,8 @@ Player
         return NULL;
     }
 
-    actor = &player->_;
-    thing = &actor->_;
+    actor = &player->base;
+    thing = &actor->base;
     
     *thing = (Thing){
         .position = position,
@@ -64,13 +64,45 @@ Player
 void
 Player_free(Player *player)
 {
-    Thing_pop(&player->_._);
-    Actor_pop(&player->_);
+    Thing_pop(&player->base.base);
+    Actor_pop(&player->base);
     Player_pop(player);
     free(player);
 } /* Player_free */
 
 
+/**********************
+*    G E T T E R S    *
+**********************/
+
+Actor
+*Player_get_Actor(Player *player)
+{
+    return &player->base;
+}
+
+Camera
+*Player_get_Camera(Player *player)
+{
+    return &player->camera;
+}
+
+Vector2
+Player_get_position(Player *player)
+{
+    return player->base.base.position;
+}
+
+float
+Player_get_half_fov(Player *player)
+{
+    return player->half_fov;
+}
+
+
+/**************************************
+*    L I S T   O P E R A T I O N S    *
+**************************************/
 void
 Player_push(Player *player1, Player *player2)
 {
@@ -85,7 +117,6 @@ Player_push(Player *player1, Player *player2)
     //Actor_push(&player1->_, &player2->_);
 } /* Player_push */
 
-
 void
 Player_pop(Player *player)
 {
@@ -95,15 +126,15 @@ Player_pop(Player *player)
     player1->next = player2;
     player2->prev = player1;
 
-    //Actor_pop(&player->_);
+    //Actor_pop(&player->base);
 } /* Player_pop */
 
 
 void 
 Player_update(Player *player, float delta, GameState *game_state)
 {
-    Actor *actor = &player->_;
-    Thing *thing = &actor->_;
+    Actor *actor = &player->base;
+    Thing *thing = &actor->base;
     
     float rotate = 0;
 
