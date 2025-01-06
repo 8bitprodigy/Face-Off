@@ -3,7 +3,7 @@
 #include <raylib.h>
 #include <string.h>
 #include <float.h>
-#include "map_private.h"
+#include "map.h"
 /* Uncomment the following #define to turn debug output on.
    It gets #define'd BEFORE "#include "defs.h". */
 #define DEBUG
@@ -32,6 +32,38 @@ Index2D Cell_Directions[4] = {
     (Index2D){ .x = -1, .y =  0 },
     (Index2D){ .x =  0, .y =  1 },
 };
+
+
+typedef struct
+Wall
+{
+    Color    color;
+    WallType type;
+    union {
+        int   health;
+        bool  locked;
+        float timeout;
+    };
+} Wall;
+
+typedef struct
+Cell
+{
+    Wall    walls[4];
+    Index2D index;
+    Vector2 corners[4];
+    Vector2 center;
+} Cell;
+
+typedef struct
+Map
+{
+    char name[MAP_NAME_MAX_CHARS];
+    uint size;
+    Cell **cells;
+    uint cell_width;
+    bool **render_buffer;
+} Map;
 
 
 static inline Index2D
@@ -433,7 +465,7 @@ Map_render(Map *map, Player *player)
     int    size               = map->size;
     bool    **render_buffer   = map->render_buffer;
     Index2D index             = Map_get_index(map, Thing_get_position(thing));
-    DBG_EXPR(Vector2 position = thing->position);
+    DBG_EXPR(Vector2 position = Thing_get_position(thing));
     float   r_fov_edge        = NORMALIZE_ANGLE(Thing_get_rotation(thing) + Player_get_half_fov(player));
     float   l_fov_edge        = NORMALIZE_ANGLE(Thing_get_rotation(thing) - Player_get_half_fov(player));
     Vector2 r_frustum         = Vector2Add(Thing_get_position(thing), Vector2Scale(ANGLE_TO_VECTOR2(r_fov_edge),MAX_DRAW_DISTANCE));
@@ -451,8 +483,8 @@ Map_render(Map *map, Player *player)
     }
     //DrawTriangle3D(VECTOR2_TO_3(r_frustum,0.1f),VECTOR2_TO_3(thing->position,0.1f),VECTOR2_TO_3(l_frustum,0.1f), BLUE);
 
-    DBG_LINE(r_frustum,thing->position,0.1f,BLUE);
-    DBG_LINE(l_frustum,thing->position,0.1f,BLUE);
+    DBG_LINE(r_frustum,Thing_get_position(thing),0.1f,BLUE);
+    DBG_LINE(l_frustum,Thing_get_position(thing),0.1f,BLUE);
     
     if (size <= index.x || size <= index.y) return;
     DBG_OUT("Index : { X: %u, \tY: %u }\n",index.x,index.y);

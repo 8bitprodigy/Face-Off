@@ -1,9 +1,30 @@
 #include <stdlib.h>
-#include "gamestate_private.h"
+#include "gamestate.h"
+#include "thing_private.h"
+#include "actor_private.h"
+#include "player_private.h"
+#include "map.h"
 #define DEBUG
 #include "defs.h"
 
 
+typedef struct 
+GameState
+{
+    GameMode game_mode;
+    
+    Player   players;
+    uint     num_players;
+    
+    Actor    actors;
+    uint     num_actors;
+    
+    Thing    things;
+    uint     num_things;
+    
+    Map      *map;
+    bool     paused;
+} GameState;
 
 /******************************
 *    C O N S T R U C T O R    *
