@@ -23,7 +23,6 @@
 * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.            *
 *                                                                              *
 *******************************************************************************/
-#include <stdlib.h>
 #include <raylib.h>
 #include "gamestate.h"
 #define DEBUG

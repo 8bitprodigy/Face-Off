@@ -2,7 +2,7 @@
 #include "actor_private.h"
 #include "gamestate.h"
 #include "map.h"
-//#define DEBUG
+#define DEBUG
 #include "defs.h"
 
 
@@ -76,6 +76,18 @@ Thing
     return &actor->base;
 }
 
+Vector2
+Actor_get_position(Actor *actor)
+{
+    return actor->base.position;
+}
+
+float
+Actor_get_radius(Actor *actor)
+{
+    return actor->base.radius;
+}
+
 
 void
 Actor_push(Actor *actor1, Actor *actor2)
@@ -128,18 +140,16 @@ Actor_move(Actor *actor, float delta, GameState *game_state)
     Vector2 collision_point;
     Vector2 collision_normal;
     //printf("New Position>\t x: %.4f | y: %.4f\n", new_position.x, new_position.y); 
-    if (Map_check_collision(map,position, new_position, thing->radius, &collision_point, &collision_normal)) {
+    if (Map_check_Actor_collision(map, actor, new_position, &collision_point, &collision_normal)) {
         DBG_OUT("Wall collision!");
-        position = Vector2Add(
+        new_position = Vector2Add(
             collision_point, 
             Vector2Multiply(
-                position, 
-                (Vector2){
-                    .x = fabsf(collision_normal.y),
-                    .y = fabsf(collision_normal.x)
-                }
+                new_position, 
+                VECTOR2(collision_normal.x, collision_normal.y)
             )
         );
+        DBG_OUT("New Position: { X:%.4f |\tY:%.4f }", new_position.x, new_position.y);
     }
     /* Todo... */
     DBG_OUT("Actor position: { X: %.4f,\tY: %.4f }",position.x,position.y);

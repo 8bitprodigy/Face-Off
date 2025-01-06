@@ -10,8 +10,6 @@ Thing
 {
     struct Thing *prev;
     struct Thing *next;
-
-    uint         id;
     
     bool         visible;
     

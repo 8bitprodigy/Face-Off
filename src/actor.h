@@ -24,7 +24,9 @@ Actor *Actor_new(ActorType type);
 void Actor_free(Actor *actor);
 
 /* Getters */
-Thing *Actor_get_Thing(Actor *actor);
+Thing   *Actor_get_Thing(Actor *actor);
+Vector2 Actor_get_position(Actor *actor);
+float   Actor_get_radius(Actor *actor);
 
 /* List Operations */
 void Actor_push(Actor *actor1, Actor *actor2);

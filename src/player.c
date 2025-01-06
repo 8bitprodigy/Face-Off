@@ -168,7 +168,7 @@ Player_update(Player *player, float delta, GameState *game_state)
 
     //Actor_move(actor, delta, game_state);
 
-    player->camera.position   = VECTOR2_TO_3( thing->position, CAMERA_HEIGHT );
+    player->camera.position   = VECTOR2_TO_3( thing->position, 30.0f );
     target = Vector2Add(thing->position, (Vector2){ thing->cos_rot, thing->sin_rot });
     player->camera.target     = VECTOR2_TO_3( target, CAMERA_HEIGHT );
 } /* Player_update */

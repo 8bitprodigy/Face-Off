@@ -6,9 +6,10 @@
 #include "map.h"
 /* Uncomment the following #define to turn debug output on.
    It gets #define'd BEFORE "#include "defs.h". */
-#define DEBUG
+//#define DEBUG
 #include "defs.h"
 
+#define INDEX2D( _x_, _y_ ) ((Index2D){.x=_x_,.y=_y_})
 #define GET_FRUSTUM_EDGE( Position, Point )  (Vector2Add(Vector2Scale(Vector2Normalize(Vector2Subtract(Point, Position)),MAX_DRAW_DISTANCE),Position))
 
 
@@ -20,17 +21,17 @@ float Wall_Normals[4] = {
 };
 
 Vector2 Wall_Vec2_Normals[4] = {
-    (Vector2){ .x = -1.0f, .y =  0.0f },
-    (Vector2){ .x =  0.0f, .y =  1.0f },
-    (Vector2){ .x =  1.0f, .y =  0.0f },
-    (Vector2){ .x =  0.0f, .y = -1.0f }
+    VECTOR2(-1.0f,  0.0f),
+    VECTOR2( 0.0f,  1.0f),
+    VECTOR2( 1.0f,  0.0f),
+    VECTOR2( 0.0f, -1.0f),
 };
 
 Index2D Cell_Directions[4] = {
-    (Index2D){ .x =  1, .y =  0 },
-    (Index2D){ .x =  0, .y = -1 },
-    (Index2D){ .x = -1, .y =  0 },
-    (Index2D){ .x =  0, .y =  1 },
+    INDEX2D( 1,  0),
+    INDEX2D( 0, -1),
+    INDEX2D(-1,  0),
+    INDEX2D( 0,  1),
 };
 
 
@@ -390,7 +391,7 @@ Map_check_vis(Map *map, Index2D index, Thing *thing, Vector2 l_frustum, Vector2 
     Vector2 inside_r;
     Index2D neighbor;
 
-    DBG_OUT("\n\tChecking cell: { X: %u,\tY: %u }",index.x,index.y);
+    //DBG_OUT("\n\tChecking cell: { X: %u,\tY: %u }",index.x,index.y);
     //if (!cell) return;
     if (render_buffer[index.x][index.y]) return;
     render_buffer[index.x][index.y] = true;
@@ -407,7 +408,7 @@ Map_check_vis(Map *map, Index2D index, Thing *thing, Vector2 l_frustum, Vector2 
             //DBG_LINE(thing->position, cell->corners[i], 0.1f, YELLOW);
             continue;
         }
-        DBG_OUT("i: %u\ti+1%%4 : %u\t(i+1)%%4: %u", i, i+1%4, (i+1)%4);
+        //DBG_OUT("i: %u\ti+1%%4 : %u\t(i+1)%%4: %u", i, i+1%4, (i+1)%4);
         inside_l = l_frustum;
         inside_r = r_frustum;
         if (
@@ -426,7 +427,7 @@ Map_check_vis(Map *map, Index2D index, Thing *thing, Vector2 l_frustum, Vector2 
             if (walls[i].type == PORTAL) {
                 //DBG_LINE(corners[i], corners[next], 0.1f, MAGENTA);
             
-                DBG_OUT("Wall %u is visible.",i);
+                //DBG_OUT("Wall %u is visible.",i);
                 //DBG_OUT("East Inside: { X: %.4f,\tY: %.4f }\n", inside_r.x, inside_r.y );
                 if (!Vector2Equals(inside_l, l_frustum) && !walls[prev].type) {
                     inside_l = GET_FRUSTUM_EDGE(position, inside_l);
@@ -437,12 +438,12 @@ Map_check_vis(Map *map, Index2D index, Thing *thing, Vector2 l_frustum, Vector2 
                 //if (walls[prev].type == PORTAL) inside_l = l_frustum;
                 //if (walls[next].type == PORTAL) inside_r = r_frustum;
                 inside_r = r_frustum; inside_l = l_frustum;
-                DBG_LINE(position, inside_l,0.2f, ORANGE);
-                DBG_LINE(position, inside_r,0.1f, GREEN);
+                //DBG_LINE(position, inside_l,0.2f, ORANGE);
+                //DBG_LINE(position, inside_r,0.1f, GREEN);
                 Map_check_vis(map, neighbor, thing, inside_l, inside_r);
             }
             else {
-                DBG_OUT("Wall %u is NOT visible.",i);
+                //DBG_OUT("Wall %u is NOT visible.",i);
                 //DBG_LINE(position, corners[i],0.2f, RED);
             }
         }
@@ -451,7 +452,7 @@ Map_check_vis(Map *map, Index2D index, Thing *thing, Vector2 l_frustum, Vector2 
         Cell_render(cell,4);
     } //else DBG_LINE(position, center, 0.3, PURPLE);
     //render_buffer[index.x][index.y] = true;
-    DBG_OUT("Cell checked.\n");
+    //DBG_OUT("Cell checked.\n");
 } /* Cell_check_vis */
 
 
@@ -465,11 +466,17 @@ Map_render(Map *map, Player *player)
     int    size               = map->size;
     bool    **render_buffer   = map->render_buffer;
     Index2D index             = Map_get_index(map, Thing_get_position(thing));
-    DBG_EXPR(Vector2 position = Thing_get_position(thing));
+    //DBG_EXPR(Vector2 position = Thing_get_position(thing));
     float   r_fov_edge        = NORMALIZE_ANGLE(Thing_get_rotation(thing) + Player_get_half_fov(player));
     float   l_fov_edge        = NORMALIZE_ANGLE(Thing_get_rotation(thing) - Player_get_half_fov(player));
-    Vector2 r_frustum         = Vector2Add(Thing_get_position(thing), Vector2Scale(ANGLE_TO_VECTOR2(r_fov_edge),MAX_DRAW_DISTANCE));
-    Vector2 l_frustum         = Vector2Add(Thing_get_position(thing), Vector2Scale(ANGLE_TO_VECTOR2(l_fov_edge),MAX_DRAW_DISTANCE));
+    Vector2 r_frustum         = Vector2Add(
+        Thing_get_position(thing), 
+        Vector2Scale(ANGLE_TO_VECTOR2(r_fov_edge), MAX_DRAW_DISTANCE)
+    );
+    Vector2 l_frustum         = Vector2Add(
+        Thing_get_position(thing), 
+        Vector2Scale(ANGLE_TO_VECTOR2(l_fov_edge), MAX_DRAW_DISTANCE)
+    );
 
     if (!render_buffer) {
         ERR_OUT("Could not initialize render buffer.");
@@ -483,24 +490,24 @@ Map_render(Map *map, Player *player)
     }
     //DrawTriangle3D(VECTOR2_TO_3(r_frustum,0.1f),VECTOR2_TO_3(thing->position,0.1f),VECTOR2_TO_3(l_frustum,0.1f), BLUE);
 
-    DBG_LINE(r_frustum,Thing_get_position(thing),0.1f,BLUE);
-    DBG_LINE(l_frustum,Thing_get_position(thing),0.1f,BLUE);
+    //DBG_LINE(r_frustum, Thing_get_position(thing), 0.1f, BLUE);
+    //DBG_LINE(l_frustum, Thing_get_position(thing), 0.1f, BLUE);
     
     if (size <= index.x || size <= index.y) return;
-    DBG_OUT("Index : { X: %u, \tY: %u }\n",index.x,index.y);
+    //DBG_OUT("Index : { X: %u, \tY: %u }\n",index.x,index.y);
     Map_check_vis(map, index, thing, l_frustum, r_frustum);
     /*DBG_OUT("Buffer size: %u",buffer_size);
     for (i=0; i < buffer_size; i++) {
         printf("%u, ",i);
         Cell_render(&map->cells[render_buffer[i].x][render_buffer[i].y], map->cell_width);
     }*/
-    DBG_OUT("frame over.\n");
+    //DBG_OUT("frame over.\n");
     
 } /* Map_render */
 
 
 bool
-Map_check_collision(Map *map, Vector2 prev_pos, Vector2 new_pos, float radius, Vector2 *collision_point, Vector2 *collision_normal)
+Map_check_Actor_collision(Map *map, Actor *actor, Vector2 new_pos, Vector2 *collision_point, Vector2 *collision_normal)
 {
     int   i, j, next;
 
@@ -511,6 +518,9 @@ Map_check_collision(Map *map, Vector2 prev_pos, Vector2 new_pos, float radius, V
     Cell  *cell;
     Wall  *walls;
 
+    Vector2 prev_pos = Actor_get_position(actor);
+    float   radius   = Actor_get_radius(actor);
+    
     Vector2 *corners;
     Vector2 wall_start;
     Vector2 wall_end;
@@ -546,13 +556,17 @@ Map_check_collision(Map *map, Vector2 prev_pos, Vector2 new_pos, float radius, V
         for (j = 0; j < 4; j++) {
             if (!walls[j].type) continue;
             next       = (j+1)%4;
-            //if (!corners[j] || corners[next]) continue;
-            DBG_OUT("j: %d |\tnext: %d", j, next);
-            wall_start = Vector2Add(corners[j],    Vector2Scale(Wall_Vec2_Normals[j],    radius));
+            /* Push walls into the cell along their normal by the actor's radius 
+            in order to create a minkowski distance */
+            wall_start = Vector2Add(corners[j],    Vector2Scale(Wall_Vec2_Normals[j], radius));
             wall_end   = Vector2Add(corners[next], Vector2Scale(Wall_Vec2_Normals[j], radius));
+            
             CheckCollisionLines(prev_pos, new_pos, wall_start, wall_end, collision_point);
             *collision_normal = Wall_Vec2_Normals[j];
-            if (!(isnan(collision_point->x)&&isnan(collision_point->y))) return true;
+            if (!(isnan(collision_point->x)&&isnan(collision_point->y))) {
+                DBG_OUT("Collision: { X: %.4f |\tY: %.4f }", collision_point->x, collision_point->y);
+                return true;
+            }
         }
     }
     

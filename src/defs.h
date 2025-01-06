@@ -137,7 +137,8 @@
 
 
 /*** Common Vector Manipulation ***/
-
+/* Declaration */
+#define VECTOR2( _x_, _y_ )  ((Vector2){.x=_x_,.y=_y_})
 /* Convert a Vector2 to a Vector3 */
 #define VECTOR2_TO_3( Vector, Height ) (Vector3){Vector.x, Height, Vector.y}
 /* Convert a Vector3 to a Vector2 */
