@@ -4,10 +4,13 @@
 #include "defs.h"
 
 
-Thing
-Thing_new(Vector2 position, float rotation, float radius)
+/******************************
+*    C O N S T R U C T O R    *
+******************************/
+void
+Thing_init(Thing *thing, Vector2 position, float rotation, float radius)
 {
-    Thing thing = (Thing){
+    *thing = (Thing){
         .visible  = true,
         .position = position,
         .rotation = rotation,
@@ -15,13 +18,10 @@ Thing_new(Vector2 position, float rotation, float radius)
         .cos_rot  = cos(rotation),
         .radius   = radius,
     };
-    
-    return thing;
 } /* Thing_new */
 
-
 Thing
-*Thing_new_ptr(Vector2 position, float rotation, float radius)
+*Thing_new(Vector2 position, float rotation, float radius)
 {
     Thing *thing = malloc(sizeof(Thing));
 
@@ -30,7 +30,7 @@ Thing
         return NULL;
     }
 
-    *thing = Thing_new(position, rotation, radius);
+    Thing_init(thing, position, rotation, radius);
 
     thing->prev = thing;
     thing->next = thing;
@@ -39,6 +39,9 @@ Thing
 } /* Thing_new_ptr */
 
 
+/****************************
+*    D E S T R U C T O R    *
+****************************/
 void
 Thing_free(Thing *thing)
 {
@@ -50,7 +53,6 @@ Thing_free(Thing *thing)
 /**********************
 *    G E T T E R S    *
 **********************/
-
 Vector2
 Thing_get_position(Thing *thing)
 {
@@ -64,7 +66,10 @@ Thing_get_rotation(Thing *thing)
 } /* Thing_get_rotation */
 
 
-
+/**************************************
+*    L I S T   O P E R A T I O N S    *
+**************************************/
+/*        A D D    */
 void
 Thing_push(Thing *thing1, Thing *thing2)
 {
@@ -77,7 +82,7 @@ Thing_push(Thing *thing1, Thing *thing2)
     thing2->prev = thing3;
 } /* Thing_push */
 
-
+/*        R E M O V E    */
 void
 Thing_pop(Thing *thing)
 {

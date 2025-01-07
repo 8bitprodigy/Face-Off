@@ -8,8 +8,8 @@
 typedef struct Thing Thing;
 
 /* Constructors */
-Thing Thing_new(Vector2 position, float rotation, float radius);
-Thing *Thing_new_ptr(Vector2 position, float rotation, float radius);
+void  Thing_init(Thing *thing, Vector2 position, float rotation, float radius);
+Thing *Thing_new(Vector2 position, float rotation, float radius);
 /* Destructor */
 void Thing_free(Thing *thing);
 

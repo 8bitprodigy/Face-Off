@@ -9,25 +9,44 @@
 #define DEBUG
 #include "defs.h"
 
+/*    L O C A L   D E F I N E S    */
 #define INDEX2D( _x_, _y_ ) ((Index2D){.x=_x_,.y=_y_})
 #define GET_FRUSTUM_EDGE( Position, Point )  (Vector2Add(Vector2Scale(Vector2Normalize(Vector2Subtract(Point, Position)),MAX_DRAW_DISTANCE),Position))
 
 
-float Wall_Normals[4] = {
+/****************************
+*    L O C A L   D A T A    *
+****************************/
+float 
+Wall_Normals[4] 
+= {
     PI,
     HALF_PI,
     0,
     PI + HALF_PI
 };
 
-Vector2 Wall_Vec2_Normals[4] = {
+Vector2 
+Wall_Vec2_Normals[4] 
+= {
     VECTOR2(-1.0f,  0.0f),
     VECTOR2( 0.0f,  1.0f),
     VECTOR2( 1.0f,  0.0f),
     VECTOR2( 0.0f, -1.0f),
 };
 
-Index2D Cell_Directions[4] = {
+Color
+Wall_Colors[4] 
+= {
+    RED,
+    GREEN,
+    BLUE,
+    YELLOW,
+};
+
+Index2D 
+Cell_Directions[4] 
+= {
     INDEX2D( 1,  0),
     INDEX2D( 0, -1),
     INDEX2D(-1,  0),
@@ -35,6 +54,9 @@ Index2D Cell_Directions[4] = {
 };
 
 
+/********************************************
+*    S T R U C T   D E F I N I T I O N S    *
+********************************************/
 typedef struct
 Wall
 {
@@ -66,7 +88,9 @@ Map
     bool **render_buffer;
 } Map;
 
-
+/****************************************
+*    H E L P E R   F U N C T I O N S    *
+****************************************/
 static inline Index2D
 Index2D_add(Index2D index_1, Index2D index_2)
 {
@@ -96,41 +120,12 @@ get_frustum_edge(Vector2 position, Vector2 point)
     return Vector2Add(Vector2Scale(direction, MAX_DRAW_DISTANCE), position);
 } /* get_frustum_edge */
 
-static inline bool
-Buffer_contains_Cell(Cell **buffer, uint size, Cell *cell)
-{
-    uint i;
-    
-    if (MAX_RENDERABLE_CELLS <= size) return true;
-    if (size == 0) return false;
-    //DBG_OUT("Current buffer size: %u", size);
-    for (i = 0; i < size; i++) {
-        if (buffer[i] == cell) return true;
-    }
-    return false;
-} /* Buffer_contains_Index2D */
 
-Cell
-Cell_new()
-{
-    int  i;
-    Cell cell;
-    
-    for ( i = 0; i < 4; i++ ) {
-        cell.walls[i] = (Wall){
-            .color  = ORANGE,
-            .type   = PORTAL,
-            .health = 0.0f
-        };
-        cell.corners[i] = Vector2Zero();
-    }
-    cell.center = Vector2Zero();
-
-    return cell;
-} /* Cell_new */
-
+/********************************
+*    W A L L   M E T H O D S    *
+********************************/
 bool
-check_wall_frustum_intersection(Vector2 wall_start, Vector2 wall_end, Vector2 position, Vector2 l_frust, Vector2 r_frust, Vector2 *inside2, Vector2 *inside1)
+Wall_check_frustum_intersection(Vector2 wall_start, Vector2 wall_end, Vector2 position, Vector2 l_frust, Vector2 r_frust, Vector2 *inside2, Vector2 *inside1)
 {
     bool is_in_triangle = false;
     Vector2 dummy;
@@ -160,7 +155,29 @@ check_wall_frustum_intersection(Vector2 wall_start, Vector2 wall_end, Vector2 po
     }
     
     return false;
-} /*check_wall_frustum_intersection */
+} /*Wall_check_frustum_intersection */
+
+
+/********************************
+*    C E L L   M E T H O D S    *
+********************************/
+/*        I N I T I A L I Z E R    */
+void
+Cell_init(Cell *cell)
+{
+    int  i;
+    
+    for ( i = 0; i < 4; i++ ) {
+        cell->walls[i] = (Wall){
+            .color  = Wall_Colors[i],
+            .type   = PORTAL,
+            .health = 0.0f
+        };
+        cell->corners[i] = Vector2Zero();
+    }
+    cell->center = Vector2Zero();
+} /* Cell_new */
+
 
 void
 Cell_render(Cell *cell, uint cell_width)
@@ -234,6 +251,10 @@ Cell_render(Cell *cell, uint cell_width)
 #endif /* DEBUG */
 } /* Cell_render */
 
+
+/**************************************
+*    M A P   C O N S T R U C T O R    *
+**************************************/
 Map
 *Map_new(const char *name, uint size, uint cell_width)
 {
@@ -275,7 +296,7 @@ Map
     
     for ( i = 0; i < (int)size; i++ ) {
         for ( j = 0; j < (int)size; j++ ) {
-            map->cells[i][j] = Cell_new();
+            Cell_init(&map->cells[i][j] );
             cell  = &map->cells[i][j];
             walls = cell->walls;
 
@@ -350,6 +371,10 @@ Map
     return map;
 } /* Map_new */
 
+
+/************************************
+*    M A P   D E S T R U C T O R    *
+************************************/
 void
 Map_free(Map *map)
 {
@@ -372,6 +397,9 @@ Map_get_index(Map *map, Vector2 position)
 }
 
 
+/******************************
+*    M A P   M E T H O D S    *
+******************************/
 void 
 Map_check_vis(Map *map, Index2D index, Thing *thing, Vector2 l_frustum, Vector2 r_frustum)
 {
@@ -412,7 +440,7 @@ Map_check_vis(Map *map, Index2D index, Thing *thing, Vector2 l_frustum, Vector2 
         inside_l = l_frustum;
         inside_r = r_frustum;
         if (
-            check_wall_frustum_intersection(
+            Wall_check_frustum_intersection(
                 corners[i], 
                 corners[next], 
                 position, 
@@ -543,26 +571,24 @@ Map_check_Actor_collision(Map *map, Actor *actor, Vector2 new_pos, Vector2 *coll
         check_cells[3] = &cells[offset.x][offset.y];
     else check_cells[3] = check_cells[0];
 
-    *collision_point = VECTOR2_NAN;
 
     for (i = 0; i < 4; i++) {
         cell    = check_cells[i];
-        if (!cell) continue;
         walls   = &cell->walls;
         corners = cell->corners; 
-        if (!corners) continue;
+        *collision_point = VECTOR2_NAN;
         
         for (j = 0; j < 4; j++) {
             if (!walls[j].type) continue;
             next       = (j+1)%4;
             /* Push walls into the cell along their normal by the actor's radius 
             in order to create a minkowski distance */
-            wall_start = Vector2Add(corners[j],    Vector2Scale(Wall_Vec2_Normals[j], radius*4));
-            wall_end   = Vector2Add(corners[next], Vector2Scale(Wall_Vec2_Normals[j], radius*4));
+            wall_start = Vector2Add(corners[j],    Vector2Scale(Wall_Vec2_Normals[j], radius));
+            wall_end   = Vector2Add(corners[next], Vector2Scale(Wall_Vec2_Normals[j], radius));
             DBG_OUT("Wall Start: { X: %.4f |\tY: %.4f }\tWall End: { X: %.4f |\tY: %.4f }", wall_start.x, wall_start.y, wall_end.x, wall_end.y);
-            CheckCollisionLines(prev_pos, new_pos, wall_start, wall_end, collision_point);
-            *collision_normal = Wall_Vec2_Normals[j];
-            if (!(isnan(collision_point->x)&&isnan(collision_point->y))) {
+            if (CheckCollisionLines(prev_pos, new_pos, wall_start, wall_end, collision_point)) {
+                *collision_normal = Wall_Vec2_Normals[j];
+            //if (!(isnan(collision_point->x)&&isnan(collision_point->y))) {
                 DBG_OUT("Collision: { X: %.4f |\tY: %.4f }", collision_point->x, collision_point->y);
                 return true;
             }

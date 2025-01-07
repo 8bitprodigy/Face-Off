@@ -46,7 +46,7 @@ Index2D
 } Index2D;
 
 
-Cell Cell_new(void);
+void Cell_init(Cell *cell);
 
 Map *Map_new(const char *name, uint size, uint cell_width);
 void Map_free(Map *map);

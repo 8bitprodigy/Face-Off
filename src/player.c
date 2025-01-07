@@ -1,9 +1,14 @@
 #include <stdlib.h>
 #include <math.h>
+#include "gamestate.h"
 #include "player_private.h"
 #define DEBUG
 #include "defs.h"
 
+
+/******************************
+*    C O N S T R U C T O R    *
+******************************/
 Player 
 *Player_new(Vector2 position, float rotation, float radius, int controller)
 {
@@ -61,6 +66,9 @@ Player
 } /* Player_new */
 
 
+/****************************
+*    D E S T R U C T O R    *
+****************************/
 void
 Player_free(Player *player)
 {
@@ -74,7 +82,6 @@ Player_free(Player *player)
 /**********************
 *    G E T T E R S    *
 **********************/
-
 Actor
 *Player_get_Actor(Player *player)
 {
@@ -103,6 +110,7 @@ Player_get_half_fov(Player *player)
 /**************************************
 *    L I S T   O P E R A T I O N S    *
 **************************************/
+/*        A D D    */
 void
 Player_push(Player *player1, Player *player2)
 {
@@ -117,6 +125,7 @@ Player_push(Player *player1, Player *player2)
     //Actor_push(&player1->_, &player2->_);
 } /* Player_push */
 
+/*        R E M O V E    */
 void
 Player_pop(Player *player)
 {
@@ -130,11 +139,15 @@ Player_pop(Player *player)
 } /* Player_pop */
 
 
+/********************
+*    U P D A T E    *
+********************/
 void 
-Player_update(Player *player, float delta, GameState *game_state)
+Player_update(Player *player, GameState *game_state)
 {
     Actor *actor = &player->base;
     Thing *thing = &actor->base;
+    float delta  = GameState_get_delta(game_state);
     
     float rotate = 0;
 
@@ -148,7 +161,7 @@ Player_update(Player *player, float delta, GameState *game_state)
         GAMEPAD_BUTTON_RIGHT_FACE_LEFT,
         KEY_LEFT ) * actor->turn_speed;
     actor->angular_velocity = rotate;
-    Actor_rotate(actor, delta);
+    Actor_rotate(actor, game_state);
     
     move = Vector2Scale(
         GET_KEY_OR_BUTTON_VECTOR(

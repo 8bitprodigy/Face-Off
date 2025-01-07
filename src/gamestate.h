@@ -35,7 +35,8 @@ void GameState_remove_Actor(GameState *game_state, Actor *actor);
 void GameState_remove_Thing(GameState *game_state, Thing *thing);
 
 /* GameState Getters */
-Map *GameState_get_Map(GameState *game_state);
+Map   *GameState_get_Map(GameState *game_state);
+float GameState_get_delta(GameState *game_state);
 
 /* GameState Setters */
 void GameState_set_Map(GameState *game_state, Map *map);

@@ -25,7 +25,7 @@ Actor
     
     int         health;
     
-    void        (*update)(struct Actor *, float, GameState *);
+    void        (*update)(struct Actor *, GameState *);
 } Actor;
 
 

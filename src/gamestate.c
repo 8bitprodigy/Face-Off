@@ -24,6 +24,8 @@ GameState
     
     Map      *map;
     bool     paused;
+
+    float    delta;
 } GameState;
 
 /******************************
@@ -84,9 +86,9 @@ GameState_free(GameState *game_state)
 } /* GameState_free */
 
 
-/****************************
-*    O P E R A T I O N S    *
-****************************/
+/**************************************
+*    L I S T   O P E R A T I O N S    *
+**************************************/
 /*    A D D    */
 void
 GameState_add_Player(GameState *game_state, Player *player)
@@ -140,6 +142,12 @@ GameState_remove_Thing(GameState *game_state, Thing *thing)
 /**********************
 *    G E T T E R S    *
 **********************/
+float
+GameState_get_delta(GameState *game_state)
+{
+    return game_state->delta;
+}
+
 Map
 *GameState_get_Map(GameState *game_state)
 {
@@ -156,6 +164,7 @@ GameState_set_Map(GameState *game_state, Map *map)
     game_state->map = map;
 }
 
+
 /********************
 *    U P D A T E    *
 ********************/
@@ -171,6 +180,7 @@ GameState_update(GameState *game_state)
     //Thing  *thing;
 
     delta = GetFrameTime();
+    game_state->delta = delta;
     
     player = game_state->players.next;
     actor  = game_state->actors.next;
@@ -178,11 +188,11 @@ GameState_update(GameState *game_state)
     
     //DBG_OUT("Actor: %u", actor);
     while (player != &game_state->players) {
-        Player_update(player, delta, game_state);
+        Player_update(player, game_state);
         player = player->next;
     }
     while (actor != &game_state->actors) {
-        actor->update(actor, delta, game_state);
+        actor->update(actor, game_state);
         actor = actor->next;
     }
 }

@@ -6,25 +6,16 @@
 #include "defs.h"
 
 
-Actor
-*Actor_new(ActorType type)
+/******************************
+*    C O N S T R U C T O R    *
+******************************/
+void
+Actor_init(Actor *actor, ActorType type)
 {
-    Thing thing;
-    Actor *actor = malloc(sizeof(Actor));
-    if (!actor) {
-        ERR_OUT("Failed to allocate memory for Actor.");
-        return NULL;
-    }
-    
-    thing = (Thing){
-        .position = Vector2Zero(),
-        .rotation = 0.0f,
-        .sin_rot  = sin(0.0f),
-        .cos_rot  = cos(0.0f),
-        .radius   = 0.5f,
-    };
-    
-    actor->base             = thing;
+    Thing *thing = &actor->base;
+
+    Thing_init(thing, Vector2Zero(), 0.0f, 0.5f);
+
     actor->prev_pos         = Vector2Zero();
     actor->velocity         = Vector2Zero();
     
@@ -47,16 +38,31 @@ Actor
         break;
     default:
         ERR_OUT("Actor type undefined!");
-        return NULL;
+        return;
     }
     
     actor->type   = type;
-    actor->update = &Actor_move;
+    actor->update = &Actor_update;
+}
+
+Actor
+*Actor_new(ActorType type)
+{
+    Actor *actor = malloc(sizeof(Actor));
+    if (!actor) {
+        ERR_OUT("Failed to allocate memory for Actor.");
+        return NULL;
+    }
+    
+    Actor_init(actor, type);
     
     return actor;
 }
 
 
+/****************************
+*    D E S T R U C T O R    *
+****************************/
 void
 Actor_free(Actor *actor)
 {
@@ -69,7 +75,6 @@ Actor_free(Actor *actor)
 /**********************
 *    G E T T E R S    *
 **********************/
-
 Thing
 *Actor_get_Thing(Actor *actor)
 {
@@ -89,6 +94,10 @@ Actor_get_radius(Actor *actor)
 }
 
 
+/**************************************
+*    L I S T   O P E R A T I O N S    *
+**************************************/
+/*        A D D    */
 void
 Actor_push(Actor *actor1, Actor *actor2)
 {
@@ -102,7 +111,7 @@ Actor_push(Actor *actor1, Actor *actor2)
 
 } /* Actor_push */
 
-
+/*        R E M O V E    */
 void
 Actor_pop(Actor *actor)
 {
@@ -115,11 +124,20 @@ Actor_pop(Actor *actor)
 } /* Actor_pop */
 
 
+/**********************************
+*    A C T O R   M E T H O D S    *
+**********************************/
+/*        U P D A T E    */
+void
+Actor_update(Actor *actor, GameState *game_state)
+{}
+
 void 
-Actor_rotate(Actor *actor, float delta)
+Actor_rotate(Actor *actor, GameState *game_state)
 {
     Thing *thing   = &actor->base;
     float rotation = thing->rotation;
+    float delta    = GameState_get_delta(game_state);
 
     actor->prev_rot  = rotation;
     
@@ -131,14 +149,17 @@ Actor_rotate(Actor *actor, float delta)
 } /* Actor_rotate */
 
 void 
-Actor_move(Actor *actor, float delta, GameState *game_state)
+Actor_move(Actor *actor, GameState *game_state)
 {
     Thing   *thing       = &actor->base;
     Map     *map         = GameState_get_Map(game_state);
+    float   delta        = GameState_get_delta(game_state);
+    
     Vector2 position     = thing->position;
     Vector2 new_position = Vector2Add(position, Vector2Scale(actor->velocity, delta));
     Vector2 collision_point;
     Vector2 collision_normal;
+    
     //printf("New Position>\t x: %.4f | y: %.4f\n", new_position.x, new_position.y); 
     if (Map_check_Actor_collision(map, actor, new_position, &collision_point, &collision_normal)) {
         DBG_OUT("Wall collision!");

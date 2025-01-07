@@ -9,6 +9,7 @@ typedef enum {
     HEALTH,
     ARMOR,
     SPEED,
+    COIN,
 }
 ItemType;
 
