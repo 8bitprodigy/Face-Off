@@ -537,7 +537,7 @@ Map_render(Map *map, Player *player)
 bool
 Map_check_Actor_collision(Map *map, Actor *actor, Vector2 new_pos, Vector2 *collision_point, Vector2 *collision_normal)
 {
-    int   i, j, next;
+    int   cell_index, wall_index, next;
 
     int   size = map->size; 
     
@@ -548,51 +548,57 @@ Map_check_Actor_collision(Map *map, Actor *actor, Vector2 new_pos, Vector2 *coll
 
     Vector2 prev_pos = Actor_get_position(actor);
     float   radius   = Actor_get_radius(actor);
-    
+
+    Vector2 collision = VECTOR2_NAN;
+    Vector2 normal    = Vector2Zero();
     Vector2 *corners;
     Vector2 wall_start;
     Vector2 wall_end;
     
     Index2D offset;
-    Index2D cell_index = Map_get_index(map, prev_pos);
+    Index2D map_index = Map_get_index(map, prev_pos);
 
-    if (!(IS_IN_BOUNDS(cell_index.x, 0, (int)map->size-1)&&IS_IN_BOUNDS(cell_index.y, 0, (int)size-1))) return false;
+    if (!(IS_IN_BOUNDS(map_index.x, 0, (int)map->size-1)&&IS_IN_BOUNDS(map_index.y, 0, (int)size-1))) return false;
     /* First checked cell should ALWAYS be the one the actor's coordinates are actually in. */
-    check_cells[0] = &cells[cell_index.x][cell_index.y];
+    check_cells[0] = &cells[map_index.x][map_index.y];
     
-    offset.x = SIGN_BETWEEN(prev_pos.x, check_cells[0]->center.x) + cell_index.x;
-    offset.y = SIGN_BETWEEN(prev_pos.y, check_cells[0]->center.y) + cell_index.y;
+    offset.x = SIGN_BETWEEN(prev_pos.x, check_cells[0]->center.x) + map_index.x;
+    offset.y = SIGN_BETWEEN(prev_pos.y, check_cells[0]->center.y) + map_index.y;
     /* Then we get adjacent cells(if applicable). */
-    if (IS_IN_BOUNDS(offset.x, 0, size-1)) check_cells[1] = &cells[offset.x][cell_index.y];
+    if (IS_IN_BOUNDS(offset.x, 0, size-1)) check_cells[1] = &cells[offset.x][map_index.y];
     else check_cells[1] = check_cells[0];
-    if (IS_IN_BOUNDS(offset.y, 0, size-1)) check_cells[2] = &cells[cell_index.x][offset.y];
+    if (IS_IN_BOUNDS(offset.y, 0, size-1)) check_cells[2] = &cells[map_index.x][offset.y];
     else check_cells[2] = check_cells[0];
     if (IS_IN_BOUNDS(offset.x, 0, size-1) && IS_IN_BOUNDS(offset.y, 0, size-1))
         check_cells[3] = &cells[offset.x][offset.y];
     else check_cells[3] = check_cells[0];
 
-
-    for (i = 0; i < 4; i++) {
-        cell    = check_cells[i];
+    for (cell_index = 0; cell_index < 4; cell_index++) {
+        cell    = check_cells[cell_index];
         walls   = &cell->walls;
         corners = cell->corners; 
-        *collision_point = VECTOR2_NAN;
         
-        for (j = 0; j < 4; j++) {
-            if (!walls[j].type) continue;
-            next       = (j+1)%4;
+        for (wall_index = 0; wall_index < 4; wall_index++) {
+            if (!walls[wall_index].type) continue;
+            next       = (wall_index+1)%4;
             /* Push walls into the cell along their normal by the actor's radius 
             in order to create a minkowski distance */
-            wall_start = Vector2Add(corners[j],    Vector2Scale(Wall_Vec2_Normals[j], radius));
-            wall_end   = Vector2Add(corners[next], Vector2Scale(Wall_Vec2_Normals[j], radius));
-            DBG_OUT("Wall Start: { X: %.4f |\tY: %.4f }\tWall End: { X: %.4f |\tY: %.4f }", wall_start.x, wall_start.y, wall_end.x, wall_end.y);
-            if (CheckCollisionLines(prev_pos, new_pos, wall_start, wall_end, collision_point)) {
-                *collision_normal = Wall_Vec2_Normals[j];
-            //if (!(isnan(collision_point->x)&&isnan(collision_point->y))) {
-                DBG_OUT("Collision: { X: %.4f |\tY: %.4f }", collision_point->x, collision_point->y);
-                return true;
+            wall_start = Vector2Add(corners[wall_index],    Vector2Scale(Wall_Vec2_Normals[wall_index], radius));
+            wall_end   = Vector2Add(corners[next], Vector2Scale(Wall_Vec2_Normals[wall_index], radius));
+            if (CheckCollisionLines(prev_pos, new_pos, wall_start, wall_end, &collision)) {
+                DBG_OUT("Wall Start: { X: %.4f |\tY: %.4f }\tWall End: { X: %.4f |\tY: %.4f }", wall_start.x, wall_start.y, wall_end.x, wall_end.y);
+                DBG_OUT("Radius: %.4f", radius);
+                new_pos = collision;
+                normal  = Vector2Add(normal,Wall_Vec2_Normals[wall_index]);
             }
         }
+    }
+    
+    if (!IS_VECTOR2_NAN(collision)) {
+        DBG_OUT("Collision: { X: %.4f |\tY: %.4f }", new_pos.x, new_pos.y);
+        *collision_point  = new_pos;
+        *collision_normal = Vector2Normalize(normal);
+        return true;
     }
     
     return false;

@@ -10,11 +10,9 @@
 *    C O N S T R U C T O R    *
 ******************************/
 void
-Actor_init(Actor *actor, ActorType type)
+Actor_init(Actor *actor, ActorType type, Vector2 position, float rotation, float radius)
 {
     Thing *thing = &actor->base;
-
-    Thing_init(thing, Vector2Zero(), 0.0f, 0.5f);
 
     actor->prev_pos         = Vector2Zero();
     actor->velocity         = Vector2Zero();
@@ -26,6 +24,8 @@ Actor_init(Actor *actor, ActorType type)
         actor->prev_rot         = 0.0f;
         actor->angular_velocity = 0.0f;
         actor->health           = 3;
+        actor->update           = &Actor_move;
+        Thing_init(thing, position, rotation, radius);
         break;
     case DERVISH:
         actor->speed            = 0.0f;
@@ -33,6 +33,8 @@ Actor_init(Actor *actor, ActorType type)
         actor->prev_rot         = 0.0f;
         actor->angular_velocity = 0.0f;
         actor->health           = 1;
+        actor->update           = &Actor_update;
+        Thing_init(thing, position, rotation, 0.5f);
         break;
     case ISOPOD:
         break;
@@ -42,11 +44,10 @@ Actor_init(Actor *actor, ActorType type)
     }
     
     actor->type   = type;
-    actor->update = &Actor_update;
 }
 
 Actor
-*Actor_new(ActorType type)
+*Actor_new(ActorType type, Vector2 position, float rotation, float radius)
 {
     Actor *actor = malloc(sizeof(Actor));
     if (!actor) {
@@ -54,7 +55,7 @@ Actor
         return NULL;
     }
     
-    Actor_init(actor, type);
+    Actor_init(actor, type, position, rotation, radius);
     
     return actor;
 }

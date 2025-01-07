@@ -9,6 +9,37 @@
 /******************************
 *    C O N S T R U C T O R    *
 ******************************/
+void
+Player_init(Player *player, Vector2 position, float rotation, float radius, int controller)
+{
+    Thing  *thing;
+    Actor  *actor;
+    
+    actor = &player->base;
+    thing = &actor->base;
+    
+    Actor_init(actor, PLAYER, position, rotation, radius);
+
+    player->controller = controller;
+
+    player->camera.position   = (Vector3){.x=0.0f,.y=CAMERA_HEIGHT,.z=0.0f};
+    
+    player->camera.target     = (Vector3){ 
+        .x = position.x + thing->cos_rot,
+        .y = CAMERA_HEIGHT,
+        .z = position.y + thing->sin_rot
+    };
+    
+    player->camera.up         = VECTOR3_UP;
+    player->fov               = PI/2.0f;
+    player->half_fov          = player->fov/2.0f;
+    player->camera.fovy       = 2 * atan(
+        tan(player->half_fov) /
+        ((float)SCREEN_WIDTH / (float)SCREEN_HEIGHT)
+    ) * 180 / PI;
+    player->camera.projection = CAMERA_PERSPECTIVE;
+}
+
 Player 
 *Player_new(Vector2 position, float rotation, float radius, int controller)
 {
@@ -20,47 +51,7 @@ Player
         return NULL;
     }
 
-    actor = &player->base;
-    thing = &actor->base;
-    
-    *thing = (Thing){
-        .position = position,
-        .rotation = rotation,
-        .sin_rot  = sin(rotation),
-        .cos_rot  = cos(rotation),
-        .radius   = radius,
-    };
-
-    *actor = (Actor){
-        .type             = PLAYER,
-        .prev_pos         = Vector2Zero(),
-        .velocity         = Vector2Zero(),
-        .speed            = 5.0f,
-        .turn_speed       = 1.0f,
-        .prev_rot         = 0.0f,
-        .angular_velocity = 0.0f,
-        .health           = 4,
-        .update           = &Actor_move,
-    };
-
-    player->controller = controller;
-
-    player->camera.position   = (Vector3){.x=0.0f,.y=CAMERA_HEIGHT,.z=0.0f};
-    
-    player->camera.target     = (Vector3){ 
-        .x = position.x + thing->cos_rot,
-        .y = CAMERA_HEIGHT,
-        .z = position.y + thing->sin_rot
-    };
-    DBG_OUT("Camera target: { X: %.4f,\tY: %.4f }", player->camera.target.x, player->camera.target.y);
-    player->camera.up         = VECTOR3_UP;
-    player->fov               = PI/2.0f;
-    player->half_fov          = player->fov/2.0f;
-    player->camera.fovy       = 2 * atan(
-        tan(player->half_fov) /
-        ((float)SCREEN_WIDTH / (float)SCREEN_HEIGHT)
-    ) * 180 / PI;
-    player->camera.projection = CAMERA_PERSPECTIVE;
+    Player_init(player, position, rotation, radius, controller);
 
     return player;
 } /* Player_new */

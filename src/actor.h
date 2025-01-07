@@ -19,8 +19,8 @@ ActorType;
 typedef struct Actor Actor;
 
 /* Actor Constructor */
-void  Actor_init(Actor *actor, ActorType type);
-Actor *Actor_new(ActorType type);
+void  Actor_init(Actor *actor, ActorType type, Vector2 position, float rotation, float radius);
+Actor *Actor_new(ActorType type, Vector2 position, float rotation, float radius);
 /* Actor Destructor */
 void Actor_free(Actor *actor);
 

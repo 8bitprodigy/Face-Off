@@ -49,7 +49,7 @@ main(/*int argc, char** argv*/)
     camera.projection = CAMERA_PERSPECTIVE;
 
     player = Player_new(
-        Vector2Zero(),
+        (Vector2){.x=2.0f,.y=2.0f},
         0.0f, 0.5f, 0
     );
 
