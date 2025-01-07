@@ -157,22 +157,32 @@ Actor_move(Actor *actor, GameState *game_state)
     float   delta        = GameState_get_delta(game_state);
     
     Vector2 position     = thing->position;
+    float   radius       = thing->radius;
     Vector2 new_position = Vector2Add(position, Vector2Scale(actor->velocity, delta));
+    Vector2 perpendicular_velocity;
+    Vector2 correction_offset;
+    Vector2 slide_velocity;
     Vector2 collision_point;
     Vector2 collision_normal;
     
     //printf("New Position>\t x: %.4f | y: %.4f\n", new_position.x, new_position.y); 
     if (Map_check_Actor_collision(map, actor, new_position, &collision_point, &collision_normal)) {
         DBG_OUT("Wall collision!");
-        new_position = Vector2Add(
-            collision_point,
-            /* This should nullify the part of the coord that would find itself inside the wall
-            allowing the actor to slide along it. */
-            Vector2Multiply(
-                new_position, 
-                VECTOR2(collision_normal.x, collision_normal.y)
-            )
+        perpendicular_velocity = Vector2Scale(
+            collision_normal,
+            Vector2DotProduct(actor->velocity, collision_normal)
         );
+
+        slide_velocity = Vector2Subtract(actor->velocity, perpendicular_velocity);
+
+        correction_offset = Vector2Scale(collision_normal, radius);
+
+        new_position = Vector2Add(
+            collision_point, 
+            Vector2Scale(slide_velocity, delta)
+        );
+
+        new_position = Vector2Add(new_position, correction_offset);
         DBG_OUT("New Position: { X:%.4f |\tY:%.4f }", new_position.x, new_position.y);
     }
     /* Todo... */
@@ -180,3 +190,4 @@ Actor_move(Actor *actor, GameState *game_state)
     actor->prev_pos = position;
     thing->position = new_position;
 } /* Actor_move */
+

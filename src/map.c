@@ -549,8 +549,8 @@ Map_check_Actor_collision(Map *map, Actor *actor, Vector2 new_pos, Vector2 *coll
     Vector2 prev_pos = Actor_get_position(actor);
     float   radius   = Actor_get_radius(actor);
 
-    Vector2 collision = VECTOR2_NAN;
-    Vector2 normal    = Vector2Zero();
+    Vector2 collision       = VECTOR2_NAN;
+    Vector2 final_collision = new_pos;
     Vector2 *corners;
     Vector2 wall_start;
     Vector2 wall_end;
@@ -585,19 +585,18 @@ Map_check_Actor_collision(Map *map, Actor *actor, Vector2 new_pos, Vector2 *coll
             in order to create a minkowski distance */
             wall_start = Vector2Add(corners[wall_index],    Vector2Scale(Wall_Vec2_Normals[wall_index], radius));
             wall_end   = Vector2Add(corners[next], Vector2Scale(Wall_Vec2_Normals[wall_index], radius));
+            
             if (CheckCollisionLines(prev_pos, new_pos, wall_start, wall_end, &collision)) {
-                DBG_OUT("Wall Start: { X: %.4f |\tY: %.4f }\tWall End: { X: %.4f |\tY: %.4f }", wall_start.x, wall_start.y, wall_end.x, wall_end.y);
-                DBG_OUT("Radius: %.4f", radius);
-                new_pos = collision;
-                normal  = Vector2Add(normal,Wall_Vec2_Normals[wall_index]);
+                //DBG_OUT("Wall Start: { X: %.4f |\tY: %.4f }\tWall End: { X: %.4f |\tY: %.4f }", wall_start.x, wall_start.y, wall_end.x, wall_end.y);
+                if (Vector2Distance(prev_pos,collision)<Vector2Distance(prev_pos,final_collision)) final_collision = collision;
+                *collision_normal = Wall_Vec2_Normals[wall_index];
             }
         }
     }
     
     if (!IS_VECTOR2_NAN(collision)) {
-        DBG_OUT("Collision: { X: %.4f |\tY: %.4f }", new_pos.x, new_pos.y);
-        *collision_point  = new_pos;
-        *collision_normal = Vector2Normalize(normal);
+        DBG_OUT("Collision: { X: %.4f\t|\tY: %.4f }", new_pos.x, new_pos.y);
+        *collision_point  = final_collision;
         return true;
     }
     
