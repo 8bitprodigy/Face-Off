@@ -27,6 +27,7 @@
     T Y P E S    
 ****************/
 #define uint unsigned int 
+#define byte unsigned char
 
 /************************
     V A R I A B L E S    

@@ -19,6 +19,7 @@ Player_init(Player *player, Vector2 position, float rotation, float radius, int 
     thing = &actor->base;
     
     Actor_init(actor, PLAYER, position, rotation, radius);
+    actor->update = &Player_update;
 
     player->controller = controller;
 
@@ -134,13 +135,13 @@ Player_pop(Player *player)
 *    U P D A T E    *
 ********************/
 void 
-Player_update(Player *player, GameState *game_state)
+Player_update(Actor *actor, GameState *game_state)
 {
-    Actor *actor = &player->base;
-    Thing *thing = &actor->base;
-    float delta  = GameState_get_delta(game_state);
+    Player *player = (Player*)actor;
+    Thing  *thing  = &actor->base;
+    float  delta   = GameState_get_delta(game_state);
     
-    float rotate = 0;
+    float rotate   = 0;
 
     Vector2 move;
     Vector2 target;
@@ -170,7 +171,7 @@ Player_update(Player *player, GameState *game_state)
 
     actor->velocity = Vector2Rotate(move,thing->rotation);
 
-    //Actor_move(actor, delta, game_state);
+    Actor_move(actor, game_state);
 
     player->camera.position   = VECTOR2_TO_3( thing->position, 30.0f );
     target = Vector2Add(thing->position, (Vector2){ thing->cos_rot, thing->sin_rot });

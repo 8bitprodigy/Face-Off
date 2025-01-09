@@ -22,6 +22,6 @@ void Player_push(Player *player1, Player *player2);
 void Player_pop(Player *player);
 
 /* Player Methods */
-void Player_update(Player *player, GameState *game_state);
+void Player_update(Actor *actor, GameState *game_state);
 
 #endif /* PLAYER_H */

@@ -16,6 +16,7 @@ ItemType;
 typedef union {
     int   i;
     float f;
+    char  c[4];
     void  *p;
 }
 ItemValue;

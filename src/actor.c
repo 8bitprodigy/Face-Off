@@ -24,7 +24,6 @@ Actor_init(Actor *actor, ActorType type, Vector2 position, float rotation, float
         actor->prev_rot         = 0.0f;
         actor->angular_velocity = 0.0f;
         actor->health           = 3;
-        actor->update           = &Actor_move;
         Thing_init(thing, position, rotation, radius);
         break;
     case DERVISH:
@@ -33,7 +32,6 @@ Actor_init(Actor *actor, ActorType type, Vector2 position, float rotation, float
         actor->prev_rot         = 0.0f;
         actor->angular_velocity = 0.0f;
         actor->health           = 1;
-        actor->update           = &Actor_update;
         Thing_init(thing, position, rotation, 0.5f);
         break;
     case ISOPOD:
