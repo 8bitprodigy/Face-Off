@@ -47,7 +47,7 @@
 #define GAME_MAX_ITEMS   32
 #define GAME_MAX_THINGS  (GAME_MAX_PLAYERS+GAME_MAX_ACTORS+GAME_MAX_ITEMS)
 
-#define VECTOR3_UP (Vector3){.x=0.0f,.y=1.0f,.z=0.0f}
+#define VECTOR3_UP ((Vector3){.x=0.0f,.y=1.0f,.z=0.0f})
 
 #ifdef PLATFORM_PSP
     #define SCREEN_WIDTH  480
@@ -63,6 +63,11 @@
 /************************
     F U N C T I O N S    
 ************************/
+
+/*** Casts ***/
+#define THING( self ) ((Thing*)(self))
+#define ACTOR( self ) ((Actor*)(self))
+#define PLAYER( self ) ((Player*)(self))
 
 /*** Common Output Operations ***/
 

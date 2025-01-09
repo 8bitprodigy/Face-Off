@@ -40,8 +40,8 @@ GameState
         return NULL;
     }
 
-    actors = Actor_new(PLAYER,Vector2Zero(),0.0f,0.0f);
-    things = Actor_get_Thing(actors);
+    actors = Actor_new(Vector2Zero(),0.0f,0.0f);
+    things = THING(actors);
 
     game_state->num_actors = 0;
     actors->next = actors;
@@ -63,10 +63,10 @@ GameState
 void
 GameState_free(GameState *game_state)
 {
-    while (game_state->actors->prev != game_state->actors->next) {
+    while (game_state->actors) {
         Actor_free(game_state->actors->prev);
     }
-    while (game_state->things->prev != game_state->things->next) {
+    while (game_state->things) {
         Thing_free(game_state->things->prev);
     }
     Map_free(game_state->map);
@@ -81,7 +81,7 @@ GameState_free(GameState *game_state)
 void 
 GameState_add_Player(GameState *game_state, Player *player)
 {
-    GameState_add_Actor(game_state, Player_get_Actor(player));
+    GameState_add_Actor(game_state, ACTOR(player));
 }
 
 void
@@ -104,7 +104,7 @@ GameState_add_Thing(GameState *game_state, Thing *thing)
 void 
 GameState_remove_Player(GameState *game_state, Player *player)
 {
-    GameState_remove_Actor(game_state, Player_get_Actor(player));
+    GameState_remove_Actor(game_state, ACTOR(player));
 }
 
 void
@@ -155,19 +155,14 @@ GameState_set_Map(GameState *game_state, Map *map)
 void
 GameState_update(GameState *game_state)
 {
-    //int i;
-    
     float delta;
     
-    Player *player;
     Actor  *actor;
-    //Thing  *thing;
 
     delta = GetFrameTime();
     game_state->delta = delta;
     
     actor  = game_state->actors->next;
-    //thing  = game_state->things.next;
     
     while (actor != game_state->actors) {
         actor->update(actor, game_state);

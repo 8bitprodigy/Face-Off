@@ -15,12 +15,9 @@ Player_init(Player *player, Vector2 position, float rotation, float radius, int 
     Thing  *thing;
     Actor  *actor;
     
-    actor = &player->base;
-    thing = &actor->base;
+    actor = ACTOR(player);
+    thing = THING(player);
     
-    Actor_init(actor, PLAYER, position, rotation, radius);
-    actor->update = &Player_update;
-
     player->controller = controller;
 
     player->camera.position   = (Vector3){.x=0.0f,.y=CAMERA_HEIGHT,.z=0.0f};
@@ -39,6 +36,9 @@ Player_init(Player *player, Vector2 position, float rotation, float radius, int 
         ((float)SCREEN_WIDTH / (float)SCREEN_HEIGHT)
     ) * 180 / PI;
     player->camera.projection = CAMERA_PERSPECTIVE;
+    
+    Actor_init(actor, position, rotation, radius);
+    actor->update = &Player_update;
 }
 
 Player 

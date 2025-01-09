@@ -44,7 +44,7 @@ main(/*int argc, char** argv*/)
 
     camera.position   = (Vector3){ 1.0f, 0.75f, 0.0f};
     camera.target     = (Vector3){ 0.0f, 0.75f, 0.0f};
-    camera.up         = (Vector3){ 0.0f, 1.0f,  0.0f};
+    camera.up         = VECTOR3_UP;
     camera.fovy       = 45.0f;
     camera.projection = CAMERA_PERSPECTIVE;
 
@@ -57,14 +57,14 @@ main(/*int argc, char** argv*/)
 
     game_state = GameState_new(CO_OP);
     GameState_add_Player(game_state, player);
-    //GameState_set_Map(game_state, map);
+    GameState_set_Map(game_state, map);
 
     SetTargetFPS(60);
     
     while (!done) {
         done = GET_KEY_OR_BUTTON_DOWN(0, GAMEPAD_BUTTON_MIDDLE_RIGHT, KEY_ESCAPE);
         //UpdateCamera( &camera, CAMERA_ORBITAL);
-        //GameState_update(game_state);
+        GameState_update(game_state);
         //camera = player->camera;
         BeginDrawing();
 

@@ -13,8 +13,6 @@ Actor
     struct Actor *prev;
     struct Actor *next;
     
-    ActorType   type;
-    
     Vector2     prev_pos;
     Vector2     velocity;
     float       speed;

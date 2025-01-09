@@ -12,7 +12,6 @@ Player *Player_new(Vector2 position, float rotation, float radius, int controlle
 void Player_free(Player *player);
 
 /* Getters */
-Actor   *Player_get_Actor(Player *player);
 Camera  *Player_get_Camera(Player *player);
 Vector2 Player_get_position(Player *player);
 float   Player_get_half_fov(Player *player);

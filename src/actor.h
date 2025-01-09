@@ -8,24 +8,15 @@
 typedef struct GameState GameState;
 typedef struct Map Map;
 
-typedef enum {
-    PLAYER,
-    DERVISH,
-    ISOPOD,
-}
-ActorType;
-
-
 typedef struct Actor Actor;
 
 /* Actor Constructor */
-void  Actor_init(Actor *actor, ActorType type, Vector2 position, float rotation, float radius);
-Actor *Actor_new(ActorType type, Vector2 position, float rotation, float radius);
+void  Actor_init(Actor *actor, Vector2 position, float rotation, float radius);
+Actor *Actor_new(Vector2 position, float rotation, float radius);
 /* Actor Destructor */
 void Actor_free(Actor *actor);
 
 /* Getters */
-Thing   *Actor_get_Thing(  Actor *actor);
 Vector2 Actor_get_position(Actor *actor);
 float   Actor_get_radius(  Actor *actor);
 
