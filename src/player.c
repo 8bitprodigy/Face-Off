@@ -20,6 +20,9 @@ Player_init(Player *player, Vector2 position, float rotation, float radius, int 
     
     player->controller = controller;
 
+    player->prev = player;
+    player->next = player;
+
     player->camera.position   = (Vector3){.x=0.0f,.y=CAMERA_HEIGHT,.z=0.0f};
     
     player->camera.target     = (Vector3){ 
@@ -38,14 +41,36 @@ Player_init(Player *player, Vector2 position, float rotation, float radius, int 
     player->camera.projection = CAMERA_PERSPECTIVE;
     
     Actor_init(actor, position, rotation, radius);
+    actor->next = actor;
+    actor->prev = actor;
+    
+    actor->prev_pos         = Vector2Zero();
+    actor->velocity         = Vector2Zero();
+    
+    actor->speed            = 5.0f;
+    actor->turn_speed       = 1.0f;
+    actor->prev_rot         = 0.0f;
+    actor->angular_velocity = 0.0f;
+    actor->health           = 3;
     actor->update = &Player_update;
+
+    
+    thing->next     = thing;
+    thing->prev     = thing;
+        
+    thing->visible  = true;
+        
+    thing->position = position;
+    thing->rotation = rotation;
+    thing->sin_rot  = sin(rotation);
+    thing->cos_rot  = cos(rotation);
+        
+    thing->radius   = radius;
 }
 
 Player 
 *Player_new(Vector2 position, float rotation, float radius, int controller)
 {
-    Thing  *thing;
-    Actor  *actor;
     Player *player = malloc(sizeof(Player));
     if (!player) {
         ERR_OUT("Failed to allocate memory for Player.");
@@ -64,9 +89,9 @@ Player
 void
 Player_free(Player *player)
 {
-    Thing_pop(&player->base.base);
-    Actor_pop(&player->base);
-    Player_pop(player);
+    Thing_remove(&player->base.base);
+    Actor_remove(&player->base);
+    Player_remove(player);
     free(player);
 } /* Player_free */
 
@@ -104,7 +129,7 @@ Player_get_half_fov(Player *player)
 **************************************/
 /*        A D D    */
 void
-Player_push(Player *player1, Player *player2)
+Player_insert(Player *player1, Player *player2)
 {
     Player *player3 = player1->prev;
 
@@ -119,7 +144,7 @@ Player_push(Player *player1, Player *player2)
 
 /*        R E M O V E    */
 void
-Player_pop(Player *player)
+Player_remove(Player *player)
 {
     Player *player1 = player->prev;
     Player *player2 = player->next;

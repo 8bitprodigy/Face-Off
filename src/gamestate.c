@@ -1,3 +1,9 @@
+/****************************
+*                           *
+*    G A M E   S T A T E    *
+*                           *
+****************************/
+
 #include <stdlib.h>
 #include "gamestate.h"
 #include "thing_private.h"
@@ -25,9 +31,9 @@ GameState
     float    delta;
 } GameState;
 
-/******************************
-*    C O N S T R U C T O R    *
-******************************/
+/****************************
+    C O N S T R U C T O R    
+****************************/
 GameState
 *GameState_new(GameMode game_mode)
 {
@@ -40,16 +46,8 @@ GameState
         return NULL;
     }
 
-    actors = Actor_new(Vector2Zero(),0.0f,0.0f);
-    things = THING(actors);
-
     game_state->num_actors = 0;
-    actors->next = actors;
-    actors->prev = actors;
-
     game_state->num_things = 0;
-    things->next = things;
-    things->prev = things;
     
     game_state->game_mode = game_mode;
     game_state->paused    = false;
@@ -57,16 +55,16 @@ GameState
     return game_state;
 } /* GameState_new */
 
-/****************************
-*    D E S T R U C T O R    *
-****************************/
+/**************************
+    D E S T R U C T O R    
+**************************/
 void
 GameState_free(GameState *game_state)
 {
     while (game_state->actors) {
         Actor_free(game_state->actors->prev);
     }
-    while (game_state->things) {
+    while (game_state->things)  {
         Thing_free(game_state->things->prev);
     }
     Map_free(game_state->map);
@@ -74,9 +72,9 @@ GameState_free(GameState *game_state)
 } /* GameState_free */
 
 
-/**************************************
-*    L I S T   O P E R A T I O N S    *
-**************************************/
+/************************************
+    L I S T   O P E R A T I O N S    
+************************************/
 /*    A D D    */
 void 
 GameState_add_Player(GameState *game_state, Player *player)
@@ -88,15 +86,17 @@ void
 GameState_add_Actor(GameState *game_state, Actor *actor)
 {
     game_state->num_actors++;
-    Actor_push(game_state->actors, actor);
-    GameState_add_Thing(game_state, &actor->base);
+    if (!game_state->actors) game_state->actors = actor;
+    Actor_insert(game_state->actors, actor);
+    //GameState_add_Thing(game_state, &actor->base);
 } /* GameState_add_Actor */
 
 void
 GameState_add_Thing(GameState *game_state, Thing *thing)
 {
     game_state->num_things++;
-    Thing_push(game_state->things, thing);
+    if (!game_state->things) game_state->things = thing;
+    Thing_insert(game_state->things, thing);
 } /* GameState_add_Thing */
 
 
@@ -111,7 +111,7 @@ void
 GameState_remove_Actor(GameState *game_state, Actor *actor)
 {
     game_state->num_actors--;
-    Actor_pop(actor);
+    Actor_remove(actor);
     GameState_remove_Thing(game_state, &actor->base);
 } /* GameState_remove_Actor */
 
@@ -119,13 +119,13 @@ void
 GameState_remove_Thing(GameState *game_state, Thing *thing)
 {
     game_state->num_things--;
-    Thing_pop(thing);
+    Thing_remove(thing);
 } /* GameState_remove_Thing */
 
 
-/**********************
-*    G E T T E R S    *
-**********************/
+/********************
+    G E T T E R S    
+********************/
 float
 GameState_get_delta(GameState *game_state)
 {
@@ -139,9 +139,9 @@ Map
 }
 
 
-/**********************
-*    S E T T E R S    *
-**********************/
+/********************
+    S E T T E R S    
+********************/
 void
 GameState_set_Map(GameState *game_state, Map *map)
 {
@@ -149,22 +149,24 @@ GameState_set_Map(GameState *game_state, Map *map)
 }
 
 
-/********************
-*    U P D A T E    *
-********************/
+/******************
+    U P D A T E    
+******************/
 void
 GameState_update(GameState *game_state)
 {
+    int i;
     float delta;
     
-    Actor  *actor;
+    Actor *actor;
+    uint  num_actors = game_state->num_actors;
 
     delta = GetFrameTime();
     game_state->delta = delta;
     
     actor  = game_state->actors->next;
     
-    while (actor != game_state->actors) {
+    for (i = num_actors; 0 < i; i--) {
         actor->update(actor, game_state);
         actor = actor->next;
     }

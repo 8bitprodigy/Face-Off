@@ -25,9 +25,9 @@
 *******************************************************************************/
 #include <raylib.h>
 #include "gamestate.h"
+#include "map.h"
 #define DEBUG
 #include "defs.h"
-#include "map.h"
 
 
 static bool done = false;
@@ -35,27 +35,23 @@ static bool done = false;
 int 
 main(/*int argc, char** argv*/) 
 {
-    Camera camera = {0};
     Player *player;
     Map    *map;
     GameState *game_state;
     
     InitWindow (SCREEN_WIDTH, SCREEN_HEIGHT, "Face-Off!");
 
-    camera.position   = (Vector3){ 1.0f, 0.75f, 0.0f};
-    camera.target     = (Vector3){ 0.0f, 0.75f, 0.0f};
-    camera.up         = VECTOR3_UP;
-    camera.fovy       = 45.0f;
-    camera.projection = CAMERA_PERSPECTIVE;
-
-    player = Player_new(
+    map        = Map_new("test", 16, 4);
+    game_state = GameState_new(CO_OP);
+    player     = Player_new(
         (Vector2){.x=2.0f,.y=2.0f},
         0.0f, 0.5f, 0
     );
+    if (player)
+        DBG_OUT("Player allocated! %p", Thing_get_prev(THING(player)));
+    else
+        DBG_OUT("Player NOT allocated!");
 
-    map = Map_new("test", 16, 4);
-
-    game_state = GameState_new(CO_OP);
     GameState_add_Player(game_state, player);
     GameState_set_Map(game_state, map);
 

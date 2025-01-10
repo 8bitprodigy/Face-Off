@@ -1,3 +1,9 @@
+/****************************
+*                           *
+*    G A M E   S T A T E    *
+*                           *
+****************************/
+
 #ifndef GAMESTATE_H
 #define GAMESTATE_H
 

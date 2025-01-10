@@ -21,8 +21,8 @@ Vector2 Actor_get_position(Actor *actor);
 float   Actor_get_radius(  Actor *actor);
 
 /* List Operations */
-void Actor_push(Actor *actor1, Actor *actor2);
-void Actor_pop( Actor *actor);
+void Actor_insert(Actor *actor1, Actor *actor2);
+void Actor_remove( Actor *actor);
 
 /* Actor Methods */
 void Actor_update(Actor *actor, GameState *game_state);

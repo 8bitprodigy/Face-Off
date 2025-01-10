@@ -2,18 +2,16 @@
 #include "actor_private.h"
 #include "gamestate.h"
 #include "map.h"
-//#define DEBUG
+#define DEBUG
 #include "defs.h"
 
 
-/******************************
-*    C O N S T R U C T O R    *
-******************************/
+/****************************
+    C O N S T R U C T O R    
+****************************/
 void
 Actor_init(Actor *actor, Vector2 position, float rotation, float radius)
 {
-    Thing *thing = THING(actor);
-
     actor->next = actor;
     actor->prev = actor;
     
@@ -25,8 +23,8 @@ Actor_init(Actor *actor, Vector2 position, float rotation, float radius)
     actor->prev_rot         = 0.0f;
     actor->angular_velocity = 0.0f;
     actor->health           = 3;
-    Thing_init(thing, position, rotation, radius);
     
+    Thing_init(THING(actor), position, rotation, radius);
 }
 
 Actor
@@ -44,21 +42,21 @@ Actor
 }
 
 
-/****************************
-*    D E S T R U C T O R    *
-****************************/
+/**************************
+    D E S T R U C T O R    
+**************************/
 void
 Actor_free(Actor *actor)
 {
-    Thing_pop(&actor->base);
-    Actor_pop(actor);
+    Thing_remove(&actor->base);
+    Actor_remove(actor);
     free(actor);
 } /* Actor_free */
 
 
-/**********************
-*    G E T T E R S    *
-**********************/
+/********************
+    G E T T E R S    
+********************/
 Thing
 *Actor_get_Thing(Actor *actor)
 {
@@ -78,13 +76,22 @@ Actor_get_radius(Actor *actor)
 }
 
 
-/**************************************
-*    L I S T   O P E R A T I O N S    *
-**************************************/
+/************************************
+    L I S T   O P E R A T I O N S    
+************************************/
 /*        A D D    */
 void
-Actor_push(Actor *actor1, Actor *actor2)
+Actor_insert(Actor *actor1, Actor *actor2)
 {
+    if (!actor1 || !actor2) {
+        ERR_OUT("Actor_push received NULL pointer");
+        return;
+    }
+
+    if (!actor1->prev || !actor1->next) {
+        ERR_OUT("Actor_push received improperly initialized actor1");
+        return;
+    }
     Actor *actor3 = actor1->prev;
 
     actor3->next = actor2;
@@ -97,7 +104,7 @@ Actor_push(Actor *actor1, Actor *actor2)
 
 /*        R E M O V E    */
 void
-Actor_pop(Actor *actor)
+Actor_remove(Actor *actor)
 {
     Actor *actor1 = actor->prev;
     Actor *actor2 = actor->next;
@@ -108,9 +115,9 @@ Actor_pop(Actor *actor)
 } /* Actor_pop */
 
 
-/**********************************
-*    A C T O R   M E T H O D S    *
-**********************************/
+/********************************
+    A C T O R   M E T H O D S    
+********************************/
 /*        U P D A T E    */
 void
 Actor_update(Actor *actor, GameState *game_state)

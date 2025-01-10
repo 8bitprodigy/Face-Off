@@ -4,10 +4,6 @@
 #include <string.h>
 #include <float.h>
 #include "map.h"
-/* Uncomment the following #define to turn debug output on.
-   It gets #define'd BEFORE "#include "defs.h". */
-#define DEBUG
-#include "defs.h"
 
 /*    L O C A L   D E F I N E S    */
 #define INDEX2D( _x_, _y_ ) ((Index2D){.x=_x_,.y=_y_})
@@ -463,9 +459,9 @@ Map_check_vis(Map *map, Index2D index, Thing *thing, Vector2 l_frustum, Vector2 
                 if (!Vector2Equals(inside_r, r_frustum) && !walls[next].type) {
                     inside_r = GET_FRUSTUM_EDGE(position, inside_r);
                 } else inside_r = r_frustum;
-                //if (walls[prev].type == PORTAL) inside_l = l_frustum;
-                //if (walls[next].type == PORTAL) inside_r = r_frustum;
-                inside_r = r_frustum; inside_l = l_frustum;
+                if (walls[prev].type == PORTAL) inside_l = l_frustum;
+                if (walls[next].type == PORTAL) inside_r = r_frustum;
+                //inside_r = r_frustum; inside_l = l_frustum;
                 //DBG_LINE(position, inside_l,0.2f, ORANGE);
                 //DBG_LINE(position, inside_r,0.1f, GREEN);
                 Map_check_vis(map, neighbor, thing, inside_l, inside_r);
@@ -488,8 +484,8 @@ void
 Map_render(Map *map, Player *player)
 {
     int    i, j;
-    Actor   *actor            = Player_get_Actor(player);
-    Thing   *thing            = Actor_get_Thing(actor);
+    Actor   *actor            = ACTOR(player);
+    Thing   *thing            = THING(player);
 
     int    size               = map->size;
     bool    **render_buffer   = map->render_buffer;
