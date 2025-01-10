@@ -186,11 +186,6 @@ GameState_update(GameState *game_state)
     actor  = game_state->actors.next;
     //thing  = game_state->things.next;
     
-    //DBG_OUT("Actor: %u", actor);
-    while (player != &game_state->players) {
-        Player_update(player, game_state);
-        player = player->next;
-    }
     while (actor != &game_state->actors) {
         actor->update(actor, game_state);
         actor = actor->next;

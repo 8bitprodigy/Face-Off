@@ -11,11 +11,17 @@ void
 Thing_init(Thing *thing, Vector2 position, float rotation, float radius)
 {
     *thing = (Thing){
+        .prev     = thing,
+        .next     = thing,
+        
         .visible  = true,
+        
         .position = position,
+        
         .rotation = rotation,
         .sin_rot  = sin(rotation),
         .cos_rot  = cos(rotation),
+        
         .radius   = radius,
     };
 } /* Thing_new */

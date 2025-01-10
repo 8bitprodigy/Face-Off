@@ -35,27 +35,20 @@ static bool done = false;
 int 
 main(/*int argc, char** argv*/) 
 {
-    Camera camera = {0};
     Player *player;
     Map    *map;
     GameState *game_state;
     
     InitWindow (SCREEN_WIDTH, SCREEN_HEIGHT, "Face-Off!");
 
-    camera.position   = (Vector3){ 1.0f, 0.75f, 0.0f};
-    camera.target     = (Vector3){ 0.0f, 0.75f, 0.0f};
-    camera.up         = (Vector3){ 0.0f, 1.0f,  0.0f};
-    camera.fovy       = 45.0f;
-    camera.projection = CAMERA_PERSPECTIVE;
-
+    game_state = GameState_new(CO_OP);
+    
+    map = Map_new("test", 16, 4);
     player = Player_new(
         (Vector2){.x=2.0f,.y=2.0f},
         0.0f, 0.5f, 0
     );
-
-    map = Map_new("test", 16, 4);
-
-    game_state = GameState_new(CO_OP);
+    
     GameState_add_Player(game_state, player);
     GameState_set_Map(game_state, map);
 

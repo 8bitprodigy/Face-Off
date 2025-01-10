@@ -10,44 +10,28 @@
 *    C O N S T R U C T O R    *
 ******************************/
 void
-Actor_init(Actor *actor, ActorType type, Vector2 position, float rotation, float radius)
+Actor_init(Actor *actor, Vector2 position, float rotation, float radius)
 {
     Thing *thing = &actor->base;
 
+    Thing_init(thing, position, rotation, radius);
+    
+    actor->prev = actor;
+    actor->next = actor;
+    
     actor->prev_pos         = Vector2Zero();
     actor->velocity         = Vector2Zero();
     
-    switch (type) {
-    case PLAYER:
-        actor->speed            = 5.0f;
-        actor->turn_speed       = 1.0f;
-        actor->prev_rot         = 0.0f;
-        actor->angular_velocity = 0.0f;
-        actor->health           = 3;
-        actor->update           = &Actor_move;
-        Thing_init(thing, position, rotation, radius);
-        break;
-    case DERVISH:
-        actor->speed            = 0.0f;
-        actor->turn_speed       = 5.0f;
-        actor->prev_rot         = 0.0f;
-        actor->angular_velocity = 0.0f;
-        actor->health           = 1;
-        actor->update           = &Actor_update;
-        Thing_init(thing, position, rotation, 0.5f);
-        break;
-    case ISOPOD:
-        break;
-    default:
-        ERR_OUT("Actor type undefined!");
-        return;
-    }
-    
-    actor->type   = type;
+    actor->speed            = 5.0f;
+    actor->turn_speed       = 1.0f;
+    actor->prev_rot         = 0.0f;
+    actor->angular_velocity = 0.0f;
+    actor->health           = 3;
+    actor->update           = &Actor_move;
 }
 
 Actor
-*Actor_new(ActorType type, Vector2 position, float rotation, float radius)
+*Actor_new(Vector2 position, float rotation, float radius)
 {
     Actor *actor = malloc(sizeof(Actor));
     if (!actor) {
@@ -55,7 +39,7 @@ Actor
         return NULL;
     }
     
-    Actor_init(actor, type, position, rotation, radius);
+    Actor_init(actor, position, rotation, radius);
     
     return actor;
 }

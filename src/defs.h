@@ -28,6 +28,14 @@
 ****************/
 #define uint unsigned int 
 
+
+/****************
+    C A S T S    
+****************/
+#define THING( Self ) ((Thing*)(Self))
+#define ACTOR( Self ) ((Actor*)(Self))
+#define PLAYER( Self ) ((Player*)(Self))
+
 /************************
     V A R I A B L E S    
 ************************/
