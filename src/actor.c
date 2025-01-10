@@ -12,8 +12,12 @@
 void
 Actor_init(Actor *actor, Vector2 position, float rotation, float radius)
 {
-    actor->next = actor;
+    Thing *thing = &actor->base;
+
+    Thing_init(thing, position, rotation, radius);
+    
     actor->prev = actor;
+    actor->next = actor;
     
     actor->prev_pos         = Vector2Zero();
     actor->velocity         = Vector2Zero();
@@ -23,12 +27,11 @@ Actor_init(Actor *actor, Vector2 position, float rotation, float radius)
     actor->prev_rot         = 0.0f;
     actor->angular_velocity = 0.0f;
     actor->health           = 3;
-    
-    Thing_init(THING(actor), position, rotation, radius);
-}
+    actor->update           = &Actor_move;
+} /* Actor_init */
 
 Actor
-*Actor_new( Vector2 position, float rotation, float radius)
+*Actor_new(Vector2 position, float rotation, float radius)
 {
     Actor *actor = malloc(sizeof(Actor));
     if (!actor) {
@@ -39,7 +42,7 @@ Actor
     Actor_init(actor, position, rotation, radius);
     
     return actor;
-}
+} /* Actor_new */
 
 
 /**************************
@@ -48,32 +51,38 @@ Actor
 void
 Actor_free(Actor *actor)
 {
-    Thing_remove(&actor->base);
+    Thing_remove(THING(actor));
     Actor_remove(actor);
     free(actor);
 } /* Actor_free */
 
 
-/********************
-    G E T T E R S    
-********************/
-Thing
-*Actor_get_Thing(Actor *actor)
+/**********************
+*    G E T T E R S    *
+**********************/
+Actor
+*Actor_get_prev(Actor *actor)
 {
-    return &actor->base;
-}
+    return actor->prev;
+} /* Actor_get_prev */
+
+Actor
+*Actor_get_next(Actor *actor)
+{
+    return actor->next;
+} /* Actor_get_next */
 
 Vector2
 Actor_get_position(Actor *actor)
 {
     return actor->base.position;
-}
+} /* Actor_get_position */
 
 float
 Actor_get_radius(Actor *actor)
 {
     return actor->base.radius;
-}
+} /* Actor_get_radius */
 
 
 /************************************
@@ -100,7 +109,7 @@ Actor_insert(Actor *actor1, Actor *actor2)
     actor2->next = actor1;
     actor2->prev = actor3;
 
-} /* Actor_push */
+} /* Actor_insert */
 
 /*        R E M O V E    */
 void
@@ -112,7 +121,7 @@ Actor_remove(Actor *actor)
     actor1->next = actor2;
     actor2->prev = actor1;
 
-} /* Actor_pop */
+} /* Actor_remove */
 
 
 /********************************
@@ -121,7 +130,9 @@ Actor_remove(Actor *actor)
 /*        U P D A T E    */
 void
 Actor_update(Actor *actor, GameState *game_state)
-{}
+{
+    actor->update(actor, game_state);
+}
 
 void 
 Actor_rotate(Actor *actor, GameState *game_state)

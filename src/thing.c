@@ -4,23 +4,26 @@
 #include "defs.h"
 
 
-/******************************
-*    C O N S T R U C T O R    *
-******************************/
+/****************************
+    C O N S T R U C T O R    
+****************************/
 void
 Thing_init(Thing *thing, Vector2 position, float rotation, float radius)
 {
-    thing->next     = thing;
-    thing->prev     = thing;
+    *thing = (Thing){
+        .prev     = thing,
+        .next     = thing,
         
-    thing->visible  = true;
+        .visible  = true,
         
-    thing->position = position;
-    thing->rotation = rotation;
-    thing->sin_rot  = sin(rotation);
-    thing->cos_rot  = cos(rotation);
+        .position = position,
         
-    thing->radius   = radius;
+        .rotation = rotation,
+        .sin_rot  = sin(rotation),
+        .cos_rot  = cos(rotation),
+        
+        .radius   = radius,
+    };
 } /* Thing_new */
 
 Thing
@@ -42,9 +45,9 @@ Thing
 } /* Thing_new_ptr */
 
 
-/****************************
-*    D E S T R U C T O R    *
-****************************/
+/**************************
+    D E S T R U C T O R    
+**************************/
 void
 Thing_free(Thing *thing)
 {
@@ -53,9 +56,9 @@ Thing_free(Thing *thing)
 } /* Thing_free */
 
 
-/**********************
-*    G E T T E R S    *
-**********************/
+/********************
+    G E T T E R S    
+********************/
 Thing
 *Thing_get_prev(Thing *thing)
 {
@@ -81,9 +84,9 @@ Thing_get_rotation(Thing *thing)
 } /* Thing_get_rotation */
 
 
-/**************************************
-*    L I S T   O P E R A T I O N S    *
-**************************************/
+/************************************
+    L I S T   O P E R A T I O N S    
+************************************/
 /*        A D D    */
 void
 Thing_insert(Thing *thing1, Thing *thing2)

@@ -41,17 +41,13 @@ main(/*int argc, char** argv*/)
     
     InitWindow (SCREEN_WIDTH, SCREEN_HEIGHT, "Face-Off!");
 
-    map        = Map_new("test", 16, 4);
     game_state = GameState_new(CO_OP);
-    player     = Player_new(
+    map = Map_new("test", 16, 4);
+    player = Player_new(
         (Vector2){.x=2.0f,.y=2.0f},
         0.0f, 0.5f, 0
     );
-    if (player)
-        DBG_OUT("Player allocated! %p", Thing_get_prev(THING(player)));
-    else
-        DBG_OUT("Player NOT allocated!");
-
+    
     GameState_add_Player(game_state, player);
     GameState_set_Map(game_state, map);
 
@@ -59,9 +55,9 @@ main(/*int argc, char** argv*/)
     
     while (!done) {
         done = GET_KEY_OR_BUTTON_DOWN(0, GAMEPAD_BUTTON_MIDDLE_RIGHT, KEY_ESCAPE);
-        //UpdateCamera( &camera, CAMERA_ORBITAL);
+        
         GameState_update(game_state);
-        //camera = player->camera;
+        
         BeginDrawing();
 
             ClearBackground(RAYWHITE);

@@ -18,19 +18,20 @@ Player_init(Player *player, Vector2 position, float rotation, float radius, int 
     actor = ACTOR(player);
     thing = THING(player);
     
-    player->controller = controller;
-
+    Actor_init(actor, position, rotation, radius);
+    actor->update = &Player_update;
+    
     player->prev = player;
     player->next = player;
+    
+    player->controller = controller;
 
     player->camera.position   = (Vector3){.x=0.0f,.y=CAMERA_HEIGHT,.z=0.0f};
-    
     player->camera.target     = (Vector3){ 
         .x = position.x + thing->cos_rot,
         .y = CAMERA_HEIGHT,
         .z = position.y + thing->sin_rot
     };
-    
     player->camera.up         = VECTOR3_UP;
     player->fov               = PI/2.0f;
     player->half_fov          = player->fov/2.0f;
@@ -39,34 +40,7 @@ Player_init(Player *player, Vector2 position, float rotation, float radius, int 
         ((float)SCREEN_WIDTH / (float)SCREEN_HEIGHT)
     ) * 180 / PI;
     player->camera.projection = CAMERA_PERSPECTIVE;
-    
-    Actor_init(actor, position, rotation, radius);
-    actor->next = actor;
-    actor->prev = actor;
-    
-    actor->prev_pos         = Vector2Zero();
-    actor->velocity         = Vector2Zero();
-    
-    actor->speed            = 5.0f;
-    actor->turn_speed       = 1.0f;
-    actor->prev_rot         = 0.0f;
-    actor->angular_velocity = 0.0f;
-    actor->health           = 3;
-    actor->update = &Player_update;
-
-    
-    thing->next     = thing;
-    thing->prev     = thing;
-        
-    thing->visible  = true;
-        
-    thing->position = position;
-    thing->rotation = rotation;
-    thing->sin_rot  = sin(rotation);
-    thing->cos_rot  = cos(rotation);
-        
-    thing->radius   = radius;
-}
+} /* Player_init */
 
 Player 
 *Player_new(Vector2 position, float rotation, float radius, int controller)
@@ -89,8 +63,8 @@ Player
 void
 Player_free(Player *player)
 {
-    Thing_remove(&player->base.base);
-    Actor_remove(&player->base);
+    Thing_remove(THING(player));
+    Actor_remove(ACTOR(player));
     Player_remove(player);
     free(player);
 } /* Player_free */
@@ -103,25 +77,25 @@ Actor
 *Player_get_Actor(Player *player)
 {
     return &player->base;
-}
+} /* Player_get_Actor */
 
 Camera
 *Player_get_Camera(Player *player)
 {
     return &player->camera;
-}
+} /* Player_get_Camera */
 
 Vector2
 Player_get_position(Player *player)
 {
     return player->base.base.position;
-}
+} /* Player_get_position */
 
 float
 Player_get_half_fov(Player *player)
 {
     return player->half_fov;
-}
+} /* Player_get_half_fov */
 
 
 /**************************************
@@ -138,9 +112,7 @@ Player_insert(Player *player1, Player *player2)
     
     player2->next = player1;
     player2->prev = player3;
-
-    //Actor_push(&player1->_, &player2->_);
-} /* Player_push */
+} /* Player_insert */
 
 /*        R E M O V E    */
 void
@@ -151,9 +123,7 @@ Player_remove(Player *player)
 
     player1->next = player2;
     player2->prev = player1;
-
-    //Actor_pop(&player->base);
-} /* Player_pop */
+} /* Player_remove */
 
 
 /********************
@@ -162,9 +132,9 @@ Player_remove(Player *player)
 void 
 Player_update(Actor *actor, GameState *game_state)
 {
-    Player *player = (Player*)actor;
-    Thing  *thing  = &actor->base;
-    float  delta   = GameState_get_delta(game_state);
+    Player *player = PLAYER(actor);
+    Thing  *thing  = THING(actor);
+    float delta    = GameState_get_delta(game_state);
     
     float rotate   = 0;
 

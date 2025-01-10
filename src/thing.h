@@ -14,8 +14,8 @@ Thing *Thing_new(Vector2 position, float rotation, float radius);
 void Thing_free(Thing *thing);
 
 /* Getters */
-Thing   *Thing_get_prev(Thing *thing);
-Thing   *Thing_get_next(Thing *thing);
+Thing   *Thing_get_prev(   Thing *thing);
+Thing   *Thing_get_next(   Thing *thing);
 Vector2 Thing_get_position(Thing *thing);
 float   Thing_get_rotation(Thing *thing);
 
