@@ -42,7 +42,6 @@ main(/*int argc, char** argv*/)
     InitWindow (SCREEN_WIDTH, SCREEN_HEIGHT, "Face-Off!");
 
     game_state = GameState_new(CO_OP);
-    
     map = Map_new("test", 16, 4);
     player = Player_new(
         (Vector2){.x=2.0f,.y=2.0f},
@@ -56,9 +55,9 @@ main(/*int argc, char** argv*/)
     
     while (!done) {
         done = GET_KEY_OR_BUTTON_DOWN(0, GAMEPAD_BUTTON_MIDDLE_RIGHT, KEY_ESCAPE);
-        //UpdateCamera( &camera, CAMERA_ORBITAL);
+        
         GameState_update(game_state);
-        //camera = player->camera;
+        
         BeginDrawing();
 
             ClearBackground(RAYWHITE);

@@ -65,9 +65,9 @@ Player
 void
 Player_free(Player *player)
 {
-    Thing_pop(&player->base.base);
-    Actor_pop(&player->base);
-    Player_pop(player);
+    Thing_remove(THING(player));
+    Actor_remove(ACTOR(player));
+    Player_remove(player);
     free(player);
 } /* Player_free */
 
@@ -105,7 +105,7 @@ Player_get_half_fov(Player *player)
 **************************************/
 /*        A D D    */
 void
-Player_push(Player *player1, Player *player2)
+Player_insert(Player *player1, Player *player2)
 {
     Player *player3 = player1->prev;
 
@@ -120,7 +120,7 @@ Player_push(Player *player1, Player *player2)
 
 /*        R E M O V E    */
 void
-Player_pop(Player *player)
+Player_remove(Player *player)
 {
     Player *player1 = player->prev;
     Player *player2 = player->next;

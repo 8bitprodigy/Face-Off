@@ -51,8 +51,8 @@ Actor
 void
 Actor_free(Actor *actor)
 {
-    Thing_pop(&actor->base);
-    Actor_pop(actor);
+    Thing_remove(THING(actor));
+    Actor_remove(actor);
     free(actor);
 } /* Actor_free */
 
@@ -60,10 +60,16 @@ Actor_free(Actor *actor)
 /**********************
 *    G E T T E R S    *
 **********************/
-Thing
-*Actor_get_Thing(Actor *actor)
+Actor
+*Actor_get_prev(Actor *actor)
 {
-    return &actor->base;
+    return actor->prev;
+}
+
+Actor
+*Actor_get_next(Actor *actor)
+{
+    return actor->next;
 }
 
 Vector2
@@ -84,7 +90,7 @@ Actor_get_radius(Actor *actor)
 **************************************/
 /*        A D D    */
 void
-Actor_push(Actor *actor1, Actor *actor2)
+Actor_insert(Actor *actor1, Actor *actor2)
 {
     Actor *actor3 = actor1->prev;
 
@@ -98,7 +104,7 @@ Actor_push(Actor *actor1, Actor *actor2)
 
 /*        R E M O V E    */
 void
-Actor_pop(Actor *actor)
+Actor_remove(Actor *actor)
 {
     Actor *actor1 = actor->prev;
     Actor *actor2 = actor->next;
@@ -115,7 +121,9 @@ Actor_pop(Actor *actor)
 /*        U P D A T E    */
 void
 Actor_update(Actor *actor, GameState *game_state)
-{}
+{
+    actor->update(actor, game_state);
+}
 
 void 
 Actor_rotate(Actor *actor, GameState *game_state)

@@ -18,8 +18,8 @@ Vector2 Player_get_position(Player *player);
 float   Player_get_half_fov(Player *player);
 
 /* List Operations */
-void Player_push(Player *player1, Player *player2);
-void Player_pop(Player *player);
+void Player_insert(Player *player1, Player *player2);
+void Player_remove(Player *player);
 
 /* Player Methods */
 void Player_update(Actor *actor, GameState *game_state);

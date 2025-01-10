@@ -4,9 +4,9 @@
 #include "defs.h"
 
 
-/******************************
-*    C O N S T R U C T O R    *
-******************************/
+/****************************
+    C O N S T R U C T O R    
+****************************/
 void
 Thing_init(Thing *thing, Vector2 position, float rotation, float radius)
 {
@@ -45,20 +45,32 @@ Thing
 } /* Thing_new_ptr */
 
 
-/****************************
-*    D E S T R U C T O R    *
-****************************/
+/**************************
+    D E S T R U C T O R    
+**************************/
 void
 Thing_free(Thing *thing)
 {
-    Thing_pop(thing);
+    Thing_remove(thing);
     free(thing);
 } /* Thing_free */
 
 
-/**********************
-*    G E T T E R S    *
-**********************/
+/********************
+    G E T T E R S    
+********************/
+Thing
+*Thing_get_prev(Thing *thing)
+{
+    return thing->prev;
+}
+
+Thing
+*Thing_get_next(Thing *thing)
+{
+    return thing->next;
+}
+
 Vector2
 Thing_get_position(Thing *thing)
 {
@@ -72,12 +84,12 @@ Thing_get_rotation(Thing *thing)
 } /* Thing_get_rotation */
 
 
-/**************************************
-*    L I S T   O P E R A T I O N S    *
-**************************************/
+/************************************
+    L I S T   O P E R A T I O N S    
+************************************/
 /*        A D D    */
 void
-Thing_push(Thing *thing1, Thing *thing2)
+Thing_insert(Thing *thing1, Thing *thing2)
 {
     Thing *thing3 = thing1->prev;
 
@@ -90,7 +102,7 @@ Thing_push(Thing *thing1, Thing *thing2)
 
 /*        R E M O V E    */
 void
-Thing_pop(Thing *thing)
+Thing_remove(Thing *thing)
 {
     Thing *thing1 = thing->prev;
     Thing *thing2 = thing->next;

@@ -488,8 +488,8 @@ void
 Map_render(Map *map, Player *player)
 {
     int    i, j;
-    Actor   *actor            = Player_get_Actor(player);
-    Thing   *thing            = Actor_get_Thing(actor);
+    Actor   *actor            = ACTOR(player);
+    Thing   *thing            = THING(player);
 
     int    size               = map->size;
     bool    **render_buffer   = map->render_buffer;
