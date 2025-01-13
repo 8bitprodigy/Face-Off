@@ -251,8 +251,8 @@ Cell_render(Cell *cell, uint cell_width)
 /**************************************
 *    M A P   C O N S T R U C T O R    *
 **************************************/
-Map
-*Map_new(const char *name, uint size, uint cell_width)
+Map *
+Map_new(const char *name, uint size, uint cell_width)
 {
     int    i, j, w;
     
@@ -571,7 +571,7 @@ Map_check_Actor_collision(Map *map, Actor *actor, Vector2 new_pos, Vector2 *coll
 
     for (cell_index = 0; cell_index < 4; cell_index++) {
         cell    = check_cells[cell_index];
-        walls   = &cell->walls;
+        walls   = cell->walls;
         corners = cell->corners; 
         
         for (wall_index = 0; wall_index < 4; wall_index++) {

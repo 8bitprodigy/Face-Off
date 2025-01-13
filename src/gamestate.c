@@ -4,7 +4,11 @@
 *                           *
 ****************************/
 
+#include <assert.h>
 #include <stdlib.h>
+
+#define DEBUG
+#include "defs.h"
 #include "gamestate.h"
 /*
 #include "thing_private.h"
@@ -12,8 +16,6 @@
 #include "player_private.h"
 */
 #include "map.h"
-#define DEBUG
-#include "defs.h"
 
 
 typedef struct 
@@ -36,8 +38,8 @@ GameState
 /****************************
     C O N S T R U C T O R    
 ****************************/
-GameState
-*GameState_new(GameMode game_mode)
+GameState *
+GameState_new(GameMode game_mode)
 {
     Actor  *actors;
     Thing  *things;
@@ -138,8 +140,8 @@ GameState_get_delta(GameState *game_state)
     return game_state->delta;
 } /* GameState_get_delta */
 
-Map
-*GameState_get_Map(GameState *game_state)
+Map *
+GameState_get_Map(GameState *game_state)
 {
     return game_state->map;
 } /* GameState_get_Map */
@@ -173,10 +175,13 @@ GameState_update(GameState *game_state)
     game_state->delta = delta;
     
     actor  = actors;
-    for (i = num_actors; 0 < i; i--) {
+    do {
+        assert(actor);
+        DBG_OUT("Grug find actor! %p", actor);
         Actor_update(actor, game_state);
+        DBG_OUT("Grug go find next actor!");
         actor = Actor_get_next(actor);
-    }
+    } while (Actor_get_next(actor) != actors);
 } /* GameState_update */
 
 

@@ -26,8 +26,8 @@ Thing_init(Thing *thing, Vector2 position, float rotation, float radius)
     };
 } /* Thing_new */
 
-Thing
-*Thing_new(Vector2 position, float rotation, float radius)
+Thing *
+Thing_new(Vector2 position, float rotation, float radius)
 {
     Thing *thing = malloc(sizeof(Thing));
 
@@ -59,14 +59,14 @@ Thing_free(Thing *thing)
 /********************
     G E T T E R S    
 ********************/
-Thing
-*Thing_get_prev(Thing *thing)
+Thing *
+Thing_get_prev(Thing *thing)
 {
     return thing->prev;
 } /* Thing_get_prev */
 
-Thing
-*Thing_get_next(Thing *thing)
+Thing *
+Thing_get_next(Thing *thing)
 {
     return thing->next;
 } /* Thing_get_next */

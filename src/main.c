@@ -24,10 +24,11 @@
 *                                                                              *
 *******************************************************************************/
 #include <raylib.h>
-#include "gamestate.h"
-#include "map.h"
+
 #define DEBUG
 #include "defs.h"
+#include "gamestate.h"
+#include "map.h"
 
 
 static bool done = false;

@@ -18,3 +18,6 @@ linux:
 dc_cdi:
 	@echo "Building DreamCast disc...\n"
 	mkdcdisc -e face-off.dc.elf -o face-off.cdi
+
+cdi:
+	@echo ""

@@ -1,9 +1,10 @@
 #include <stdlib.h>
+
 #include "actor_private.h"
-#include "gamestate.h"
-#include "map.h"
 #define DEBUG
 #include "defs.h"
+#include "gamestate.h"
+#include "map.h"
 
 
 /****************************
@@ -30,8 +31,8 @@ Actor_init(Actor *actor, Vector2 position, float rotation, float radius)
     actor->update           = &Actor_move;
 } /* Actor_init */
 
-Actor
-*Actor_new(Vector2 position, float rotation, float radius)
+Actor *
+Actor_new(Vector2 position, float rotation, float radius)
 {
     Actor *actor = malloc(sizeof(Actor));
     if (!actor) {
@@ -60,14 +61,14 @@ Actor_free(Actor *actor)
 /**********************
 *    G E T T E R S    *
 **********************/
-Actor
-*Actor_get_prev(Actor *actor)
+Actor *
+Actor_get_prev(Actor *actor)
 {
     return actor->prev;
 } /* Actor_get_prev */
 
-Actor
-*Actor_get_next(Actor *actor)
+Actor *
+Actor_get_next(Actor *actor)
 {
     return actor->next;
 } /* Actor_get_next */
@@ -192,3 +193,8 @@ Actor_move(Actor *actor, GameState *game_state)
     thing->position = new_position;
 } /* Actor_move */
 
+void
+Actor_nop(Actor *actor, GameState *game_state)
+{
+    return;
+} /* Actor_nop */

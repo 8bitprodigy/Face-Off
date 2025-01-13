@@ -1,9 +1,10 @@
 #include <stdlib.h>
 #include <math.h>
-#include "gamestate.h"
-#include "player_private.h"
+
 #define DEBUG
 #include "defs.h"
+#include "gamestate.h"
+#include "player_private.h"
 
 
 /******************************
@@ -42,8 +43,8 @@ Player_init(Player *player, Vector2 position, float rotation, float radius, int 
     player->camera.projection = CAMERA_PERSPECTIVE;
 } /* Player_init */
 
-Player 
-*Player_new(Vector2 position, float rotation, float radius, int controller)
+Player *
+Player_new(Vector2 position, float rotation, float radius, int controller)
 {
     Player *player = malloc(sizeof(Player));
     if (!player) {
@@ -73,14 +74,14 @@ Player_free(Player *player)
 /**********************
 *    G E T T E R S    *
 **********************/
-Actor
-*Player_get_Actor(Player *player)
+Actor *
+Player_get_Actor(Player *player)
 {
     return &player->base;
 } /* Player_get_Actor */
 
-Camera
-*Player_get_Camera(Player *player)
+Camera *
+Player_get_Camera(Player *player)
 {
     return &player->camera;
 } /* Player_get_Camera */
