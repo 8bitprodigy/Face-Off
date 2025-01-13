@@ -163,8 +163,6 @@ GameState_set_Map(GameState *game_state, Map *map)
 void
 GameState_update(GameState *game_state)
 {
-    int i;
-
     int   num_actors = game_state->num_actors;
     float delta;
     

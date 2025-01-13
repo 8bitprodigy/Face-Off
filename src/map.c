@@ -6,7 +6,6 @@
 #include "map.h"
 
 /*    L O C A L   D E F I N E S    */
-#define INDEX2D( _x_, _y_ ) ((Index2D){.x=_x_,.y=_y_})
 #define GET_FRUSTUM_EDGE( Position, Point )  (Vector2Add(Vector2Scale(Vector2Normalize(Vector2Subtract(Point, Position)),MAX_DRAW_DISTANCE),Position))
 
 
@@ -484,7 +483,6 @@ void
 Map_render(Map *map, Player *player)
 {
     int    i, j;
-    Actor   *actor            = ACTOR(player);
     Thing   *thing            = THING(player);
 
     int    size               = map->size;

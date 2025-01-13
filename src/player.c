@@ -135,7 +135,6 @@ Player_update(Actor *actor, GameState *game_state)
 {
     Player *player = PLAYER(actor);
     Thing  *thing  = THING(actor);
-    float delta    = GameState_get_delta(game_state);
     
     float rotate   = 0;
 

@@ -12,6 +12,7 @@
 #define DEBUG_CHECK_VIS
 #define DEBUG_MAP_NEW
 
+#define INDEX2D( _x_, _y_ ) ((Index2D){.x=_x_,.y=_y_})
 #define INDEX2D_NAN (Index2D){.x=INT_MAX,.y=INT_MAX}
 
 
