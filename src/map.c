@@ -382,6 +382,10 @@ Map_free(Map *map)
     free(map);
 } /* Map_free */
 
+
+/******************************
+*    M A P   M E T H O D S    *
+******************************/
 static inline Index2D
 Map_get_index(Map *map, Vector2 position) 
 {
@@ -391,10 +395,53 @@ Map_get_index(Map *map, Vector2 position)
     };
 }
 
+void
+get_nearest_adjacent_cells(Map *map, Index2D index, Vector2 position, Cell **check_cells)
+{
+    int       i;
+    
+    int       size  = map->size; 
+    Cell    **cells = map->cells;
+    Index2D   offset;
+    
+    /* First checked cell should ALWAYS be the one the actor's coordinates are actually in. */
+    check_cells[0] = &cells[index.x][index.y];
+    
+    if (!( /* This is readable. I don't exactly like it, but it's readable. */
+        IS_IN_BOUNDS(index.x, 0, (int)map->size-1)
+        && IS_IN_BOUNDS(index.y, 0, (int)size-1)
+    )) return;
+    
+    offset.x = SIGN_BETWEEN(position.x, check_cells[0]->center.x) + index.x;
+    offset.y = SIGN_BETWEEN(position.y, check_cells[0]->center.y) + index.y;
+    /* Then we get adjacent cells(if applicable). */
+    if (IS_IN_BOUNDS(offset.x, 0, size-1)) check_cells[1] = &cells[offset.x][index.y];
+    else check_cells[1] = check_cells[0];
+    if (IS_IN_BOUNDS(offset.y, 0, size-1)) check_cells[2] = &cells[index.x][offset.y];
+    else check_cells[2] = check_cells[0];
+    if (IS_IN_BOUNDS(offset.x, 0, size-1) && IS_IN_BOUNDS(offset.y, 0, size-1))
+        check_cells[3] = &cells[offset.x][offset.y];
+    else check_cells[3] = check_cells[0];
+}
 
-/******************************
-*    M A P   M E T H O D S    *
-******************************/
+bool
+is_corner_on_wall(Map *map, Index2D index, int corner)
+{
+    int   i;
+    Cell *cells[4];
+    Cell *cell     = &map->cells[index.x][index.y]; 
+    
+    get_nearest_adjacent_cells(map, index, cell->corners[corner], cells);
+    
+    for (i = 0; i < 4; i++) {
+        if (!cells[i]) return false;
+        if (cells[i]->walls[corner].type || cells[i]->walls[corner-1%4].type) return true;
+        corner++;
+    }
+    
+    return false;
+}
+
 void 
 Map_check_vis(Map *map, Index2D index, Thing *thing, Vector2 l_frustum, Vector2 r_frustum)
 {
@@ -552,7 +599,7 @@ Map_check_Actor_collision(Map *map, Actor *actor, Vector2 new_pos, Vector2 *coll
     Index2D offset;
     Index2D map_index = Map_get_index(map, prev_pos);
 
-    if (!(IS_IN_BOUNDS(map_index.x, 0, (int)map->size-1)&&IS_IN_BOUNDS(map_index.y, 0, (int)size-1))) return false;
+    if (!(IS_IN_BOUNDS(map_index.x, 0, (int)size-1)&&IS_IN_BOUNDS(map_index.y, 0, (int)size-1))) return false;
     /* First checked cell should ALWAYS be the one the actor's coordinates are actually in. */
     check_cells[0] = &cells[map_index.x][map_index.y];
     

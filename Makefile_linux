@@ -1,11 +1,11 @@
-CC = gcc
-CFLAGS = -Wall -Wextra -pedantic
+CC      = gcc
+CFLAGS  = -Wall -Wextra -pedantic
 CCFLAGS = -I/usr/local/include -L/usr/local/lib -lraylib -lGL -lm -g3
 
 PROJECTNAME = face-off
 
-SRCDIR          = src
-OBJDIR          = obj/linux
+SRCDIR      = src
+OBJDIR      = obj/linux
 
 TARGET   = $(PROJECTNAME)
 CSOURCES = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.c)))

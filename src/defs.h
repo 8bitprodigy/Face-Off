@@ -73,7 +73,7 @@
 /*** Common Output Operations ***/
 
 #ifdef __linux__
-    #define ERR_OUT( Error_Text ) perror( "[ERROR] " Error_Text "\n" )
+#define ERR_OUT( Error_Text ) perror( "[ERROR] " Error_Text "\n" )    
 #else
     #define ERR_OUT( Error_Text )
 #endif

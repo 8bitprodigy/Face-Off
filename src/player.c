@@ -74,12 +74,6 @@ Player_free(Player *player)
 /**********************
 *    G E T T E R S    *
 **********************/
-Actor *
-Player_get_Actor(Player *player)
-{
-    return &player->base;
-} /* Player_get_Actor */
-
 Camera *
 Player_get_Camera(Player *player)
 {
@@ -97,6 +91,12 @@ Player_get_half_fov(Player *player)
 {
     return player->half_fov;
 } /* Player_get_half_fov */
+
+Player *
+Player_get_prev(Player *player)
+{
+    return player->prev;
+}
 
 
 /**************************************
@@ -168,7 +168,7 @@ Player_update(Actor *actor, GameState *game_state)
 
     Actor_move(actor, game_state);
 
-    player->camera.position   = VECTOR2_TO_3( thing->position, 30.0f );
+    player->camera.position   = VECTOR2_TO_3( thing->position, CAMERA_HEIGHT );
     target = Vector2Add(thing->position, (Vector2){ thing->cos_rot, thing->sin_rot });
     player->camera.target     = VECTOR2_TO_3( target, CAMERA_HEIGHT );
 } /* Player_update */

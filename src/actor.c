@@ -1,7 +1,7 @@
 #include <stdlib.h>
 
 #include "actor_private.h"
-#define DEBUG
+//#define DEBUG
 #include "defs.h"
 #include "gamestate.h"
 #include "map.h"
@@ -144,7 +144,6 @@ Actor_rotate(Actor *actor, GameState *game_state)
 
     actor->prev_rot  = rotation;
     
-    DBG_OUT("Rotation: %.4f", actor->angular_velocity);
     thing->rotation  = NORMALIZE_ANGLE(actor->angular_velocity * delta + rotation);
     //printf("Rotation: %.4f\n", thing->rotation);
     thing->sin_rot   = sin(rotation);
@@ -169,7 +168,7 @@ Actor_move(Actor *actor, GameState *game_state)
     
     //printf("New Position>\t x: %.4f | y: %.4f\n", new_position.x, new_position.y); 
     if (Map_check_Actor_collision(map, actor, new_position, &collision_point, &collision_normal)) {
-        DBG_OUT("Wall collision!");
+        
         perpendicular_velocity = Vector2Scale(
             collision_normal,
             Vector2DotProduct(actor->velocity, collision_normal)
@@ -185,10 +184,10 @@ Actor_move(Actor *actor, GameState *game_state)
         );
 
         new_position = Vector2Add(new_position, correction_offset);
-        DBG_OUT("New Position: { X:%.4f |\tY:%.4f }", new_position.x, new_position.y);
+        //DBG_OUT("New Position: { X:%.4f |\tY:%.4f }", new_position.x, new_position.y);
     }
     /* Todo... */
-    DBG_OUT("Actor position: { X: %.4f,\tY: %.4f }",position.x,position.y);
+    //DBG_OUT("Actor position: { X: %.4f,\tY: %.4f }",position.x,position.y);
     actor->prev_pos = position;
     thing->position = new_position;
 } /* Actor_move */

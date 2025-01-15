@@ -5,7 +5,7 @@
 #include "gamestate.h"
 /* Uncomment the following #define to turn debug output on.
    It gets #define'd BEFORE "#include "defs.h". */
-#define DEBUG
+//#define DEBUG
 #include "defs.h"
 
 

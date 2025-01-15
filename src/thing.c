@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include "thing_private.h"
-#define DEBUG
+//#define DEBUG
 #include "defs.h"
 
 
@@ -10,20 +10,21 @@
 void
 Thing_init(Thing *thing, Vector2 position, float rotation, float radius)
 {
-    *thing = (Thing){
-        .prev     = thing,
-        .next     = thing,
-        
-        .visible  = true,
-        
-        .position = position,
-        
-        .rotation = rotation,
-        .sin_rot  = sin(rotation),
-        .cos_rot  = cos(rotation),
-        
-        .radius   = radius,
-    };
+    if (!thing) return;
+
+    // Initialize all fields
+    thing->visible  = true;
+    thing->position = position;
+    thing->rotation = rotation;
+    thing->sin_rot  = sin(rotation);
+    thing->cos_rot  = cos(rotation);
+    thing->radius   = radius;
+
+    thing->prev = thing;
+    thing->next = thing;
+
+    thing->name = NULL;
+    thing->body = NULL;
 } /* Thing_new */
 
 Thing *
@@ -32,15 +33,11 @@ Thing_new(Vector2 position, float rotation, float radius)
     Thing *thing = malloc(sizeof(Thing));
 
     if (!thing) {
-        ERR_OUT("Failed to allocate memory for Actor.");
+        ERR_OUT("Unable to allocate memory for Thing.");
         return NULL;
     }
 
-    Thing_init(thing, position, rotation, radius);
-
-    thing->prev = thing;
-    thing->next = thing;
-    
+    Thing_init(thing, position, rotation, radius);    
     return thing;
 } /* Thing_new_ptr */
 

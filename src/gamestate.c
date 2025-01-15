@@ -7,32 +7,31 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#define DEBUG
+//#define DEBUG
 #include "defs.h"
 #include "gamestate.h"
-/*
-#include "thing_private.h"
-#include "actor_private.h"
-#include "player_private.h"
-*/
 #include "map.h"
 
 
 typedef struct 
 GameState
 {
-    GameMode game_mode;
+    GameMode  game_mode;
+
+    Player   *players;
+    uint      num_players;
     
     Actor    *actors;
-    uint     num_actors;
+    uint      num_actors;
     
     Thing    *things;
-    uint     num_things;
+    uint      num_things;
     
     Map      *map;
-    bool     paused;
+    bool      paused;
+    bool      request_exit;
 
-    float    delta;
+    float     delta;
 } GameState;
 
 /****************************
@@ -41,20 +40,23 @@ GameState
 GameState *
 GameState_new(GameMode game_mode)
 {
-    Actor  *actors;
-    Thing  *things;
     GameState *game_state = malloc(sizeof(GameState));
     
     if(!game_state) {
         ERR_OUT("Failed to allocate memory for GameState.");
         return NULL;
     }
-
-    game_state->game_mode = game_mode;
-    game_state->paused    = false;
-
-    game_state->num_actors = 0;
-    game_state->num_things = 0;
+    
+    game_state->game_mode    = game_mode;
+    game_state->paused       = false;
+    game_state->request_exit = false;
+    game_state->num_actors   = 0;
+    game_state->num_things   = 0;
+    
+    // Initialize list heads to NULL
+    game_state->players = NULL; 
+    game_state->actors  = NULL;
+    game_state->things  = NULL;
     
     return game_state;
 } /* GameState_new */
@@ -65,14 +67,18 @@ GameState_new(GameMode game_mode)
 void
 GameState_free(GameState *game_state)
 {
-    Actor *actors = game_state->actors;
-    Thing *things = game_state->things;
-    
+    Player *players = game_state->players;
+    Actor  *actors  = game_state->actors;
+    Thing  *things  = game_state->things;
+
+    while (players) {
+        Player_free(Player_get_prev(players));
+    }
     while (actors) {
         Actor_free(Actor_get_prev(actors));
     }
     while (things) {
-        Thing_free(Thing_get_next(things));
+        Thing_free(Thing_get_prev(things));
     }
     
     Map_free(game_state->map);
@@ -85,48 +91,62 @@ GameState_free(GameState *game_state)
 ************************************/
 /*    A D D    */
 void 
-GameState_add_Player(GameState *game_state, Player *player)
+GameState_add_Player(GameState *self, Player *player)
 {
-    GameState_add_Actor(game_state, ACTOR(player));
+    self->num_players++;
+    if (!self->players) {
+        self->players = player;
+    } else {
+        Player_insert(self->players, player);
+    }
+    GameState_add_Actor(self, ACTOR(player));
 } /* GameState_add_Player */
 
 void
-GameState_add_Actor(GameState *game_state, Actor *actor)
+GameState_add_Actor(GameState *self, Actor *actor)
 {
-    game_state->num_actors++;
-    if (!game_state->actors) game_state->actors = actor;
-    Actor_insert(game_state->actors, actor);
-    GameState_add_Thing(game_state, THING(actor));
+    self->num_actors++;
+    if (!self->actors) {
+        self->actors = actor;
+    } else {
+        Actor_insert(self->actors, actor);
+    }
+    GameState_add_Thing(self, THING(actor));
 } /* GameState_add_Actor */
 
-void
-GameState_add_Thing(GameState *game_state, Thing *thing)
+void 
+GameState_add_Thing(GameState *self, Thing *thing)
 {
-    game_state->num_things++;
-    if (!game_state->things) game_state->things = thing;
-    Thing_insert(game_state->things, thing);
+    self->num_things++;
+    if (!self->things) {
+        self->things = thing;
+    } else {
+        Thing_insert(self->things, thing);
+    }
 } /* GameState_add_Thing */
 
 
 /*    R E M O V E    */
 void 
-GameState_remove_Player(GameState *game_state, Player *player)
+GameState_remove_Player(GameState *self, Player *player)
 {
-    GameState_remove_Actor(game_state, ACTOR(player));
+    self->num_players--;
+    Player_remove(player);
+    GameState_remove_Actor(self, ACTOR(player));
 } /* GameState_remove_Player */
 
 void
-GameState_remove_Actor(GameState *game_state, Actor *actor)
+GameState_remove_Actor(GameState *self, Actor *actor)
 {
-    game_state->num_actors--;
+    self->num_actors--;
     Actor_remove(actor);
-    GameState_remove_Thing(game_state, THING(actor));
+    GameState_remove_Thing(self, THING(actor));
 } /* GameState_remove_Actor */
 
 void
-GameState_remove_Thing(GameState *game_state, Thing *thing)
+GameState_remove_Thing(GameState *self, Thing *thing)
 {
-    game_state->num_things--;
+    self->num_things--;
     Thing_remove(thing);
 } /* GameState_remove_Thing */
 
@@ -135,15 +155,15 @@ GameState_remove_Thing(GameState *game_state, Thing *thing)
     G E T T E R S    
 ********************/
 float
-GameState_get_delta(GameState *game_state)
+GameState_get_delta(GameState *self)
 {
-    return game_state->delta;
+    return self->delta;
 } /* GameState_get_delta */
 
 Map *
-GameState_get_Map(GameState *game_state)
+GameState_get_Map(GameState *self)
 {
-    return game_state->map;
+    return self->map;
 } /* GameState_get_Map */
 
 
@@ -151,35 +171,74 @@ GameState_get_Map(GameState *game_state)
     S E T T E R S    
 ********************/
 void
-GameState_set_Map(GameState *game_state, Map *map)
+GameState_set_paused(GameState *self, bool paused)
 {
-    game_state->map = map;
+    self->paused = paused;
+} /* GameState_set_paused */
+
+void
+GameState_set_Map(GameState *self, Map *map)
+{
+    self->map = map;
 } /* GameState_set_Map */
+
+
+/************
+    R U N   
+************/
+void
+GameState_run(GameState *self)
+{
+    while(!self->request_exit) {
+        if (self->paused) continue;
+        GameState_update(self);
+        GameState_render(self);
+        self->request_exit = (
+            WindowShouldClose() 
+            || GET_KEY_OR_BUTTON_DOWN(0, GAMEPAD_BUTTON_MIDDLE_RIGHT, KEY_ESCAPE)
+        );
+    }
+} /* GameState_run */
 
 
 /******************
     U P D A T E    
 ******************/
 void
-GameState_update(GameState *game_state)
+GameState_update(GameState *self)
 {
-    int   num_actors = game_state->num_actors;
-    float delta;
-    
-    Actor *actors = game_state->actors;
+    Actor *actors = self->actors;
     Actor *actor;
-
-    delta = GetFrameTime();
-    game_state->delta = delta;
+    
+    self->delta =  GetFrameTime();;
     
     actor  = actors;
     do {
         assert(actor);
-        DBG_OUT("Grug find actor! %p", actor);
-        Actor_update(actor, game_state);
-        DBG_OUT("Grug go find next actor!");
+        Actor_update(actor, self);
         actor = Actor_get_next(actor);
     } while (Actor_get_next(actor) != actors);
 } /* GameState_update */
 
 
+/******************
+    R E N D E R    
+******************/
+void
+GameState_render(GameState *self)
+{ /* The following is temporary and will be replaced later with something that will support multiplayer... */
+    BeginDrawing();
+        
+        ClearBackground(RAYWHITE);
+        DrawFPS(10,10);
+        
+        BeginMode3D(*Player_get_Camera(self->players));
+    
+            DrawGrid(16, 4.0f);
+            
+            Map_render(self->map, self->players);
+            DrawSphere(VECTOR2_TO_3( Player_get_position(self->players), CAMERA_HEIGHT ),0.5f,YELLOW);
+            
+        EndMode3D();
+    EndDrawing();
+} /* GameState_render */

@@ -54,28 +54,7 @@ main(/*int argc, char** argv*/)
 
     SetTargetFPS(60);
     
-    while (!done) {
-        done = GET_KEY_OR_BUTTON_DOWN(0, GAMEPAD_BUTTON_MIDDLE_RIGHT, KEY_ESCAPE);
-        
-        GameState_update(game_state);
-        
-        BeginDrawing();
-
-            ClearBackground(RAYWHITE);
-
-            DrawFPS(10,10);
-            BeginMode3D(*Player_get_Camera(player));
-
-                DrawGrid(16, 4.0f);
-                
-                Map_render(map, player);
-                DrawSphere(VECTOR2_TO_3( Player_get_position(player), CAMERA_HEIGHT ),0.5f,YELLOW);
-                
-            EndMode3D();
-            
-        EndDrawing();
-        
-    }
+    GameState_run(game_state);
 
     CloseWindow();
 
