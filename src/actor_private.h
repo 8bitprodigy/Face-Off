@@ -13,17 +13,17 @@ Actor
     struct Actor *prev;
     struct Actor *next;
     
-    Vector2     prev_pos;
-    Vector2     velocity;
-    float       speed;
+    Vector2       prev_pos;
+    Vector2       velocity;
+    float         speed;
     
-    float       turn_speed;
-    float       prev_rot;
-    float       angular_velocity;
+    float         turn_speed;
+    float         prev_rot;
+    float         angular_velocity;
     
-    int         health;
+    int           health;
     
-    void        (*update)(struct Actor *, GameState *);
+    void          (*update)(struct Actor *, GameState *);
 } Actor;
 
 

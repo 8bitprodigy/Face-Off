@@ -11,21 +11,21 @@ Thing
     struct Thing *prev;
     struct Thing *next;
     
-    bool         visible;
+    bool          visible;
     
-    Vector2      position;
+    Vector2       position;
     
-    float        rotation;
-    float        sin_rot;
-    float        cos_rot;
+    float         rotation;
+    float         sin_rot;
+    float         cos_rot;
     
-    float        radius;
+    float         radius;
     
     char         *name;
     
     Mesh         *body;
-    Color        color_body;
-    Color        color_outline;
+    Color         color_body;
+    Color         color_outline;
 } Thing;
 
 

@@ -4,10 +4,9 @@
 *                           *
 ****************************/
 
-#include <assert.h>
 #include <stdlib.h>
 
-//#define DEBUG
+#define DEBUG
 #include "defs.h"
 #include "gamestate.h"
 #include "map.h"
@@ -189,14 +188,16 @@ GameState_set_Map(GameState *self, Map *map)
 void
 GameState_run(GameState *self)
 {
+    SetExitKey(0);
     while(!self->request_exit) {
-        if (self->paused) continue;
+        self->request_exit = WindowShouldClose();
+        if (GET_KEY_OR_BUTTON_PRESSED(0, GAMEPAD_BUTTON_MIDDLE_RIGHT, KEY_ESCAPE)) {
+            self->paused = !self->paused;
+        }
+        
         GameState_update(self);
         GameState_render(self);
-        self->request_exit = (
-            WindowShouldClose() 
-            || GET_KEY_OR_BUTTON_DOWN(0, GAMEPAD_BUTTON_MIDDLE_RIGHT, KEY_ESCAPE)
-        );
+        
     }
 } /* GameState_run */
 
@@ -210,11 +211,12 @@ GameState_update(GameState *self)
     Actor *actors = self->actors;
     Actor *actor;
     
-    self->delta =  GetFrameTime();;
+    self->delta =  GetFrameTime();
     
-    actor  = actors;
+    if ( self->paused || self->request_exit) return;
+    
+    actor = actors;
     do {
-        assert(actor);
         Actor_update(actor, self);
         actor = Actor_get_next(actor);
     } while (Actor_get_next(actor) != actors);

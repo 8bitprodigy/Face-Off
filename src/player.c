@@ -7,9 +7,9 @@
 #include "player_private.h"
 
 
-/******************************
-*    C O N S T R U C T O R    *
-******************************/
+/****************************
+    C O N S T R U C T O R   
+****************************/
 void
 Player_init(Player *player, Vector2 position, float rotation, float radius, int controller)
 {
@@ -58,9 +58,9 @@ Player_new(Vector2 position, float rotation, float radius, int controller)
 } /* Player_new */
 
 
-/****************************
-*    D E S T R U C T O R    *
-****************************/
+/**************************
+    D E S T R U C T O R    
+**************************/
 void
 Player_free(Player *player)
 {
@@ -71,9 +71,9 @@ Player_free(Player *player)
 } /* Player_free */
 
 
-/**********************
-*    G E T T E R S    *
-**********************/
+/********************
+    G E T T E R S    
+********************/
 Camera *
 Player_get_Camera(Player *player)
 {
@@ -99,9 +99,9 @@ Player_get_prev(Player *player)
 }
 
 
-/**************************************
-*    L I S T   O P E R A T I O N S    *
-**************************************/
+/************************************
+    L I S T   O P E R A T I O N S
+************************************/
 /*        A D D    */
 void
 Player_insert(Player *player1, Player *player2)
@@ -127,9 +127,9 @@ Player_remove(Player *player)
 } /* Player_remove */
 
 
-/********************
-*    U P D A T E    *
-********************/
+/******************
+    U P D A T E
+******************/
 void 
 Player_update(Actor *actor, GameState *game_state)
 {

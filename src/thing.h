@@ -27,4 +27,3 @@ void Thing_remove(Thing *thing);
 void Thing_draw(Thing *thing);
 
 #endif /* THING_H */
-

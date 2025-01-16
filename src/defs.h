@@ -16,7 +16,6 @@
         - Rotations increase clockwise.
 */
 
-
 #include <stdio.h>
 #include <math.h>
 #include <raylib.h>
@@ -89,6 +88,8 @@
 #endif
 
 /*** Common Input Operations ***/
+
+#define GET_KEY_OR_BUTTON_PRESSED( Controller, Button, Key ) (int)(IsGamepadButtonPressed(Controller, Button) || IsKeyPressed(Key))
 
 #define GET_KEY_OR_BUTTON_DOWN( Controller, Button, Key ) (int)(IsGamepadButtonDown(Controller, Button) || IsKeyDown(Key))
 

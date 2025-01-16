@@ -386,7 +386,7 @@ Map_free(Map *map)
 /******************************
 *    M A P   M E T H O D S    *
 ******************************/
-static inline Index2D
+inline Index2D
 Map_get_index(Map *map, Vector2 position) 
 {
     return (Index2D) {
@@ -443,7 +443,7 @@ is_corner_on_wall(Map *map, Index2D index, int corner)
 }
 
 void 
-Map_check_vis(Map *map, Index2D index, Thing *thing, Vector2 l_frustum, Vector2 r_frustum)
+check_vis(Map *map, Index2D index, Thing *thing, Vector2 l_frustum, Vector2 r_frustum)
 {
     uint    i, next, prev;
     
@@ -510,7 +510,7 @@ Map_check_vis(Map *map, Index2D index, Thing *thing, Vector2 l_frustum, Vector2 
                 //inside_r = r_frustum; inside_l = l_frustum;
                 //DBG_LINE(position, inside_l,0.2f, ORANGE);
                 //DBG_LINE(position, inside_r,0.1f, GREEN);
-                Map_check_vis(map, neighbor, thing, inside_l, inside_r);
+                check_vis(map, neighbor, thing, inside_l, inside_r);
             }
             else {
                 //DBG_OUT("Wall %u is NOT visible.",i);
@@ -564,7 +564,7 @@ Map_render(Map *map, Player *player)
     
     if (size <= index.x || size <= index.y) return;
     //DBG_OUT("Index : { X: %u, \tY: %u }\n",index.x,index.y);
-    Map_check_vis(map, index, thing, l_frustum, r_frustum);
+    check_vis(map, index, thing, l_frustum, r_frustum);
     /*DBG_OUT("Buffer size: %u",buffer_size);
     for (i=0; i < buffer_size; i++) {
         printf("%u, ",i);

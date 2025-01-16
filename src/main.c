@@ -25,7 +25,7 @@
 *******************************************************************************/
 #include <raylib.h>
 
-#define DEBUG
+//#define DEBUG
 #include "defs.h"
 #include "gamestate.h"
 #include "map.h"
