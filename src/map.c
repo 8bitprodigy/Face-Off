@@ -396,32 +396,61 @@ Map_get_index(Map *map, Vector2 position)
 }
 
 void
-get_nearest_adjacent_cells(Map *map, Index2D index, Vector2 position, Cell **check_cells)
+get_adjacent_cells(Map *map, Index2D index, Vector2 position, Cell **check_cells)
 {
     int       i;
     
-    int       size  = map->size; 
-    Cell    **cells = map->cells;
+    int       size      = map->size-1; 
+    Cell    **cells     = map->cells;
+    Cell     *curr_cell = &cells[index.x][index.y];
+    Cell     *swap_cell_1;
+    Cell     *swap_cell_2;
     Index2D   offset;
-    
-    /* First checked cell should ALWAYS be the one the actor's coordinates are actually in. */
-    check_cells[0] = &cells[index.x][index.y];
     
     if (!( /* This is readable. I don't exactly like it, but it's readable. */
         IS_IN_BOUNDS(index.x, 0, (int)map->size-1)
         && IS_IN_BOUNDS(index.y, 0, (int)size-1)
     )) return;
     
-    offset.x = SIGN_BETWEEN(position.x, check_cells[0]->center.x) + index.x;
-    offset.y = SIGN_BETWEEN(position.y, check_cells[0]->center.y) + index.y;
-    /* Then we get adjacent cells(if applicable). */
-    if (IS_IN_BOUNDS(offset.x, 0, size-1)) check_cells[1] = &cells[offset.x][index.y];
-    else check_cells[1] = check_cells[0];
-    if (IS_IN_BOUNDS(offset.y, 0, size-1)) check_cells[2] = &cells[index.x][offset.y];
-    else check_cells[2] = check_cells[0];
-    if (IS_IN_BOUNDS(offset.x, 0, size-1) && IS_IN_BOUNDS(offset.y, 0, size-1))
+    offset.x = SIGN_BETWEEN(position.x, curr_cell->center.x) + index.x;
+    offset.y = SIGN_BETWEEN(position.y, curr_cell->center.y) + index.y;
+    
+    check_cells[0] = &cells[index.x][index.y];
+    
+    if (IS_IN_BOUNDS(offset.x, 0, size)) 
+        check_cells[1] = &cells[offset.x][index.y];
+    else check_cells[1] = NULL;
+    
+    if (IS_IN_BOUNDS(offset.y, 0, size)) 
+        check_cells[2] = &cells[index.x][offset.y];
+    else check_cells[2] = NULL;
+    
+    if (IS_IN_BOUNDS(offset.x, 0, size) && IS_IN_BOUNDS(offset.y, 0, size))
         check_cells[3] = &cells[offset.x][offset.y];
-    else check_cells[3] = check_cells[0];
+    else check_cells[3] = NULL;
+
+    /* Sort cells to be in counter-clockwise order with southwest at index 0 */
+    if (offset.x < 0) {
+        swap_cell_1 = check_cells[0];
+        swap_cell_2 = check_cells[2];
+        
+        check_cells[0] = check_cells[1];
+        check_cells[2] = check_cells[3];
+        
+        check_cells[1] = swap_cell_1;
+        check_cells[3] = swap_cell_2;
+    }
+    
+    if (0 < offset.y) {
+        swap_cell_1 = check_cells[0];
+        swap_cell_2 = check_cells[1];
+        
+        check_cells[0] = check_cells[2];
+        check_cells[1] = check_cells[3];
+
+        check_cells[2] = swap_cell_1;
+        check_cells[3] = swap_cell_2;
+    }
 }
 
 bool
@@ -431,10 +460,11 @@ is_corner_on_wall(Map *map, Index2D index, int corner)
     Cell *cells[4];
     Cell *cell     = &map->cells[index.x][index.y]; 
     
-    get_nearest_adjacent_cells(map, index, cell->corners[corner], cells);
+    get_adjacent_cells(map, index, cell->corners[corner], cells);
     
+    corner = 0;
     for (i = 0; i < 4; i++) {
-        if (!cells[i]) return false;
+        if (!cells[i]) return true;
         if (cells[i]->walls[corner].type || cells[i]->walls[corner-1%4].type) return true;
         corner++;
     }
@@ -455,18 +485,14 @@ check_vis(Map *map, Index2D index, Thing *thing, Vector2 l_frustum, Vector2 r_fr
     bool    is_visible      = false;
 
     Vector2 position   = Thing_get_position(thing);
-    //float   rotation   = thing->rotation;
+    float   rotation   = Thing_get_rotation(thing);
 
     Vector2 inside_l;
     Vector2 inside_r;
     Index2D neighbor;
-
-    //DBG_OUT("\n\tChecking cell: { X: %u,\tY: %u }",index.x,index.y);
-    //if (!cell) return;
+    
     if (render_buffer[index.x][index.y]) return;
     render_buffer[index.x][index.y] = true;
-    //DBG_OUT("Cell Index: { X: %u,\tY: %u }", cell->index.x, cell->index.y);
-    //Cell_render(cell,4);
 
     for (i = 0; i < 4; i++) {
         neighbor = Index2D_add(index, Cell_Directions[i]);
@@ -474,11 +500,10 @@ check_vis(Map *map, Index2D index, Thing *thing, Vector2 l_frustum, Vector2 r_fr
         prev     = (i-1)%4;
         
         
-        if ( Index2D_OOB(neighbor, map->size) ) {//|| (0 < DOT(rotation, Wall_Normals[i])) ) {
-            //DBG_LINE(thing->position, cell->corners[i], 0.1f, YELLOW);
+        if ( Index2D_OOB(neighbor, map->size) ) {// || (0 < DOT(rotation, Wall_Normals[i])) ) {
             continue;
         }
-        //DBG_OUT("i: %u\ti+1%%4 : %u\t(i+1)%%4: %u", i, i+1%4, (i+1)%4);
+        
         inside_l = l_frustum;
         inside_r = r_frustum;
         if (
@@ -491,14 +516,10 @@ check_vis(Map *map, Index2D index, Thing *thing, Vector2 l_frustum, Vector2 r_fr
                 &inside_l,
                 &inside_r
             )
-            //|| CheckCollisionPointTriangle(cell->center, position, r_frustum, l_frustum)
         ) {
             is_visible = true;
             if (walls[i].type == PORTAL) {
-                //DBG_LINE(corners[i], corners[next], 0.1f, MAGENTA);
-            
-                //DBG_OUT("Wall %u is visible.",i);
-                //DBG_OUT("East Inside: { X: %.4f,\tY: %.4f }\n", inside_r.x, inside_r.y );
+                
                 if (!Vector2Equals(inside_l, l_frustum) && !walls[prev].type) {
                     inside_l = GET_FRUSTUM_EDGE(position, inside_l);
                 } else inside_l = l_frustum;
@@ -508,21 +529,14 @@ check_vis(Map *map, Index2D index, Thing *thing, Vector2 l_frustum, Vector2 r_fr
                 if (walls[prev].type == PORTAL) inside_l = l_frustum;
                 if (walls[next].type == PORTAL) inside_r = r_frustum;
                 //inside_r = r_frustum; inside_l = l_frustum;
-                //DBG_LINE(position, inside_l,0.2f, ORANGE);
-                //DBG_LINE(position, inside_r,0.1f, GREEN);
+                
                 check_vis(map, neighbor, thing, inside_l, inside_r);
-            }
-            else {
-                //DBG_OUT("Wall %u is NOT visible.",i);
-                //DBG_LINE(position, corners[i],0.2f, RED);
             }
         }
     }
     if (is_visible) { // && !render_buffer[index.x][index.y]) {
         Cell_render(cell,4);
-    } //else DBG_LINE(position, center, 0.3, PURPLE);
-    //render_buffer[index.x][index.y] = true;
-    //DBG_OUT("Cell checked.\n");
+    } 
 } /* Cell_check_vis */
 
 
@@ -600,22 +614,12 @@ Map_check_Actor_collision(Map *map, Actor *actor, Vector2 new_pos, Vector2 *coll
     Index2D map_index = Map_get_index(map, prev_pos);
 
     if (!(IS_IN_BOUNDS(map_index.x, 0, (int)size-1)&&IS_IN_BOUNDS(map_index.y, 0, (int)size-1))) return false;
-    /* First checked cell should ALWAYS be the one the actor's coordinates are actually in. */
-    check_cells[0] = &cells[map_index.x][map_index.y];
     
-    offset.x = SIGN_BETWEEN(prev_pos.x, check_cells[0]->center.x) + map_index.x;
-    offset.y = SIGN_BETWEEN(prev_pos.y, check_cells[0]->center.y) + map_index.y;
-    /* Then we get adjacent cells(if applicable). */
-    if (IS_IN_BOUNDS(offset.x, 0, size-1)) check_cells[1] = &cells[offset.x][map_index.y];
-    else check_cells[1] = check_cells[0];
-    if (IS_IN_BOUNDS(offset.y, 0, size-1)) check_cells[2] = &cells[map_index.x][offset.y];
-    else check_cells[2] = check_cells[0];
-    if (IS_IN_BOUNDS(offset.x, 0, size-1) && IS_IN_BOUNDS(offset.y, 0, size-1))
-        check_cells[3] = &cells[offset.x][offset.y];
-    else check_cells[3] = check_cells[0];
+    get_adjacent_cells(map, map_index, prev_pos, check_cells);
 
     for (cell_index = 0; cell_index < 4; cell_index++) {
         cell    = check_cells[cell_index];
+        if (!cell) continue;
         walls   = cell->walls;
         corners = cell->corners; 
         

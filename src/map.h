@@ -25,6 +25,22 @@ typedef enum {
 Cardinals;
 
 typedef enum {
+    BOTTOM_RIGHT,
+    TOP_RIGHT,
+    TOP_LEFT,
+    BOTTOM_LEFT,
+}
+Corners;
+
+typedef enum {
+    BOTTOM = 0,
+    TOP    = 1,
+    RIGHT  = 0,
+    LEFT   = 2,
+}
+Sides;
+
+typedef enum {
     PORTAL,
     SOLID,
     BREAKABLE,
