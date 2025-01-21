@@ -27,6 +27,7 @@
 ****************/
 #define uint unsigned int 
 #define byte unsigned char
+#define uint64 long long unsigned int
 
 
 /************************
@@ -149,6 +150,8 @@
 #define VECTOR2( _x_, _y_ )  ((Vector2){.x=(_x_),.y=(_y_)})
 /* Convert a Vector2 to a Vector3 */
 #define VECTOR2_TO_3( Vector, Height ) (Vector3){(Vector).x, (Height), (Vector).y}
+/* Vector2 Cross Product */
+#define VECTOR2_CROSS( Vector_1, Vector_2 ) (CROSS(Vector_1.x, Vector_1.y, Vector_2.x, Vector_2.y))
 /* Convert a Vector3 to a Vector2 */
 #define VECTOR3_TO_2( Vector ) (Vector2){(Vector).x, (Vector).z}
 /* Convert an angle to a Vector2 */
@@ -158,5 +161,18 @@
 /* Check if Vector2 is Vector2_NaN */
 #define IS_VECTOR2_NAN( Vector ) (isnan((Vector).x) && isnan((Vector).y))
 
+/* Check what side of a line segment a point is on; return <0, ==0, or >0 */
+#define POINT_ON_SIDE( Point, Segment_start, Segment_end ) \
+    (VECTOR2_CROSS( \
+        (Vector2){ \
+           (Segment_end).x - (Segment_start).x, \
+           (Segment_end).y - (Segment_start).y  \
+        }, \
+        (Vector2){ \
+            (Point).x - (Segment_start).x, \
+            (Point).y - (Segment_start).y  \
+        } \
+    ))
+    
 
 #endif /* DEFS_H */

@@ -593,6 +593,7 @@ bool
 Map_check_Actor_collision(Map *map, Actor *actor, Vector2 new_pos, Vector2 *collision_point, Vector2 *collision_normal)
 {
     int   cell_index, wall_index, next;
+    bool  collision_detected = false;
 
     int   size = map->size; 
     
@@ -609,6 +610,7 @@ Map_check_Actor_collision(Map *map, Actor *actor, Vector2 new_pos, Vector2 *coll
     Vector2 *corners;
     Vector2 wall_start;
     Vector2 wall_end;
+    Vector2 points[4];
     
     Index2D offset;
     Index2D map_index = Map_get_index(map, prev_pos);
@@ -617,25 +619,54 @@ Map_check_Actor_collision(Map *map, Actor *actor, Vector2 new_pos, Vector2 *coll
     
     get_adjacent_cells(map, map_index, prev_pos, check_cells);
 
+    /* Loop through nearest four cells */
     for (cell_index = 0; cell_index < 4; cell_index++) {
         cell    = check_cells[cell_index];
         if (!cell) continue;
         walls   = cell->walls;
         corners = cell->corners; 
-        
+
+        /* Loop through the four walls */
         for (wall_index = 0; wall_index < 4; wall_index++) {
+            /* Check corner collision */
+            if (
+                CheckCollisionCircleLine(
+                    corners[wall_index], 
+                    radius, 
+                    prev_pos, 
+                    new_pos
+                )
+            ) {
+                *collision_normal = Vector2Normalize(
+                    Vector2Subtract(
+                        new_pos, 
+                        corners[wall_index]
+                    )
+                );
+                collision = Vector2Scale(*collision_normal, radius);
+                collision_detected = true;
+            }
+
+            /* Start Wall Collision */
             if (!walls[wall_index].type) continue;
-            next       = (wall_index+1)%4;
+            next = (wall_index+1)%4;
             /* Push walls into the cell along their normal by the actor's radius 
             in order to create a minkowski distance */
             wall_start = Vector2Add(corners[wall_index],    Vector2Scale(Wall_Vec2_Normals[wall_index], radius));
             wall_end   = Vector2Add(corners[next], Vector2Scale(Wall_Vec2_Normals[wall_index], radius));
             
-            if (CheckCollisionLines(prev_pos, new_pos, wall_start, wall_end, &collision)) {
-                //DBG_OUT("Wall Start: { X: %.4f |\tY: %.4f }\tWall End: { X: %.4f |\tY: %.4f }", wall_start.x, wall_start.y, wall_end.x, wall_end.y);
-                if (Vector2Distance(prev_pos,collision)<Vector2Distance(prev_pos,final_collision)) final_collision = collision;
+            if ( CheckCollisionLines(prev_pos, new_pos, wall_start, wall_end, &collision) ) {
                 *collision_normal = Wall_Vec2_Normals[wall_index];
+                collision_detected = true;
             }
+
+            /* If there was a collision, update final_collision */
+            if (
+                collision_detected
+                && Vector2Distance(prev_pos, collision)
+                <  Vector2Distance(prev_pos, final_collision)
+            ) final_collision = collision;
+            collision_detected = false;
         }
     }
     

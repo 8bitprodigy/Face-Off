@@ -30,6 +30,8 @@ GameState
     bool      paused;
     bool      request_exit;
 
+    uint64     frame_num;
+    
     float     delta;
 } GameState;
 
@@ -52,10 +54,13 @@ GameState_new(GameMode game_mode)
     game_state->num_actors   = 0;
     game_state->num_things   = 0;
     
-    // Initialize list heads to NULL
+    /* Initialize list heads to NULL */
     game_state->players = NULL; 
     game_state->actors  = NULL;
     game_state->things  = NULL;
+
+    game_state->delta     = 0.0f;
+    game_state->frame_num = 0;
     
     return game_state;
 } /* GameState_new */
@@ -233,6 +238,8 @@ GameState_render(GameState *self)
         
         ClearBackground(RAYWHITE);
         DrawFPS(10,10);
+        if (self->paused)
+            DrawText("PAUSED",100,10,20,BLACK);
         
         BeginMode3D(*Player_get_Camera(self->players));
     
@@ -243,4 +250,5 @@ GameState_render(GameState *self)
             
         EndMode3D();
     EndDrawing();
+    self->frame_num++;
 } /* GameState_render */

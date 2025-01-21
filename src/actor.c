@@ -166,28 +166,39 @@ Actor_move(Actor *actor, GameState *game_state)
     Vector2 collision_point;
     Vector2 collision_normal;
     
-    //printf("New Position>\t x: %.4f | y: %.4f\n", new_position.x, new_position.y); 
-    if (Map_check_Actor_collision(map, actor, new_position, &collision_point, &collision_normal)) {
-        
-        perpendicular_velocity = Vector2Scale(
-            collision_normal,
-            Vector2DotProduct(actor->velocity, collision_normal)
-        );
+    if (
+        !Map_check_Actor_collision(
+            map, actor, 
+            new_position, 
+            &collision_point,
+            &collision_normal
+        )
+    ) goto finalize_move;
+    
+    perpendicular_velocity = Vector2Scale(
+        collision_normal,
+        Vector2DotProduct(
+            actor->velocity, 
+            collision_normal
+        )
+    );
 
-        slide_velocity = Vector2Subtract(actor->velocity, perpendicular_velocity);
+    slide_velocity = Vector2Subtract(
+        actor->velocity, 
+        perpendicular_velocity
+    );
 
-        correction_offset = Vector2Scale(collision_normal, radius);
+    correction_offset = Vector2Scale(collision_normal, radius);
 
-        new_position = Vector2Add(
-            collision_point, 
-            Vector2Scale(slide_velocity, delta)
-        );
+    new_position = Vector2Add(
+        collision_point, 
+        Vector2Scale(slide_velocity, delta)
+    );
 
-        new_position = Vector2Add(new_position, correction_offset);
-        //DBG_OUT("New Position: { X:%.4f |\tY:%.4f }", new_position.x, new_position.y);
-    }
-    /* Todo... */
-    //DBG_OUT("Actor position: { X: %.4f,\tY: %.4f }",position.x,position.y);
+    new_position = Vector2Add(new_position, correction_offset);
+    new_position = collision_point;
+    
+finalize_move:
     actor->prev_pos = position;
     thing->position = new_position;
 } /* Actor_move */
