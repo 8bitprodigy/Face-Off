@@ -604,6 +604,8 @@ Map_check_Actor_collision(Map *map, Actor *actor, Vector2 new_pos, Vector2 *coll
 
     Vector2 prev_pos = Actor_get_position(actor);
     float   radius   = Actor_get_radius(actor);
+    Vector2 rot_prev_pos;
+    Vector2 rot_new_pos;
 
     Vector2 collision       = VECTOR2_NAN;
     Vector2 final_collision = new_pos;
@@ -613,7 +615,8 @@ Map_check_Actor_collision(Map *map, Actor *actor, Vector2 new_pos, Vector2 *coll
     Vector2 points[4];
     
     Index2D offset;
-    Index2D map_index = Map_get_index(map, prev_pos);
+    Index2D map_index  = Map_get_index(map, prev_pos);
+    float   rot_amount = 0;
 
     if (!(IS_IN_BOUNDS(map_index.x, 0, (int)size-1)&&IS_IN_BOUNDS(map_index.y, 0, (int)size-1))) return false;
     
@@ -628,7 +631,7 @@ Map_check_Actor_collision(Map *map, Actor *actor, Vector2 new_pos, Vector2 *coll
 
         /* Loop through the four walls */
         for (wall_index = 0; wall_index < 4; wall_index++) {
-            /* Check corner collision */
+            /* Check corner collision 
             if (
                 CheckCollisionCircleLine(
                     corners[wall_index], 
@@ -644,25 +647,59 @@ Map_check_Actor_collision(Map *map, Actor *actor, Vector2 new_pos, Vector2 *coll
                     )
                 );
                 collision = Vector2Scale(*collision_normal, radius);
+                new_pos = collision;
                 collision_detected = true;
-            }
+            }*/
 
             /* Start Wall Collision */
-            if (!walls[wall_index].type) continue;
+            rot_amount = HALF_PI * wall_index;
+            if (!walls[wall_index].type) goto handle_collision;
             next = (wall_index+1)%4;
             /* Push walls into the cell along their normal by the actor's radius 
             in order to create a minkowski distance */
-            wall_start = Vector2Add(corners[wall_index],    Vector2Scale(Wall_Vec2_Normals[wall_index], radius));
-            wall_end   = Vector2Add(corners[next], Vector2Scale(Wall_Vec2_Normals[wall_index], radius));
+            wall_start = Vector2Rotate(
+                Vector2Add(
+                    corners[wall_index],
+                    Vector2Scale(
+                        Wall_Vec2_Normals[wall_index],
+                        radius
+                    )
+                ),
+                rot_amount
+            );
+            wall_start.y += radius;
             
-            if ( CheckCollisionLines(prev_pos, new_pos, wall_start, wall_end, &collision) ) {
+            wall_end   = Vector2Rotate(
+                Vector2Add(
+                    corners[next],
+                    Vector2Scale(
+                        Wall_Vec2_Normals[wall_index],
+                        radius
+                    )
+                ),
+                rot_amount
+            );
+            wall_end.y -= radius;
+            
+            rot_prev_pos = Vector2Rotate(prev_pos, rot_amount);
+            rot_new_pos  = Vector2Rotate(new_pos,  rot_amount);
+            
+            if ( wall_start.x    <= rot_new_pos.x 
+                && rot_new_pos.x <= corners[wall_index].x
+                && rot_prev_pos.y <= wall_start.y
+                && wall_end.y    <= rot_prev_pos.y 
+            ) {
                 *collision_normal = Wall_Vec2_Normals[wall_index];
+                rot_new_pos.x = wall_start.x;
+                collision     = Vector2Rotate(
+                    rot_new_pos,
+                    -rot_amount
+                );
                 collision_detected = true;
             }
-
+handle_collision:
             /* If there was a collision, update final_collision */
-            if (
-                collision_detected
+            if ( collision_detected
                 && Vector2Distance(prev_pos, collision)
                 <  Vector2Distance(prev_pos, final_collision)
             ) final_collision = collision;

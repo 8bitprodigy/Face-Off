@@ -174,28 +174,6 @@ Actor_move(Actor *actor, GameState *game_state)
             &collision_normal
         )
     ) goto finalize_move;
-    
-    perpendicular_velocity = Vector2Scale(
-        collision_normal,
-        Vector2DotProduct(
-            actor->velocity, 
-            collision_normal
-        )
-    );
-
-    slide_velocity = Vector2Subtract(
-        actor->velocity, 
-        perpendicular_velocity
-    );
-
-    correction_offset = Vector2Scale(collision_normal, radius);
-
-    new_position = Vector2Add(
-        collision_point, 
-        Vector2Scale(slide_velocity, delta)
-    );
-
-    new_position = Vector2Add(new_position, correction_offset);
     new_position = collision_point;
     
 finalize_move:
