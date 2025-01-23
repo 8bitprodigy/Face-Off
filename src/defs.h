@@ -129,12 +129,24 @@
 
 /* Cross Product */
 #define CROSS( a, b, c, d ) ((a)*(d)-(b)*(c))
-/* Dot Product */
+/* Dot Product of two angles */
 #define DOT( a, b )  \
     Vector2DotProduct( \
         (Vector2){.x=cos((a)),.y=sin((a))}, \
         (Vector2){.x=cos((b)),.y=sin((b))}  \
     )  
+/* Dot Product of point to a line */
+#define DOTPL( point, start, end ) ( \
+    ( \
+        (point.x - start.x) \
+        * (end.x - start.x) \
+    ) \
+    + ( \
+        (point.y - start.y) \
+        * (end.y - start.y) \
+    ) \
+    / pow(Vector2Distance(start,end),2) \
+)
 /* Minimum value */
 #define MIN( a, b ) (((a)<(b))?(a):(b))
 /* Clamp angle to between 0 and TAU */
@@ -160,6 +172,19 @@
 #define VECTOR2_NAN ((Vector2){NAN,NAN})
 /* Check if Vector2 is Vector2_NaN */
 #define IS_VECTOR2_NAN( Vector ) (isnan((Vector).x) && isnan((Vector).y))
+/* Get normal between two points */
+#define VECTOR2_NORMAL( Start, End ) ( \
+        Vector2Normalize( \
+            Vector2Subtract( End, Start ) \
+        )\
+    )
+/* Re-project a vector between two points to a certain length */
+#define VECTOR2_REPROJECT( Start, End, Length ) \
+    ( \
+        Vector2Scale( \
+            VECTOR2_NORMAL( End, Start ), Length \
+        ) \
+    )
 
 /* Check what side of a line segment a point is on; return <0, ==0, or >0 */
 #define POINT_ON_SIDE( Point, Segment_start, Segment_end ) \
