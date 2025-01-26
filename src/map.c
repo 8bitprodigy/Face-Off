@@ -589,6 +589,42 @@ Map_render(Map *map, Player *player)
     
 } /* Map_render */
 
+bool
+Map_check_circle_circle_collision(
+    Vector2 start_pos,
+    Vector2 end_pos,
+    Vector2 circle,
+    float   radius,
+    Vector2 *collision,
+    Vector2 *normal
+)
+{
+    if (!CheckCollisionCircleLine( circle, radius, start_pos, end_pos )) {
+        return false;
+    }
+    
+    *normal = Vector2Normalize(
+        Vector2Subtract( end_pos, circle)
+    );
+    
+    *collision = Vector2Add(Vector2Scale(*normal, radius), circle);
+    end_pos = *collision;
+    return true;
+}
+
+bool
+Map_check_circle_segment_collision(
+    Vector2 start_pos,
+    Vector2 end_pos,
+    float   radius,
+    Vector2 seg_start,
+    Vector2 seg_end,
+    Vector2 *collision,
+    Vector2 *normal
+)
+{
+    return false;
+}
 
 bool
 Map_check_Actor_collision(Map *map, Actor *actor, Vector2 new_pos, Vector2 *collision_point, Vector2 *collision_normal)
@@ -614,6 +650,8 @@ Map_check_Actor_collision(Map *map, Actor *actor, Vector2 new_pos, Vector2 *coll
     Vector2 *corners;
     Vector2 wall_start;
     Vector2 wall_end;
+    Vector2 mink_wall_start;
+    Vector2 mink_wall_end;
     Vector2 points[4];
     
     Index2D offset;
@@ -659,43 +697,41 @@ Map_check_Actor_collision(Map *map, Actor *actor, Vector2 new_pos, Vector2 *coll
             /* Push walls into the cell along their normal by the actor's radius 
             in order to create a minkowski distance */
             wall_start = Vector2Rotate(
-                Vector2Add(
-                    corners[wall_index],
-                    Vector2Scale(
-                        Wall_Vec2_Normals[wall_index],
-                        radius
-                    )
-                ),
+                corners[wall_index],
                 rot_amount
             );
-            wall_start.y += radius;
+            mink_wall_start = Vector2Subtract(wall_start, VECTOR2(radius, 0));
             
             wall_end   = Vector2Rotate(
-                Vector2Add(
-                    corners[next],
-                    Vector2Scale(
-                        Wall_Vec2_Normals[wall_index],
-                        radius
-                    )
-                ),
+                corners[next],
                 rot_amount
             );
-            wall_end.y -= radius;
+            mink_wall_end = Vector2Subtract(wall_end, VECTOR2(radius, 0));
             
             rot_prev_pos = Vector2Rotate(prev_pos, rot_amount);
             rot_new_pos  = Vector2Rotate(new_pos,  rot_amount);
-            
-            if ( wall_start.x    <= rot_new_pos.x 
-                && rot_new_pos.x <= corners[wall_index].x
-                && rot_prev_pos.y <= wall_start.y
-                && wall_end.y    <= rot_prev_pos.y 
+            /*
+            if ( rot_new_pos.x < mink_wall_start.x) goto handle_collision;
+
+            if ( mink_wall_start.x < rot_prev_pos.x) {
+                rot_new_pos.x = mink_wall_start.x;
+                collision = Vector2Rotate(rot_new_pos, -rot_amount);
+                collision_detected = true;
+                goto handle_collision;
+            }
+            */
+            if ( mink_wall_start.x <= rot_new_pos.x 
+                && rot_new_pos.x   <= wall_start.x
+                && rot_prev_pos.y  <= wall_start.y
+                && wall_end.y      <= rot_prev_pos.y 
             ) {
                 *collision_normal = Wall_Vec2_Normals[wall_index];
-                rot_new_pos.x = wall_start.x;
+                rot_new_pos.x = mink_wall_start.x;
                 collision     = Vector2Rotate(
                     rot_new_pos,
                     -rot_amount
                 );
+                new_pos = collision;
                 collision_detected = true;
             }
 handle_collision:
