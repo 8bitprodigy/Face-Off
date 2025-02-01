@@ -28,7 +28,15 @@ Projectile_init(Projectile *projectile, Actor *master, Vector2 position, Vector2
 Projectile *
 Projectile_new(Actor *master, Vector2 position, Vector2 direction, float max_distance, uint8 damage, float speed, float radius)
 {
-    return NULL;
+    Projectile *projectile = malloc(sizeof(Projectile));
+    if (!projectile){
+        ERR_OUT("Failed to allocate memory for Projectile.");
+        return NULL;
+    }
+    
+    Projectile_new(master, position, direction, max_distance, damage, speed, radius);
+    
+    return projectile;
 } /* Projectile_new */
 
 
