@@ -710,16 +710,18 @@ Map_check_Actor_collision(Map *map, Actor *actor, Vector2 new_pos, Vector2 *coll
             
             rot_prev_pos = Vector2Rotate(prev_pos, rot_amount);
             rot_new_pos  = Vector2Rotate(new_pos,  rot_amount);
-            /*
+
+            /* If new position is outside the wall+radius boundary */
             if ( rot_new_pos.x < mink_wall_start.x) goto handle_collision;
 
+            /* If old position is also inside the wall+radius boundary
             if ( mink_wall_start.x < rot_prev_pos.x) {
                 rot_new_pos.x = mink_wall_start.x;
                 collision = Vector2Rotate(rot_new_pos, -rot_amount);
                 collision_detected = true;
                 goto handle_collision;
-            }
-            */
+            } */
+            
             if ( mink_wall_start.x <= rot_new_pos.x 
                 && rot_new_pos.x   <= wall_start.x
                 && rot_prev_pos.y  <= wall_start.y

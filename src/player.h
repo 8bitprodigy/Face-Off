@@ -3,6 +3,9 @@
 
 #include "actor.h"
 
+
+#define PLAYER( self ) ((Player*)(self))
+
 typedef struct Player Player;
 
 /* Constructor */

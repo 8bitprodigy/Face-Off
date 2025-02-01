@@ -99,9 +99,10 @@ Player_get_prev(Player *player)
 }
 
 
-/************************************
-    L I S T   O P E R A T I O N S
-************************************/
+/*******************
+   M E T H O D S
+*******************/
+/*    L I S T   O P E R A T I O N S    */
 /*        A D D    */
 void
 Player_insert(Player *player1, Player *player2)

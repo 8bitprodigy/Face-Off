@@ -18,13 +18,13 @@ GameState
     GameMode  game_mode;
 
     Player   *players;
-    uint      num_players;
+    uint      player_count;
     
     Actor    *actors;
-    uint      num_actors;
+    uint      actor_count;
     
     Thing    *things;
-    uint      num_things;
+    uint      thing_count;
     
     Map      *map;
     bool      paused;
@@ -51,8 +51,8 @@ GameState_new(GameMode game_mode)
     game_state->game_mode    = game_mode;
     game_state->paused       = false;
     game_state->request_exit = false;
-    game_state->num_actors   = 0;
-    game_state->num_things   = 0;
+    game_state->actor_count  = 0;
+    game_state->thing_count  = 0;
     
     /* Initialize list heads to NULL */
     game_state->players = NULL; 
@@ -97,7 +97,7 @@ GameState_free(GameState *game_state)
 void 
 GameState_add_Player(GameState *self, Player *player)
 {
-    self->num_players++;
+    self->player_count++;
     if (!self->players) {
         self->players = player;
     } else {
@@ -109,7 +109,7 @@ GameState_add_Player(GameState *self, Player *player)
 void
 GameState_add_Actor(GameState *self, Actor *actor)
 {
-    self->num_actors++;
+    self->actor_count++;
     if (!self->actors) {
         self->actors = actor;
     } else {
@@ -121,7 +121,7 @@ GameState_add_Actor(GameState *self, Actor *actor)
 void 
 GameState_add_Thing(GameState *self, Thing *thing)
 {
-    self->num_things++;
+    self->thing_count++;
     if (!self->things) {
         self->things = thing;
     } else {
@@ -134,7 +134,7 @@ GameState_add_Thing(GameState *self, Thing *thing)
 void 
 GameState_remove_Player(GameState *self, Player *player)
 {
-    self->num_players--;
+    self->player_count--;
     Player_remove(player);
     GameState_remove_Actor(self, ACTOR(player));
 } /* GameState_remove_Player */
@@ -142,7 +142,7 @@ GameState_remove_Player(GameState *self, Player *player)
 void
 GameState_remove_Actor(GameState *self, Actor *actor)
 {
-    self->num_actors--;
+    self->actor_count--;
     Actor_remove(actor);
     GameState_remove_Thing(self, THING(actor));
 } /* GameState_remove_Actor */
@@ -150,7 +150,7 @@ GameState_remove_Actor(GameState *self, Actor *actor)
 void
 GameState_remove_Thing(GameState *self, Thing *thing)
 {
-    self->num_things--;
+    self->thing_count--;
     Thing_remove(thing);
 } /* GameState_remove_Thing */
 
@@ -235,20 +235,18 @@ void
 GameState_render(GameState *self)
 { /* The following is temporary and will be replaced later with something that will support multiplayer... */
     BeginDrawing();
-        
         ClearBackground(RAYWHITE);
-        DrawFPS(10,10);
-        if (self->paused)
-            DrawText("PAUSED",100,10,20,BLACK);
         
         BeginMode3D(*Player_get_Camera(self->players));
     
-            DrawGrid(16, 4.0f);
+            //DrawGrid(16, 4.0f);
             
             Map_render(self->map, self->players);
             DrawSphere(VECTOR2_TO_3( Player_get_position(self->players), CAMERA_HEIGHT ),0.5f,YELLOW);
             
         EndMode3D();
+        DrawFPS(10,10);
+        if (self->paused) DrawText("PAUSED",100,10,20,BLACK);
     EndDrawing();
     self->frame_num++;
 } /* GameState_render */

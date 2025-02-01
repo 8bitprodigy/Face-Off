@@ -5,6 +5,9 @@
 #include <raymath.h>
 #include "thing.h"
 
+
+#define ACTOR( self ) ((Actor*)(self))
+
 typedef struct GameState GameState;
 typedef struct Map Map;
 

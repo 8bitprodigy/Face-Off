@@ -2,6 +2,7 @@
 #define ACTOR_PRIVATE_H
 
 #include "actor.h"
+#include "defs.h"
 #include "thing_private.h"
 
 
@@ -21,9 +22,11 @@ Actor
     float         prev_rot;
     float         angular_velocity;
     
-    int           health;
+    uint8         health;
     
     void          (*update)(struct Actor *, GameState *);
+    void          (*on_hit)(struct Actor *, struct Actor *, GameState *);
+    void          (*on_wall)(struct Actor *, Vector2, Vector2);
 } Actor;
 
 

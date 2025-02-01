@@ -5,6 +5,8 @@
 #include <raymath.h>
 
 
+#define THING( self ) ((Thing*)(self))
+
 typedef struct Thing Thing;
 
 /* Constructors */

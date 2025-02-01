@@ -26,7 +26,7 @@
     T Y P E S    
 ****************/
 #define uint unsigned int 
-#define byte unsigned char
+#define uint8 unsigned char
 #define uint64 long long unsigned int
 
 
@@ -64,11 +64,6 @@
 /************************
     F U N C T I O N S    
 ************************/
-
-/*** Casts ***/
-#define THING( self ) ((Thing*)(self))
-#define ACTOR( self ) ((Actor*)(self))
-#define PLAYER( self ) ((Player*)(self))
 
 /*** Common Output Operations ***/
 
