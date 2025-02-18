@@ -7,6 +7,29 @@
 
 #define THING( self ) ((Thing*)(self))
 
+typedef enum 
+{
+    MESH,
+    SPRITE,
+}
+VisualizerType;
+
+typedef struct
+Visualizer
+ {
+    VisualizerType type;
+    union 
+    {
+        Mesh      *mesh;
+        Texture2D *sprite;
+    }
+    data;
+}
+Visualizer;
+
+#define VISMESH(   Mesh      ) ({.type = MESH,   .data.mesh      = (Mesh)})
+#define VISSPRITE( BillBoard ) ({.type = SPRITE, .data.billboard = (Billboard)})
+
 typedef struct Thing Thing;
 
 /* Constructors */
@@ -26,6 +49,6 @@ void Thing_insert(Thing *thing1, Thing *thing2); /* pun intended */
 void Thing_remove(Thing *thing);
 
 /* Thing Methods */
-void Thing_draw(Thing *thing);
+void Thing_draw(Thing *thing, Camera *camera);
 
 #endif /* THING_H */

@@ -5,6 +5,7 @@
 #include "defs.h"
 #include "gamestate.h"
 #include "map.h"
+#include "projectile.h"
 
 
 /****************************
@@ -130,36 +131,36 @@ Actor_remove(Actor *actor)
 ********************************/
 /*        U P D A T E    */
 void
-Actor_update(Actor *actor, GameState *game_state)
+Actor_update(Actor *self, GameState *game_state)
 {
-    actor->update(actor, game_state);
+    self->update(self, game_state);
 }
 
 void 
-Actor_rotate(Actor *actor, GameState *game_state)
+Actor_rotate(Actor *self, GameState *game_state)
 {
-    Thing *thing   = &actor->base;
+    Thing *thing   = &self->base;
     float rotation = thing->rotation;
     float delta    = GameState_get_delta(game_state);
 
-    actor->prev_rot  = rotation;
+    self->prev_rot  = rotation;
     
-    thing->rotation  = NORMALIZE_ANGLE(actor->angular_velocity * delta + rotation);
+    thing->rotation  = NORMALIZE_ANGLE(self->angular_velocity * delta + rotation);
     //printf("Rotation: %.4f\n", thing->rotation);
     thing->sin_rot   = sin(rotation);
     thing->cos_rot   = cos(rotation);
 } /* Actor_rotate */
 
 void 
-Actor_move(Actor *actor, GameState *game_state)
+Actor_move(Actor *self, GameState *game_state)
 {
-    Thing   *thing       = &actor->base;
+    Thing   *thing       = &self->base;
     Map     *map         = GameState_get_Map(game_state);
     float   delta        = GameState_get_delta(game_state);
     
     Vector2 position     = thing->position;
     float   radius       = thing->radius;
-    Vector2 new_position = Vector2Add(position, Vector2Scale(actor->velocity, delta));
+    Vector2 new_position = Vector2Add(position, Vector2Scale(self->velocity, delta));
     Vector2 perpendicular_velocity;
     Vector2 correction_offset;
     Vector2 slide_velocity;
@@ -168,7 +169,7 @@ Actor_move(Actor *actor, GameState *game_state)
     
     if (
         !Map_check_Actor_collision(
-            map, actor, 
+            map, self, 
             new_position, 
             &collision_point,
             &collision_normal
@@ -177,12 +178,38 @@ Actor_move(Actor *actor, GameState *game_state)
     new_position = collision_point;
     
 finalize_move:
-    actor->prev_pos = position;
+    self->prev_pos = position;
     thing->position = new_position;
 } /* Actor_move */
 
 void
-Actor_nop(Actor *actor, GameState *game_state)
+Actor_shoot(Actor *self, GameState *game_state)
+{
+    DBG_OUT("`Actor_shoot()` entered...");
+    
+    Thing   *thing     = THING(self);
+    Vector2  position  = thing->position;
+    Vector2  direction = VECTOR2( thing->cos_rot, thing->sin_rot );
+
+    
+    Projectile *projectile = Projectile_new(
+        self, 
+        position, 
+        direction, 
+        PROJECTILE_MAX_DIST, 
+        1, 5.0f, 0.1f
+    );
+    
+    DBG_OUT("Projectile created at address %u", projectile);
+    
+    GameState_add_Actor(
+        game_state,
+        ACTOR( projectile )
+    );
+} /* Actor_shoot */
+
+void
+Actor_nop(Actor *self, GameState *game_state)
 {
     return;
 } /* Actor_nop */

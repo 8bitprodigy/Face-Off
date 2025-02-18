@@ -24,10 +24,12 @@ Actor
     
     uint8         health;
     
-    void          (*update)(struct Actor *, GameState *);
-    void          (*on_hit)(struct Actor *, struct Actor *, GameState *);
-    void          (*on_wall)(struct Actor *, Vector2, Vector2);
+    void          (*update )(struct Actor *, GameState *);
+    void          (*on_hit )(struct Actor *, struct Actor *, GameState *);
+    void          (*on_wall)(struct Actor *, Vector2,        Vector2);
 } Actor;
 
+
+void Actor_shoot(Actor *actor, GameState *game_state);
 
 #endif /* ACTOR_PRIVATE_H */

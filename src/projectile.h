@@ -6,6 +6,7 @@
 
 
 #define PROJECTILE( self ) ((Projectile*)self)
+#define PROJECTILE_MAX_DIST (1024.0f)
 
 typedef struct Projectile Projectile;
 

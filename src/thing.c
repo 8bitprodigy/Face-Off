@@ -24,7 +24,7 @@ Thing_init(Thing *thing, Vector2 position, float rotation, float radius)
     thing->next = thing;
 
     thing->name = NULL;
-    thing->body = NULL;
+    //thing->body = NULL;
 } /* Thing_new */
 
 Thing *
@@ -107,3 +107,23 @@ Thing_remove(Thing *thing)
     thing1->next = thing2;
     thing2->prev = thing1;
 } /* Thing_pop */
+
+/********************************
+    T H I N G   M E T H O D S 
+********************************/
+/*        D R A W    */
+void
+Thing_draw(Thing *self, Camera *camera)
+{
+    Visualizer *body = &self->body;
+
+    DrawSphere(VECTOR2_TO_3(self->position, 0.5f), self->radius, self->color_body);
+    /*
+    if      (body->type == MESH) {
+        DrawMesh(*body->data.mesh, LoadMaterialDefault(), MATRIX(VECTOR2_TO_3(self->position, 0.5f),self->rotation));
+    }
+    else if (body->type == SPRITE) {
+        DrawBillboard(*camera, , VECTOR2_TO_3(self->position, 0.5f), 1.0f, self->color_body);
+    }
+    */
+} /* Thing_draw */
