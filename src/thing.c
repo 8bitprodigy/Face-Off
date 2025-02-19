@@ -118,7 +118,7 @@ Thing_draw(Thing *self, Camera *camera)
     Visualizer *body = &self->body;
 
     DrawSphere(VECTOR2_TO_3(self->position, 0.5f), self->radius, self->color_body);
-    /*
+    /* Not yet ready for prime-time.
     if      (body->type == MESH) {
         DrawMesh(*body->data.mesh, LoadMaterialDefault(), MATRIX(VECTOR2_TO_3(self->position, 0.5f),self->rotation));
     }

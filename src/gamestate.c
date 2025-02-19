@@ -6,7 +6,7 @@
 
 #include <stdlib.h>
 
-#define DEBUG
+//#define DEBUG
 #include "defs.h"
 #include "gamestate.h"
 #include "map.h"
@@ -213,18 +213,23 @@ GameState_run(GameState *self)
 void
 GameState_update(GameState *self)
 {
+    int i = 0;
     Actor *actors = self->actors;
     Actor *actor;
     
     self->delta =  GetFrameTime();
     
     if ( self->paused || self->request_exit) return;
-    
+
+    DBG_OUT("Updating actors...");
     actor = actors;
     do {
+        DBG_OUT("Actor #: %d", i);
         Actor_update(actor, self);
         actor = Actor_get_next(actor);
+        i++;
     } while (Actor_get_next(actor) != actors);
+    DBG_OUT("");
 } /* GameState_update */
 
 
@@ -234,6 +239,10 @@ GameState_update(GameState *self)
 void
 GameState_render(GameState *self)
 { /* The following is temporary and will be replaced later with something that will support multiplayer... */
+    int i = 0;
+    Thing *things = self->things;
+    Thing *thing;
+    
     BeginDrawing();
         ClearBackground(RAYWHITE);
         
@@ -242,7 +251,11 @@ GameState_render(GameState *self)
             //DrawGrid(16, 4.0f);
             
             Map_render(self->map, self->players);
-            DrawSphere(VECTOR2_TO_3( Player_get_position(self->players), CAMERA_HEIGHT ),0.5f,YELLOW);
+            thing = things;
+            do {
+                Thing_draw(thing, Player_get_Camera(self->players));
+                thing = Thing_get_next(thing);
+            } while (Thing_get_next(thing) != things);
             
         EndMode3D();
         DrawFPS(10,10);

@@ -2,6 +2,7 @@
 #define ACTOR_PRIVATE_H
 
 #include "actor.h"
+#define DEBUG
 #include "defs.h"
 #include "thing_private.h"
 

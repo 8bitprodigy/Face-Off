@@ -18,6 +18,7 @@ Projectile_init(Projectile *projectile, Actor *master, Vector2 position, Vector2
     actor->speed             = speed;
     actor->health            = damage;
     actor->velocity          = VECTOR2(direction.x * speed, direction.y * speed);
+    actor->update            = &Projectile_update;
     
     thing->radius            = radius;
     thing->cos_rot           = direction.x;
@@ -28,13 +29,14 @@ Projectile_init(Projectile *projectile, Actor *master, Vector2 position, Vector2
 Projectile *
 Projectile_new(Actor *master, Vector2 position, Vector2 direction, float max_distance, uint8 damage, float speed, float radius)
 {
+    DBG_OUT("Creating Projectile...");
     Projectile *projectile = malloc(sizeof(Projectile));
     if (!projectile){
         ERR_OUT("Failed to allocate memory for Projectile.");
         return NULL;
     }
     
-    Projectile_new(master, position, direction, max_distance, damage, speed, radius);
+    Projectile_init(projectile, master, position, direction, max_distance, damage, speed, radius);
     
     return projectile;
 } /* Projectile_new */
@@ -56,6 +58,8 @@ Projectile_free(Projectile *projectile)
 void
 Projectile_update(Actor *actor, GameState *game_state)
 {
+    Thing *thing = THING(actor);
+    //DBG_OUT("Projectile updating! { X: %.4f\tY: %.4f }", thing->position.x, thing->position.y);
     Actor_move(actor, game_state);
 } /* Projectile_update */
 

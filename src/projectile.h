@@ -2,6 +2,7 @@
 #define PROJECTILE_H
     
 #include "actor.h"
+#define DEBUG
 #include "defs.h"
 
 

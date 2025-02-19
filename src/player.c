@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define DEBUG
+//#define DEBUG
 #include "defs.h"
 #include "gamestate.h"
 #include "player_private.h"
@@ -134,7 +134,7 @@ Player_remove(Player *player)
 void 
 Player_update(Actor *actor, GameState *game_state)
 {
-    Player *player = PLAYER(actor);
+    Player *self = PLAYER(actor);
     Thing  *thing  = THING(actor);
     
     float rotate   = 0;
@@ -143,7 +143,7 @@ Player_update(Actor *actor, GameState *game_state)
     Vector2 target;
 
     rotate = GET_KEY_OR_BUTTON_AXIS(
-        player->controller,
+        self->controller,
         GAMEPAD_BUTTON_RIGHT_FACE_RIGHT,
         KEY_RIGHT,
         GAMEPAD_BUTTON_RIGHT_FACE_LEFT,
@@ -153,7 +153,7 @@ Player_update(Actor *actor, GameState *game_state)
     
     move = Vector2Scale(
         GET_KEY_OR_BUTTON_VECTOR(
-            player->controller,
+            self->controller,
             GAMEPAD_BUTTON_LEFT_FACE_UP,
             KEY_W,
             GAMEPAD_BUTTON_LEFT_FACE_DOWN,
@@ -169,11 +169,11 @@ Player_update(Actor *actor, GameState *game_state)
 
     Actor_move(actor, game_state);
 
-    player->camera.position   = VECTOR2_TO_3( thing->position, CAMERA_HEIGHT ); // 30.0f
+    self->camera.position   = VECTOR2_TO_3( thing->position, CAMERA_HEIGHT ); // 30.0f
     target = Vector2Add(thing->position, (Vector2){ thing->cos_rot, thing->sin_rot });
-    player->camera.target     = VECTOR2_TO_3( target, CAMERA_HEIGHT );
+    self->camera.target     = VECTOR2_TO_3( target, CAMERA_HEIGHT );
 
-    if (GET_KEY_OR_BUTTON_PRESSED(player->controller,GAMEPAD_BUTTON_RIGHT_TRIGGER_2,KEY_SPACE)) {
+    if (GET_KEY_OR_BUTTON_PRESSED(self->controller,GAMEPAD_BUTTON_RIGHT_FACE_UP,KEY_SPACE)) {
         DBG_OUT("Shooting...");
         Actor_shoot(actor, game_state);
     }
