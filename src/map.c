@@ -627,6 +627,21 @@ Map_check_circle_segment_collision(
 }
 
 bool
+Map_check_Actor_in_broad_phase(Map *map, Actor *actor, Index2D index)
+{
+    Cell    *cell              = &map->cells[index.x][index.y];
+    Vector2  cell_pos          = cell->center;
+    Vector2  actor_pos         = Actor_get_position(actor);
+    float    broad_phase_range = (map->cell_width/2.0f)-Actor_get_radius(actor)+0.01f;
+    
+    return  (  (cell_pos.x - broad_phase_range) < actor_pos.x
+            &&  actor_pos.x                     < (cell_pos.x + broad_phase_range)
+            && (cell_pos.y - broad_phase_range) < actor_pos.y
+            &&  actor_pos.y                     < (cell_pos.y + broad_phase_range)
+    );
+}
+
+bool
 Map_check_Actor_collision(Map *map, Actor *actor, Vector2 new_pos, Vector2 *collision_point, Vector2 *collision_normal)
 {
     int   cell_index, wall_index, next;
@@ -659,6 +674,8 @@ Map_check_Actor_collision(Map *map, Actor *actor, Vector2 new_pos, Vector2 *coll
     float   rot_amount = 0;
 
     if (!(IS_IN_BOUNDS(map_index.x, 0, (int)size-1)&&IS_IN_BOUNDS(map_index.y, 0, (int)size-1))) return false;
+
+    if (!Map_check_Actor_in_broad_phase(map, actor, map_index)) return false;
     
     get_adjacent_cells(map, map_index, prev_pos, check_cells);
 
