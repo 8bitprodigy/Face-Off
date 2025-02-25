@@ -7,17 +7,22 @@
 
 #define THING( self ) ((Thing*)(self))
 
+#define BODY_NONE()           ((Body){.type = NONE})
+#define BODY_MESH(   Mesh   ) ((Body){.type = MESH,   .data.mesh   = (Mesh)})
+#define BODY_SPRITE( Sprite ) ((Body){.type = SPRITE, .data.sprite = (Sprite)})
+
 typedef enum 
 {
+    NONE,
     MESH,
     SPRITE,
 }
-VisualizerType;
+BodyType;
 
 typedef struct
-Visualizer
+Body
  {
-    VisualizerType type;
+    BodyType type;
     union 
     {
         Mesh      *mesh;
@@ -25,16 +30,13 @@ Visualizer
     }
     data;
 }
-Visualizer;
-
-#define VISMESH(   Mesh      ) ({.type = MESH,   .data.mesh      = (Mesh)})
-#define VISSPRITE( BillBoard ) ({.type = SPRITE, .data.billboard = (Billboard)})
+Body;
 
 typedef struct Thing Thing;
 
 /* Constructors */
-void  Thing_init(Thing   *thing,   Vector2 position, float rotation, float radius);
-Thing *Thing_new(Vector2 position, float   rotation, float radius);
+void  Thing_init(Thing *thing, Body    body,     Vector2 position, float rotation, float radius);
+Thing *Thing_new(Body   body,  Vector2 position, float   rotation, float radius);
 /* Destructor */
 void Thing_free(Thing *thing);
 

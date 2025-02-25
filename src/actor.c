@@ -12,11 +12,13 @@
     C O N S T R U C T O R    
 ****************************/
 void
-Actor_init(Actor *actor, Vector2 position, float rotation, float radius)
+Actor_init(Actor *actor, Body body, Vector2 position, float rotation, float radius)
 {
     Thing *thing = &actor->base;
 
-    Thing_init(thing, position, rotation, radius);
+    Mesh mesh = GenMeshSphere(radius,8,8);
+    
+    Thing_init(thing, body, position, rotation, radius);
     
     actor->prev = actor;
     actor->next = actor;
@@ -33,7 +35,7 @@ Actor_init(Actor *actor, Vector2 position, float rotation, float radius)
 } /* Actor_init */
 
 Actor *
-Actor_new(Vector2 position, float rotation, float radius)
+Actor_new(Body body, Vector2 position, float rotation, float radius)
 {
     Actor *actor = malloc(sizeof(Actor));
     if (!actor) {
@@ -41,7 +43,7 @@ Actor_new(Vector2 position, float rotation, float radius)
         return NULL;
     }
     
-    Actor_init(actor, position, rotation, radius);
+    Actor_init(actor, body, position, rotation, radius);
     
     return actor;
 } /* Actor_new */
@@ -188,19 +190,19 @@ Actor_shoot(Actor *self, GameState *game_state)
     DBG_OUT("`Actor_shoot()` entered...");
     
     Thing   *thing     = THING(self);
-    Vector2  position  = thing->position;
     Vector2  direction = VECTOR2( thing->cos_rot, thing->sin_rot );
-
+    Vector2  position  = Vector2Add(thing->position, direction);
     
     Projectile *projectile = Projectile_new(
         self, 
-        position, 
-        direction, 
         PROJECTILE_MAX_DIST, 
-        1, 5.0f, 0.1f
+        1, 1.0f, 
+        position, 
+        thing->rotation, 
+        0.1f
     );
     
-    DBG_OUT("Projectile created at address %u", projectile);
+    DBG_OUT("Projectile created at address %p", projectile);
     
     GameState_add_Actor(
         game_state,

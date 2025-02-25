@@ -14,8 +14,8 @@ typedef struct Map Map;
 typedef struct Actor Actor;
 
 /* Actor Constructor */
-void  Actor_init(Actor *actor, Vector2 position, float rotation, float radius);
-Actor *Actor_new(Vector2 position, float rotation, float radius);
+void  Actor_init(Actor *actor, Body    body,     Vector2 position, float rotation, float radius);
+Actor *Actor_new(Body   body,  Vector2 position, float   rotation, float radius);
 /* Actor Destructor */
 void Actor_free(Actor *actor);
 

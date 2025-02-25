@@ -4,11 +4,12 @@
 #include "defs.h"
 
 
+
 /****************************
     C O N S T R U C T O R    
 ****************************/
 void
-Thing_init(Thing *thing, Vector2 position, float rotation, float radius)
+Thing_init(Thing *thing, Body body, Vector2 position, float rotation, float radius)
 {
     if (!thing) return;
 
@@ -24,11 +25,11 @@ Thing_init(Thing *thing, Vector2 position, float rotation, float radius)
     thing->next = thing;
 
     thing->name = NULL;
-    //thing->body = NULL;
+    thing->body = body;
 } /* Thing_new */
 
 Thing *
-Thing_new(Vector2 position, float rotation, float radius)
+Thing_new(Body body, Vector2 position, float rotation, float radius)
 {
     Thing *thing = malloc(sizeof(Thing));
 
@@ -37,7 +38,7 @@ Thing_new(Vector2 position, float rotation, float radius)
         return NULL;
     }
 
-    Thing_init(thing, position, rotation, radius);    
+    Thing_init(thing, body, position, rotation, radius);    
     return thing;
 } /* Thing_new_ptr */
 
@@ -115,15 +116,15 @@ Thing_remove(Thing *thing)
 void
 Thing_draw(Thing *self, Camera *camera)
 {
-    Visualizer *body = &self->body;
+    Body *body = &self->body;
 
-    DrawSphere(VECTOR2_TO_3(self->position, 0.5f), self->radius, self->color_body);
-    /* Not yet ready for prime-time.
+    /* Not yet ready for prime-time. */
     if      (body->type == MESH) {
-        DrawMesh(*body->data.mesh, LoadMaterialDefault(), MATRIX(VECTOR2_TO_3(self->position, 0.5f),self->rotation));
+        DrawSphere(VECTOR2_TO_3(self->position, 0.5f), self->radius, self->color_body);
+        //DrawMesh(*body->data.mesh, LoadMaterialDefault(), MATRIX(VECTOR2_TO_3(self->position, 0.5f),self->rotation));
     }
     else if (body->type == SPRITE) {
-        DrawBillboard(*camera, , VECTOR2_TO_3(self->position, 0.5f), 1.0f, self->color_body);
+        DrawBillboard(*camera, *self->body.data.sprite, VECTOR2_TO_3(self->position, 0.5f), 0.25f, self->color_body);
     }
-    */
+    
 } /* Thing_draw */

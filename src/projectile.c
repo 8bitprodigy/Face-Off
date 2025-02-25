@@ -3,31 +3,38 @@
 #include "projectile_private.h"
 
 
+Texture2D tex;
+
+void
+Projectile_init_texture()
+{
+    Image img = GenImageColor(64,64,WHITE);
+    tex = LoadTextureFromImage(img);
+    UnloadImage(img);
+}
+
 /****************************
     C O N S T R U C T O R   
 ****************************/
 void
-Projectile_init(Projectile *projectile, Actor *master, Vector2 position, Vector2 direction, float max_distance, uint8 damage, float speed, float radius)
+Projectile_init(Projectile *projectile, Actor *master, float max_distance, uint8 damage, float speed, Vector2 position, float rotation, float radius)
 {
     Thing *thing             = THING(projectile);
     Actor *actor             = ACTOR(projectile);
-    
-    projectile->master       = master;
-    projectile->max_distance = max_distance;
+
+    Actor_init(actor, BODY_SPRITE(&tex), position, rotation, radius);
     
     actor->speed             = speed;
     actor->health            = damage;
-    actor->velocity          = VECTOR2(direction.x * speed, direction.y * speed);
     actor->update            = &Projectile_update;
     
-    thing->radius            = radius;
-    thing->cos_rot           = direction.x;
-    thing->sin_rot           = direction.y;
-    thing->rotation          = atan2(direction.x, direction.y);
+    projectile->master       = master;
+    projectile->max_distance = max_distance;
+    projectile->damage       = damage;
 } /* Projectile_init */
 
 Projectile *
-Projectile_new(Actor *master, Vector2 position, Vector2 direction, float max_distance, uint8 damage, float speed, float radius)
+Projectile_new(Actor *master, float max_distance, uint8 damage, float speed, Vector2 position, float rotation, float radius)
 {
     DBG_OUT("Creating Projectile...");
     Projectile *projectile = malloc(sizeof(Projectile));
@@ -36,7 +43,7 @@ Projectile_new(Actor *master, Vector2 position, Vector2 direction, float max_dis
         return NULL;
     }
     
-    Projectile_init(projectile, master, position, direction, max_distance, damage, speed, radius);
+    Projectile_init(projectile, master, max_distance, damage, speed, position, rotation, radius);
     
     return projectile;
 } /* Projectile_new */
@@ -67,6 +74,9 @@ void
 Projectile_hit(Actor *actor, Actor *collider, GameState *game_state)
 {
     Projectile *self = PROJECTILE(actor);
+    
+    if (collider == self->master) return;
+    
     Projectile_free(self);
 } /* Projectile_hit */
 

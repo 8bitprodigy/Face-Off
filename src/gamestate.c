@@ -61,9 +61,12 @@ GameState_new(GameMode game_mode)
 
     game_state->delta     = 0.0f;
     game_state->frame_num = 0;
+
+    Projectile_init_texture();
     
     return game_state;
 } /* GameState_new */
+
 
 /**************************
     D E S T R U C T O R    

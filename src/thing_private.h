@@ -23,7 +23,7 @@ Thing
     
     char         *name;
     
-    Visualizer    body;
+    Body          body;
     Color         color_body;
     Color         color_outline;
 } Thing;

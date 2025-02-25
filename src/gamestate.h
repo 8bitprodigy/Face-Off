@@ -12,6 +12,7 @@
 #include "thing.h"
 #include "actor.h"
 #include "player.h"
+#include "projectile.h"
 
 
 typedef enum {

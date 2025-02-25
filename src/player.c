@@ -19,7 +19,7 @@ Player_init(Player *player, Vector2 position, float rotation, float radius, int 
     actor = ACTOR(player);
     thing = THING(player);
     
-    Actor_init(actor, position, rotation, radius);
+    Actor_init(actor, BODY_NONE(), position, rotation, radius);
     actor->update = &Player_update;
     
     player->prev = player;
@@ -44,7 +44,7 @@ Player_init(Player *player, Vector2 position, float rotation, float radius, int 
 } /* Player_init */
 
 Player *
-Player_new(Vector2 position, float rotation, float radius, int controller)
+Player_new( Vector2 position, float rotation, float radius, int controller)
 {
     Player *player = malloc(sizeof(Player));
     if (!player) {

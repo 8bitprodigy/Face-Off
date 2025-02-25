@@ -9,8 +9,8 @@
 typedef struct Player Player;
 
 /* Constructor */
-void    Player_init(Player *player, Vector2 position, float rotation, float radius, int controller);
-Player *Player_new(Vector2 position, float rotation, float radius, int controller);
+void    Player_init(Player *player,   Vector2 position, float rotation, float radius,    int controller);
+Player *Player_new( Vector2 position, float   rotation, float radius,   int   controller);
 /* Destructor */
 void    Player_free(Player *player);
 

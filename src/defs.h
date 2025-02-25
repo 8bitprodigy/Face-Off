@@ -43,10 +43,11 @@
 #define HALF_PI              (PI/2.0f)
 #define TAU                  (PI*2)
 
-#define GAME_MAX_PLAYERS 4
-#define GAME_MAX_ACTORS  32
-#define GAME_MAX_ITEMS   32
-#define GAME_MAX_THINGS  (GAME_MAX_PLAYERS+GAME_MAX_ACTORS+GAME_MAX_ITEMS)
+#define GAME_MAX_PLAYERS  4
+#define GAME_MAX_ACTORS   32
+#define GAME_MAX_ITEMS    32
+#define GAME_MAX_THINGS   (GAME_MAX_PLAYERS+GAME_MAX_ACTORS+GAME_MAX_ITEMS)
+#define GAME_MAX_TEXTURES 32
 
 #define VECTOR3_UP ((Vector3){.x=0.0f,.y=1.0f,.z=0.0f})
 
@@ -127,8 +128,8 @@
 /* Dot Product of two angles */
 #define DOT( a, b )  \
     Vector2DotProduct( \
-        (Vector2){.x=cos((a)),.y=sin((a))}, \
-        (Vector2){.x=cos((b)),.y=sin((b))}  \
+        (Vector2){.x=cosf((a)),.y=sinf((a))}, \
+        (Vector2){.x=cosf((b)),.y=sinf((b))}  \
     )  
 /* Dot Product of point to a line */
 #define DOTPL( point, start, end ) ( \
@@ -162,7 +163,7 @@
 /* Convert a Vector3 to a Vector2 */
 #define VECTOR3_TO_2( Vector ) (Vector2){(Vector).x, (Vector).z}
 /* Convert an angle to a Vector2 */
-#define ANGLE_TO_VECTOR2( Angle ) (Vector2){ cos( (Angle) ), sin( (Angle) ) }
+#define ANGLE_TO_VECTOR2( Angle ) (Vector2){ cosf( (Angle) ), sinf( (Angle) ) }
 /* Vector2 of NaN values */
 #define VECTOR2_NAN ((Vector2){NAN,NAN})
 /* Check if Vector2 is Vector2_NaN */

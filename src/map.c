@@ -675,7 +675,7 @@ Map_check_Actor_collision(Map *map, Actor *actor, Vector2 new_pos, Vector2 *coll
 
     if (!(IS_IN_BOUNDS(map_index.x, 0, (int)size-1)&&IS_IN_BOUNDS(map_index.y, 0, (int)size-1))) return false;
 
-    if (!Map_check_Actor_in_broad_phase(map, actor, map_index)) return false;
+    //if (!Map_check_Actor_in_broad_phase(map, actor, map_index)) return false;
     
     get_adjacent_cells(map, map_index, prev_pos, check_cells);
 
