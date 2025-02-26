@@ -14,6 +14,7 @@ Thing_init(Thing *thing, Body body, Vector2 position, float rotation, float radi
     if (!thing) return;
 
     // Initialize all fields
+    thing->dead     = false;
     thing->visible  = true;
     thing->position = position;
     thing->rotation = rotation;
@@ -124,7 +125,7 @@ Thing_draw(Thing *self, Camera *camera)
         //DrawMesh(*body->data.mesh, LoadMaterialDefault(), MATRIX(VECTOR2_TO_3(self->position, 0.5f),self->rotation));
     }
     else if (body->type == SPRITE) {
-        DrawBillboard(*camera, *self->body.data.sprite, VECTOR2_TO_3(self->position, 0.5f), 0.25f, self->color_body);
+        DrawBillboard(*camera, *self->body.data.sprite, VECTOR2_TO_3(self->position, 0.5f), 0.25f, MAGENTA);
     }
     
 } /* Thing_draw */

@@ -231,7 +231,7 @@ GameState_update(GameState *self)
         Actor_update(actor, self);
         actor = Actor_get_next(actor);
         i++;
-    } while (Actor_get_next(actor) != actors);
+    } while (actor != actors);
     DBG_OUT("");
 } /* GameState_update */
 
@@ -258,7 +258,7 @@ GameState_render(GameState *self)
             do {
                 Thing_draw(thing, Player_get_Camera(self->players));
                 thing = Thing_get_next(thing);
-            } while (Thing_get_next(thing) != things);
+            } while (thing != things);
             
         EndMode3D();
         DrawFPS(10,10);

@@ -26,7 +26,7 @@ Actor
     uint8         health;
     
     void          (*update )(struct Actor *, GameState *);
-    void          (*on_hit )(struct Actor *, struct Actor *, GameState *);
+    void          (*collide)(struct Actor *, struct Actor *, GameState *);
     void          (*on_wall)(struct Actor *, Vector2,        Vector2);
 } Actor;
 

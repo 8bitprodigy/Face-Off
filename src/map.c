@@ -767,6 +767,7 @@ handle_collision:
         //DBG_OUT("Collision: { X: %.4f\t|\tY: %.4f }", new_pos.x, new_pos.y);
         *collision_point  = final_collision;
         *collision_normal = normal;
+        Actor_on_wall(actor, *collision_point, *collision_normal);
         return true;
     }
     

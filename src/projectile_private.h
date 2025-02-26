@@ -14,4 +14,7 @@ Projectile
 }
 Projectile;
 
+void Projectile_collide(Actor *actor, Actor   *collider, GameState *game_state);
+void Projectile_on_wall(Actor *actor, Vector2  position, Vector2    normal);
+
 #endif  /* PROJECTILE_PRIVATE_H */

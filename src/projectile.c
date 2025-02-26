@@ -27,6 +27,8 @@ Projectile_init(Projectile *projectile, Actor *master, float max_distance, uint8
     actor->speed             = speed;
     actor->health            = damage;
     actor->update            = &Projectile_update;
+    actor->collide           = &Projectile_collide;
+    actor->on_wall           = &Projectile_on_wall;
     
     projectile->master       = master;
     projectile->max_distance = max_distance;
@@ -55,6 +57,8 @@ Projectile_new(Actor *master, float max_distance, uint8 damage, float speed, Vec
 void
 Projectile_free(Projectile *projectile)
 {
+    Actor *actor = ACTOR(projectile);
+    Actor_free(actor);
     free(projectile);
 } /* Projectile_free */
 
@@ -66,12 +70,19 @@ void
 Projectile_update(Actor *actor, GameState *game_state)
 {
     Thing *thing = THING(actor);
+
+    if (thing->dead) {
+        Projectile_free(PROJECTILE(actor));
+        return;
+    }
+    
+    actor->velocity  = Vector2Scale(VECTOR2(thing->cos_rot, thing->sin_rot), actor->speed);
     //DBG_OUT("Projectile updating! { X: %.4f\tY: %.4f }", thing->position.x, thing->position.y);
     Actor_move(actor, game_state);
 } /* Projectile_update */
 
 void
-Projectile_hit(Actor *actor, Actor *collider, GameState *game_state)
+Projectile_collide(Actor *actor, Actor *collider, GameState *game_state)
 {
     Projectile *self = PROJECTILE(actor);
     
@@ -84,5 +95,5 @@ void
 Projectile_on_wall(Actor *actor, Vector2 position, Vector2 normal)
 {
     Projectile *self = PROJECTILE(actor);
-    Projectile_free(self);
+    THING(self)->dead = true;
 } /* Projectile_on_wall */

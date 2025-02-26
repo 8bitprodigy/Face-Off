@@ -30,9 +30,11 @@ void Actor_insert(Actor *actor1, Actor *actor2);
 void Actor_remove( Actor *actor);
 
 /* Actor Methods */
-void Actor_update(Actor *actor, GameState *game_state);
-void Actor_draw(  Actor *actor);
-void Actor_rotate(Actor *actor, GameState *game_state);
-void Actor_move(  Actor *actor, GameState *game_state);
+void Actor_update( Actor *actor, GameState *game_state);
+void Actor_collide(Actor *actor, Actor     *collider,  GameState *game_state);
+void Actor_on_wall(Actor *actor, Vector2    position,  Vector2    normal);
+void Actor_draw(   Actor *actor);
+void Actor_rotate( Actor *actor, GameState *game_state);
+void Actor_move(   Actor *actor, GameState *game_state);
 
 #endif /* ACTOR_H */

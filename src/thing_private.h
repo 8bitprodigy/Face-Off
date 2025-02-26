@@ -10,7 +10,8 @@ Thing
 {
     struct Thing *prev;
     struct Thing *next;
-    
+
+    bool          dead;
     bool          visible;
     
     Vector2       position;

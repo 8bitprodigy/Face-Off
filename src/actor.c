@@ -136,7 +136,20 @@ void
 Actor_update(Actor *self, GameState *game_state)
 {
     self->update(self, game_state);
-}
+} /* Actor_update */
+
+void
+Actor_collide(Actor *actor, Actor *collider, GameState *game_state)
+{
+    if (actor->collide) actor->collide(actor, collider, game_state);
+} /* Actor_collide */
+
+void
+Actor_on_wall(Actor *actor, Vector2 position, Vector2 normal)
+{
+    if (actor->on_wall) actor->on_wall(actor, position, normal);
+} /* Actor_on_wall */
+
 
 void 
 Actor_rotate(Actor *self, GameState *game_state)
@@ -191,7 +204,7 @@ Actor_shoot(Actor *self, GameState *game_state)
     
     Thing   *thing     = THING(self);
     Vector2  direction = VECTOR2( thing->cos_rot, thing->sin_rot );
-    Vector2  position  = Vector2Add(thing->position, direction);
+    Vector2  position  = Vector2Add(thing->position, Vector2Scale(direction, thing->radius));
     
     Projectile *projectile = Projectile_new(
         self, 
