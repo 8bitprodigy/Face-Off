@@ -8,6 +8,11 @@
 #include "projectile.h"
 
 
+void
+Actor_nop(Actor *self, ...) 
+{}
+
+
 /****************************
     C O N S T R U C T O R    
 ****************************/
@@ -32,6 +37,9 @@ Actor_init(Actor *actor, Body body, Vector2 position, float rotation, float radi
     actor->angular_velocity = 0.0f;
     actor->health           = 3;
     actor->update           = &Actor_move;
+    actor->collide          = &Actor_nop;
+    actor->on_wall          = &Actor_nop;
+    
 } /* Actor_init */
 
 Actor *
@@ -141,13 +149,15 @@ Actor_update(Actor *self, GameState *game_state)
 void
 Actor_collide(Actor *actor, Actor *collider, GameState *game_state)
 {
-    if (actor->collide) actor->collide(actor, collider, game_state);
+    if (actor->collide) return;
+    actor->collide(actor, collider, game_state);
 } /* Actor_collide */
 
 void
 Actor_on_wall(Actor *actor, Vector2 position, Vector2 normal)
 {
-    if (actor->on_wall) actor->on_wall(actor, position, normal);
+    if (!actor->on_wall) return;
+    actor->on_wall(actor, position, normal);
 } /* Actor_on_wall */
 
 
@@ -223,8 +233,3 @@ Actor_shoot(Actor *self, GameState *game_state)
     );
 } /* Actor_shoot */
 
-void
-Actor_nop(Actor *self, GameState *game_state)
-{
-    return;
-} /* Actor_nop */

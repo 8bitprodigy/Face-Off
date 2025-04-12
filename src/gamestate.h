@@ -20,7 +20,8 @@ typedef enum {
     DM,
     TDM,
     CTF
-} GameMode;
+} 
+GameMode;
 
 
 typedef struct GameState GameState;

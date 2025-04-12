@@ -28,7 +28,8 @@ Actor
     void          (*update )(struct Actor *, GameState *);
     void          (*collide)(struct Actor *, struct Actor *, GameState *);
     void          (*on_wall)(struct Actor *, Vector2,        Vector2);
-} Actor;
+} 
+Actor;
 
 
 void Actor_shoot(Actor *actor, GameState *game_state);

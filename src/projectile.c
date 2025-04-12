@@ -58,7 +58,8 @@ void
 Projectile_free(Projectile *projectile)
 {
     Actor *actor = ACTOR(projectile);
-    Actor_free(actor);
+    Thing_remove(THING(actor));
+    Actor_remove(actor);
     free(projectile);
 } /* Projectile_free */
 
@@ -76,7 +77,7 @@ Projectile_update(Actor *actor, GameState *game_state)
         return;
     }
     
-    actor->velocity  = Vector2Scale(VECTOR2(thing->cos_rot, thing->sin_rot), actor->speed);
+    actor->velocity = Vector2Scale(VECTOR2(thing->cos_rot, thing->sin_rot), actor->speed);
     //DBG_OUT("Projectile updating! { X: %.4f\tY: %.4f }", thing->position.x, thing->position.y);
     Actor_move(actor, game_state);
 } /* Projectile_update */
@@ -95,5 +96,5 @@ void
 Projectile_on_wall(Actor *actor, Vector2 position, Vector2 normal)
 {
     Projectile *self = PROJECTILE(actor);
-    THING(self)->dead = true;
+    Projectile_free(self);
 } /* Projectile_on_wall */

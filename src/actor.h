@@ -20,10 +20,10 @@ Actor *Actor_new(Body   body,  Vector2 position, float   rotation, float radius)
 void Actor_free(Actor *actor);
 
 /* Getters */
-Actor   *Actor_get_prev(   Actor *actor);
-Actor   *Actor_get_next(   Actor *actor);
-Vector2 Actor_get_position(Actor *actor);
-float   Actor_get_radius(  Actor *actor);
+Actor   *Actor_get_prev(    Actor *actor);
+Actor   *Actor_get_next(    Actor *actor);
+Vector2  Actor_get_position(Actor *actor);
+float    Actor_get_radius(  Actor *actor);
 
 /* List Operations */
 void Actor_insert(Actor *actor1, Actor *actor2);
