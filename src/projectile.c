@@ -79,7 +79,7 @@ Projectile_update(Actor *actor, GameState *game_state)
     
     actor->velocity = Vector2Scale(VECTOR2(thing->cos_rot, thing->sin_rot), actor->speed);
     //DBG_OUT("Projectile updating! { X: %.4f\tY: %.4f }", thing->position.x, thing->position.y);
-    Actor_move(actor, game_state);
+    Actor_move(actor, actor->velocity, game_state);
 } /* Projectile_update */
 
 void

@@ -28,7 +28,7 @@
 //#define DEBUG
 #include "defs.h"
 #include "gamestate.h"
-#include "map.h"
+#include "cell_map.h"
 
 
 static bool done = false;
@@ -43,7 +43,7 @@ main(/*int argc, char** argv*/)
     InitWindow (SCREEN_WIDTH, SCREEN_HEIGHT, "Face-Off!");
 
     game_state = GameState_new(CO_OP);
-    map = Map_new("test", 16, 4);
+    map = CellMap_new("test", 16, 4);
     player = Player_new(
         (Vector2){.x=2.0f,.y=2.0f},
         0.0f, 0.5f, 0
@@ -59,7 +59,7 @@ main(/*int argc, char** argv*/)
     CloseWindow();
 
     Player_free(player);
-    Map_free(map);
+    CellMap_free(map);
     
     return 0;
 } /* main */

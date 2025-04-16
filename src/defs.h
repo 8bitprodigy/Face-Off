@@ -16,6 +16,7 @@
         - Rotations increase clockwise.
 */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <math.h>
 #include <raylib.h>
@@ -25,9 +26,9 @@
 /****************
     T Y P E S    
 ****************/
-#define uint unsigned int 
-#define uint8 unsigned char
-#define uint64 long long unsigned int
+#define uint   unsigned int 
+#define uint8  uint8_t
+#define uint64 uint64_t
 
 
 /************************
@@ -36,12 +37,12 @@
 /* Common Constant values */
 #define NAME_MAX_CHARS          8
 #define MAP_NAME_MAX_CHARS     16
-#define CAMERA_HEIGHT           0.5f
-#define FLOOR_HEIGHT            0.0f
+#define CAMERA_HEIGHT          (0.5f)
+#define FLOOR_HEIGHT           (0.0f)
 #define MAX_RENDERABLE_CELLS 1024
-#define MAX_DRAW_DISTANCE     362.0f
-#define HALF_PI              (PI/2.0f)
-#define TAU                  (PI*2)
+#define MAX_DRAW_DISTANCE    (362.0f)
+#define HALF_PI             (PI/2.0f)
+#define TAU                 (PI*2)
 
 #define GAME_MAX_PLAYERS  4
 #define GAME_MAX_ACTORS   32
@@ -145,6 +146,10 @@
 )
 /* Minimum value */
 #define MIN( a, b ) (((a)<(b))?(a):(b))
+/* Maximum value */
+#define MAX( a, b ) (((b)<(a))?(a):(b))
+/* Clamp value to range */
+#define CLAMP( value, min, max ) ((value)<(min)?(min):((value)>(max)?(max):(value)))
 /* Clamp angle to between 0 and TAU */
 #define NORMALIZE_ANGLE( angle )  fmod((angle) + TAU, TAU)
 /* Get sign between two numbers */

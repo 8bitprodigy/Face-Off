@@ -165,9 +165,9 @@ Player_update(Actor *actor, GameState *game_state)
         ), 
         actor->speed );
 
-    actor->velocity = Vector2Rotate(move,thing->rotation);
+    move = Vector2Rotate(move,thing->rotation);
 
-    Actor_move(actor, game_state);
+    Actor_move(actor, move, game_state);
 
     self->camera.position   = VECTOR2_TO_3( thing->position, CAMERA_HEIGHT ); // 30.0f
     target = Vector2Add(thing->position, (Vector2){ thing->cos_rot, thing->sin_rot });

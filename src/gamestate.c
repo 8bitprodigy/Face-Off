@@ -9,6 +9,7 @@
 //#define DEBUG
 #include "defs.h"
 #include "gamestate.h"
+#include "cell_map.h"
 #include "map.h"
 
 
@@ -87,8 +88,8 @@ GameState_free(GameState *game_state)
     while (things) {
         Thing_free(Thing_get_prev(things));
     }
-    
-    Map_free(game_state->map);
+
+    if (game_state->map) CellMap_free(game_state->map);
     free(game_state);
 } /* GameState_free */
 
@@ -233,6 +234,8 @@ GameState_update(GameState *self)
         i++;
     } while (actor != actors);
     DBG_OUT("");
+    //Map_update(self->map, self);
+    self->frame_num++;
 } /* GameState_update */
 
 
