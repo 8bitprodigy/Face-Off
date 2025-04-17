@@ -14,11 +14,22 @@ Map_init(Map *map, char name[MAP_NAME_MAX_CHARS])
 	if (!map) return;
 	
 	memcpy(map->name, name, MAP_NAME_MAX_CHARS);
+	map->free                  = NULL;
 	map->load                  = NULL;
 	map->update                = NULL;
 	map->render                = NULL;
 	map->check_Actor_Collision = NULL;
 } /* Map_init */
+
+/****************************
+    I N I T I A L I Z E R    
+****************************/
+void
+Map_free(Map *self)
+{
+    if (!self->free) return;
+    self->free(self);
+} /* Map_free */
 
 
 /***************************

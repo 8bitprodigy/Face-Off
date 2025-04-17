@@ -89,7 +89,7 @@ GameState_free(GameState *game_state)
         Thing_free(Thing_get_prev(things));
     }
 
-    if (game_state->map) CellMap_free(game_state->map);
+    if (game_state->map) Map_free((Map*)game_state->map);
     free(game_state);
 } /* GameState_free */
 

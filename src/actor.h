@@ -13,6 +13,7 @@ typedef struct Map Map;
 
 typedef struct Actor Actor;
 
+
 /* Actor Constructor */
 void  Actor_init(Actor *actor, Body    body,     Vector2 position, float rotation, float radius);
 Actor *Actor_new(Body   body,  Vector2 position, float   rotation, float radius);

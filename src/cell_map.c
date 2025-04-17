@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <raylib.h>
@@ -74,6 +75,7 @@ Cell
     Wall    walls[4];
     Index2D index;
     Vector2 corners[4];
+    bool    is_corner[4];
     Vector2 center;
 } 
 Cell;
@@ -82,10 +84,10 @@ typedef struct
 CellMap
 {
     Map  base;
-    uint size;
     Cell **cells;
-    uint cell_width;
     bool **render_buffer;
+    uint size;
+    uint cell_width;
 } 
 CellMap;
 
@@ -264,6 +266,8 @@ CellMap_new(const char *name, uint size, uint cell_width)
     CellMap *map   = malloc(sizeof(CellMap));
     Cell    *cell;
     Wall    *walls;
+    Vector2 *corners;
+    bool    *is_corner;
     
     float   map_width       = size * cell_width;
     float   half_map_width  = map_width / 2.0f;
@@ -300,8 +304,10 @@ CellMap_new(const char *name, uint size, uint cell_width)
     for ( i = 0; i < (int)size; i++ ) {
         for ( j = 0; j < (int)size; j++ ) {
             Cell_init(&map->cells[i][j] );
-            cell  = &map->cells[i][j];
-            walls = cell->walls;
+            cell      = &map->cells[i][j];
+            walls     = cell->walls;
+            corners   = cell->corners;
+            is_corner = cell->is_corner;
 
             cell->index = (Index2D){i,j};
             center = (Vector2){
@@ -310,19 +316,19 @@ CellMap_new(const char *name, uint size, uint cell_width)
             };
             cell->center     = center;
 
-            cell->corners[0] = (Vector2) { /* SOUTHEAST */
+            corners[0] = (Vector2) { /* SOUTHEAST */
                 center.x + half_cell_width,
                 center.y + half_cell_width
             };
-            cell->corners[1] = (Vector2) { /* NORTHEAST */
+            corners[1] = (Vector2) { /* NORTHEAST */
                 center.x + half_cell_width,
                 center.y - half_cell_width
             };
-            cell->corners[2] = (Vector2) { /* NORTHWEST */
+            corners[2] = (Vector2) { /* NORTHWEST */
                 center.x - half_cell_width,
                 center.y - half_cell_width
             };
-            cell->corners[3] = (Vector2) { /* SOUTHWEST */
+            corners[3] = (Vector2) { /* SOUTHWEST */
                 center.x - half_cell_width,
                 center.y + half_cell_width
             };
@@ -337,8 +343,11 @@ CellMap_new(const char *name, uint size, uint cell_width)
                 w = (uint)rand() >> 30;
                 walls[WEST].type = w;
                 walls[WEST].color = BLUE;
+                //is_corner[2] = is_corner[3] = w != PORTAL;
+                
                 map->cells[i-1][j].walls[EAST].type = w;
                 map->cells[i-1][j].walls[EAST].color = RED;
+                //map->cells[i-1][j].is_corner[2] = map->cells[i-1][j].is_corner[3] = w != PORTAL;
             } 
             
             if (!j) {
@@ -371,6 +380,7 @@ CellMap_new(const char *name, uint size, uint cell_width)
         }
     }
 
+    base->free                  = &CellMap_free;
     base->render                = &CellMap_render;
     base->check_Actor_Collision = &CellMap_check_Actor_collision;
     
@@ -654,6 +664,30 @@ Map_check_Actor_in_broad_phase(CellMap *map, Actor *actor, Index2D index)
 }
 
 bool
+isCornerSolid(CellMap *map, Vector2 corner)
+{
+    float   half_cell_width = map->cell_width/2.0f;
+    Index2D map_index = CellMap_get_index(
+        map, 
+        Vector2Add(
+            corner, 
+            VECTOR2(
+                -half_cell_width, 
+                half_cell_width
+            )
+        )
+    );
+    Cell *cells[4];
+    
+    get_adjacent_cells(map, map_index, corner, cells);
+    if (cells[0] && cells[0]->walls[NORTH].type != PORTAL) return true;
+    if (cells[1] && cells[1]->walls[WEST].type  != PORTAL) return true;
+    if (cells[1] && cells[1]->walls[NORTH].type != PORTAL) return true;
+    if (cells[2] && cells[2]->walls[WEST].type  != PORTAL) return true;
+    return false;
+} /* isCornerSolid */
+
+bool
 CellMap_check_Actor_collision(Map *self, Actor *actor, Vector2 new_pos, Vector2 *collision_point, Vector2 *collision_normal)
 {
     CellMap *cell_map = (CellMap*)self;
@@ -696,7 +730,7 @@ CellMap_check_Actor_collision(Map *self, Actor *actor, Vector2 new_pos, Vector2 
     /* Loop through nearest four cells */
     for (cell_index = 0; cell_index < 4; cell_index++) {
         cell    = check_cells[cell_index];
-        if (!cell || !cell->walls || !cell->corners) continue;
+        if (!cell) continue;
         walls   = cell->walls;
         corners = cell->corners; 
 
@@ -704,8 +738,11 @@ CellMap_check_Actor_collision(Map *self, Actor *actor, Vector2 new_pos, Vector2 
         for (wall_index = 0; wall_index < 4; wall_index++) {
             next = (wall_index + 1) % 4;
             /* Check corner collision */
+            bool corner_solid = isCornerSolid(cell_map, corners[wall_index]);
+            //printf("Corner solid:\t%b\t| Wall #:\t%d\n", corner_solid,wall_index);
             if (
-                CheckCollisionCircleLine(
+                corner_solid
+                && CheckCollisionCircleLine(
                     corners[wall_index], 
                     radius, 
                     prev_pos, 

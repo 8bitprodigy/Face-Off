@@ -8,6 +8,7 @@ typedef struct
 Map
 {
     char name[MAP_NAME_MAX_CHARS];
+    void (*free)(                 struct Map *map);
     void (*load)(                 struct Map *map, GameState *game_state);
     void (*update)(               struct Map *map, GameState *game_state);
     void (*render)(               struct Map *map, Player    *player);

@@ -4,7 +4,7 @@
 //#define DEBUG
 #include "defs.h"
 #include "gamestate.h"
-#include "cell_map.h"
+#include "map.h"
 #include "projectile.h"
 
 
@@ -17,7 +17,13 @@ Actor_nop(Actor *self, ...)
     C O N S T R U C T O R    
 ****************************/
 void
-Actor_init(Actor *actor, Body body, Vector2 position, float rotation, float radius)
+Actor_init(
+    Actor   *actor, 
+    Body     body, 
+    Vector2  position, 
+    float    rotation, 
+    float    radius
+)
 {
     Thing *thing = &actor->base;
 
@@ -43,7 +49,12 @@ Actor_init(Actor *actor, Body body, Vector2 position, float rotation, float radi
 } /* Actor_init */
 
 Actor *
-Actor_new(Body body, Vector2 position, float rotation, float radius)
+Actor_new(
+    Body    body, 
+    Vector2 position, 
+    float   rotation, 
+    float   radius
+)
 {
     Actor *actor = malloc(sizeof(Actor));
     if (!actor) {

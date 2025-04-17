@@ -12,6 +12,8 @@ typedef struct Map Map;
 
 /* Map Initializer */
 void     Map_init(  Map  *map,    char       name[MAP_NAME_MAX_CHARS]); 
+/* Map Destructor */
+void     Map_free( Map *map);
 
 /* Map Methods */
 void     Map_update(Map  *map,    GameState *game_state);
