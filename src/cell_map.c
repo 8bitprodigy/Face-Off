@@ -73,10 +73,11 @@ typedef struct
 Cell
 {
     Wall    walls[4];
-    Index2D index;
     Vector2 corners[4];
-    bool    is_corner[4];
+    Index2D index;
     Vector2 center;
+    uint    frame_num;
+    bool    is_corner[4];
 } 
 Cell;
 

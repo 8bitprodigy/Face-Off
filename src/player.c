@@ -169,9 +169,9 @@ Player_update(Actor *actor, GameState *game_state)
 
     Actor_move(actor, move, game_state);
 
-    self->camera.position   = VECTOR2_TO_3( thing->position, CAMERA_HEIGHT ); // 30.0f
-    target = Vector2Add(thing->position, (Vector2){ thing->cos_rot, thing->sin_rot });
-    self->camera.target     = VECTOR2_TO_3( target, CAMERA_HEIGHT );
+    self->camera.position = VECTOR2_TO_3( thing->position, CAMERA_HEIGHT ); // 30.0f
+    target                = Vector2Add(thing->position, (Vector2){ thing->cos_rot, thing->sin_rot });
+    self->camera.target   = VECTOR2_TO_3( target, CAMERA_HEIGHT );
 
     if (GET_KEY_OR_BUTTON_PRESSED(self->controller,GAMEPAD_BUTTON_RIGHT_FACE_UP,KEY_SPACE)) {
         DBG_OUT("Shooting...");

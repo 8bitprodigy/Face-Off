@@ -3,15 +3,18 @@
 
 #include <raylib.h>
 #include <raymath.h>
+
 #include "thing.h"
 
 
 #define ACTOR( self ) ((Actor*)(self))
 
+
 typedef struct GameState GameState;
 typedef struct Map Map;
 
 typedef struct Actor Actor;
+typedef struct Action Action;
 
 
 /* Actor Constructor */
@@ -29,6 +32,8 @@ float    Actor_get_radius(  Actor *actor);
 /* List Operations */
 void Actor_insert(Actor *actor1, Actor *actor2);
 void Actor_remove( Actor *actor);
+
+void Actor_queueAction( Actor *actor, Action *action);
 
 /* Actor Methods */
 void Actor_update( Actor *actor, GameState *game_state);

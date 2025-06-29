@@ -14,6 +14,8 @@ Actor
     
     struct Actor *prev;
     struct Actor *next;
+
+    Action       *actions;
     
     Vector2       prev_pos;
     Vector2       velocity;

@@ -61,7 +61,10 @@ dkms.conf
 *.cdi
 *.iso
 
-#other
+# Directories
+obj
+
+# Other
 *.*~
 *.*~~
 *.*~~~

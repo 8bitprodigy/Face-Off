@@ -147,6 +147,14 @@ Actor_remove(Actor *actor)
 } /* Actor_remove */
 
 
+void
+Actor_queueAction(Actor *self, Action *action)
+{
+    self->actions = Action_insert(action, self->actions);
+}
+
+
+
 /********************************
     A C T O R   M E T H O D S    
 ********************************/
@@ -198,9 +206,11 @@ Actor_move(Actor *self, Vector2 move_dir, GameState *game_state)
     Vector2 position     = thing->position;
     float   radius       = thing->radius;
     Vector2 new_position = Vector2Add(position, Vector2Scale(move_dir, delta));
+    /*
     Vector2 perpendicular_velocity;
     Vector2 correction_offset;
     Vector2 slide_velocity;
+    */
     Vector2 collision_point;
     Vector2 collision_normal;
     

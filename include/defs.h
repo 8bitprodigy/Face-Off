@@ -209,6 +209,48 @@
         ), \
         MatrixRotateY( (Rotation) ) \
     ))
+
+
+typedef struct
+Vector2i
+{
+    union {
+        int v[2];
+        struct {
+            int
+                x,
+                y;
+        };
+        struct {
+            int
+                w,
+                h;
+        };
+    };
+}
+Vector2i;
+
+
+typedef struct
+Region
+{
+    union {
+        Vector2i v[2];
+        struct {
+            Vector2i
+                position,
+                dimension;
+        };
+        struct {
+            int
+                x,
+                y,
+                w,
+                h;
+        };
+    };
+}
+Region;
             
 
 #endif /* DEFS_H */

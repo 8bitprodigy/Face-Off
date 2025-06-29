@@ -31,7 +31,7 @@ GameState
     bool      paused;
     bool      request_exit;
 
-    uint64     frame_num;
+    uint64    frame_num;
     
     float     delta;
 } GameState;
@@ -207,6 +207,7 @@ GameState_run(GameState *self)
         GameState_update(self);
         GameState_render(self);
         
+        self->frame_num++;
     }
 } /* GameState_run */
 
@@ -243,29 +244,34 @@ GameState_update(GameState *self)
     R E N D E R    
 ******************/
 void
-GameState_render(GameState *self)
-{ /* The following is temporary and will be replaced later with something that will support multiplayer... */
+GameState_drawScene(GameState *self)
+{
     int i = 0;
     Thing *things = self->things;
     Thing *thing;
     
-    BeginDrawing();
-        ClearBackground(RAYWHITE);
+    ClearBackground(RAYWHITE);
         
-        BeginMode3D(*Player_get_Camera(self->players));
-    
-            //DrawGrid(16, 4.0f);
-            
-            Map_render(self->map, self->players);
-            thing = things;
-            do {
-                Thing_draw(thing, Player_get_Camera(self->players));
-                thing = Thing_get_next(thing);
-            } while (thing != things);
-            
-        EndMode3D();
-        DrawFPS(10,10);
-        if (self->paused) DrawText("PAUSED",100,10,20,BLACK);
+    BeginMode3D(*Player_get_Camera(self->players));
+
+        //DrawGrid(16, 4.0f);
+        
+        Map_render(self->map, self->players);
+        thing = things;
+        do {
+            Thing_draw(thing, Player_get_Camera(self->players));
+            thing = Thing_get_next(thing);
+        } while (thing != things);
+        
+    EndMode3D();
+    DrawFPS(10,10);
+    if (self->paused) DrawText("PAUSED",100,10,20,BLACK);
+}
+
+void
+GameState_render(GameState *self)
+{ /* The following is temporary and will be replaced later with something that will support multiplayer... */
+    BeginDrawing();
+        GameState_drawScene(self);
     EndDrawing();
-    self->frame_num++;
 } /* GameState_render */
