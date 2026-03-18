@@ -1,0 +1,1482 @@
+#!/bin/sh
+# tclmk - Tcl Make Build Tool
+# The next line restarts using wish if available, falls back to tclsh \
+for interp in wish8.7 wish8.6 wish tclsh8.7 tclsh8.6 tclsh; do \
+    command -v "$interp" >/dev/null 2>&1 && exec "$interp" "$0" "$@"; \
+done; \
+echo "tclmk: no Tcl interpreter found" >&2; exit 1
+
+# =============================================================================
+# tclmk -- Tcl Make Build Tool
+# Generic, project-file-driven build system with optional Tk GUI.
+#
+# Usage: tclmk [--nogui] [--clean] [--export] [--list]
+#              [--project FILE] [platform [flags...] ...]
+#
+# Run with no arguments to open the GUI (if Tk is available),
+# or print usage if running headless.
+# =============================================================================
+
+package require Tcl 8.6
+
+# -----------------------------------------------------------------------------
+# Global state
+# -----------------------------------------------------------------------------
+namespace eval ::mk {
+    variable project {}          ;# loaded project dict
+    variable graph   {}          ;# build graph: target -> {deps cmd}
+    variable opts    {}          ;# parsed CLI platform->flags dict
+
+    # Configurable hooks — GUI overrides these
+    variable on_log  {mk::default_log}
+    variable on_cmd  {mk::default_log}
+    variable on_prog {}          ;# progress hook: called with (done total)
+
+    # Runtime flags
+    variable opt_nogui    0
+    variable opt_clean    0
+    variable opt_export   0
+    variable opt_list     0
+    variable opt_project  "build.tclproj"
+    variable opt_deps     0       ;# --deps: rebuild all deps
+    variable opt_dep      {}      ;# --dep=name list
+    variable opt_pull     {}      ;# --pull=name list
+    variable opt_pull_all 0       ;# --pull-all
+
+    variable build_cancelled 0
+    variable build_running   0
+    variable dep_mode        0    ;# 0=targets 1=dependencies
+}
+
+# -----------------------------------------------------------------------------
+# Logging
+# -----------------------------------------------------------------------------
+proc mk::default_log {msg} {
+    puts $msg
+}
+
+proc mk::log {msg} {
+    {*}$::mk::on_log $msg
+}
+
+proc mk::log_cmd {args} {
+    {*}$::mk::on_cmd "[join $args { }]"
+}
+
+proc mk::progress {done total} {
+    if {$::mk::on_prog ne {}} {
+        {*}$::mk::on_prog $done $total
+    }
+}
+
+# -----------------------------------------------------------------------------
+# Project file DSL
+# These commands are evaluated when a .tclproj file is sourced.
+# -----------------------------------------------------------------------------
+proc project {name body} {
+    dict set ::mk::project name $name
+    # Register bare-word field commands so the body can use either:
+    #   version 0.1.0
+    # or the set-style:
+    #   set version 0.1.0
+    namespace eval ::mk::proj_ctx {
+        proc version     {v} { set ::mk::proj_ctx::version     $v }
+        proc description {v} { set ::mk::proj_ctx::description $v }
+        proc license     {v} { set ::mk::proj_ctx::license     $v }
+    }
+    namespace eval ::mk::proj_ctx $body
+    foreach key {version description license} {
+        if {[info exists ::mk::proj_ctx::$key]} {
+            dict set ::mk::project $key [set ::mk::proj_ctx::$key]
+        }
+    }
+    namespace delete ::mk::proj_ctx
+}
+
+proc toolchain {name body} {
+    set tc [dict create \
+        cc              gcc         \
+        cxx             g++         \
+        ar              ar          \
+        cflags          {}          \
+        cxxflags        {}          \
+        ldflags         {}          \
+        defines         {}          \
+        includes        {}          \
+        sysroot         {}          \
+        opt_levels      {-O0 -O1 -O2 -O3 -Os} \
+        default_olevel  -O2         \
+        debug_flags     {}          \
+        outdir          "build/$name" \
+        targets         {}]
+
+    # Expose a target sub-command inside the toolchain body
+    namespace eval ::mk::tc_ctx {
+        proc target {tname tbody} {
+            set t [dict create desc "" deps {} cmds {} default 0]
+            namespace eval ::mk::tc_tgt_ctx $tbody
+            foreach key {desc deps cmds default} {
+                if {[info exists ::mk::tc_tgt_ctx::$key]} {
+                    dict set t $key [set ::mk::tc_tgt_ctx::$key]
+                }
+            }
+            namespace delete ::mk::tc_tgt_ctx
+            # Store in parent ctx for pickup after eval
+            dict set ::mk::tc_ctx::targets $tname $t
+        }
+        variable targets {}
+    }
+
+    namespace eval ::mk::tc_ctx $body
+
+    foreach key [dict keys $tc] {
+        if {$key eq "targets"} continue
+        if {[info exists ::mk::tc_ctx::$key]} {
+            dict set tc $key [set ::mk::tc_ctx::$key]
+        }
+    }
+
+    # Merge any targets defined in the body
+    if {[info exists ::mk::tc_ctx::targets] && \
+        $::mk::tc_ctx::targets ne {}} {
+        dict set tc targets $::mk::tc_ctx::targets
+    }
+
+    # Always ensure the implicit 'binary' target exists
+    if {![dict exists $tc targets binary]} {
+        dict set tc targets binary \
+            [dict create desc "Build binary" deps {} cmds {} default 1]
+    }
+
+    namespace delete ::mk::tc_ctx
+    dict set ::mk::project toolchains $name $tc
+}
+
+proc sources {body} {
+    namespace eval ::mk::src_ctx {
+        variable srcs {}
+        variable excl {}
+
+        proc src     {pat} { lappend ::mk::src_ctx::srcs $pat }
+        proc exclude {pat} { lappend ::mk::src_ctx::excl $pat }
+    }
+    namespace eval ::mk::src_ctx $body
+
+    set all {}
+    foreach pat $::mk::src_ctx::srcs {
+        lappend all {*}[glob -nocomplain $pat]
+    }
+
+    # Apply exclusions
+    set filtered {}
+    foreach f $all {
+        set excluded 0
+        foreach pat $::mk::src_ctx::excl {
+            if {[string match $pat $f]} { set excluded 1; break }
+        }
+        if {!$excluded} { lappend filtered $f }
+    }
+
+    dict set ::mk::project sources $filtered
+    namespace delete ::mk::src_ctx
+}
+
+proc option {name body} {
+    set opt [dict create desc "" default 0 platforms {}]
+    namespace eval ::mk::opt_ctx $body
+    foreach key [dict keys $opt] {
+        if {[info exists ::mk::opt_ctx::$key]} {
+            dict set opt $key [set ::mk::opt_ctx::$key]
+        }
+    }
+    namespace delete ::mk::opt_ctx
+    dict set ::mk::project options $name $opt
+}
+
+proc dependency {name body} {
+    set dep [dict create \
+        name       $name \
+        path       "deps/$name" \
+        url        "" \
+        branch     "main" \
+        build_cmds {} \
+        inc_path   "" \
+        lib_path   "" \
+        lib_name   ""]
+    namespace eval ::mk::dep_ctx $body
+    foreach key {path url branch build_cmds inc_path lib_path lib_name} {
+        if {[info exists ::mk::dep_ctx::$key]} {
+            dict set dep $key [set ::mk::dep_ctx::$key]
+        }
+    }
+    namespace delete ::mk::dep_ctx
+    dict lappend ::mk::project deps $dep
+}
+
+# -----------------------------------------------------------------------------
+# Project loading
+# -----------------------------------------------------------------------------
+proc mk::load_project {path} {
+    if {![file exists $path]} {
+        mk::log "tclmk: project file not found: $path"
+        exit 1
+    }
+    source $path
+    if {![dict exists $::mk::project toolchains]} {
+        dict set ::mk::project toolchains {}
+    }
+    if {![dict exists $::mk::project sources]} {
+        dict set ::mk::project sources {}
+    }
+    if {![dict exists $::mk::project options]} {
+        dict set ::mk::project options {}
+    }
+    if {![dict exists $::mk::project deps]} {
+        dict set ::mk::project deps {}
+    }
+}
+
+proc mk::platform_exists {name} {
+    dict exists $::mk::project toolchains $name
+}
+
+proc mk::toolchain_get {tc key} {
+    dict get $::mk::project toolchains $tc $key
+}
+
+# -----------------------------------------------------------------------------
+# Build helpers
+# -----------------------------------------------------------------------------
+proc mk::src_to_obj {tc src} {
+    set outdir [mk::toolchain_get $tc outdir]
+    set base   [file rootname [file tail $src]]
+    return "$outdir/obj/${base}.o"
+}
+
+proc mk::link_target {tc} {
+    set outdir [mk::toolchain_get $tc outdir]
+    set name   [dict get $::mk::project name]
+    return "$outdir/$name"
+}
+
+proc mk::stale? {target deps} {
+    if {![file exists $target]} { return 1 }
+    set tmtime [file mtime $target]
+    foreach dep $deps {
+        if {[file exists $dep] && [file mtime $dep] > $tmtime} {
+            return 1
+        }
+    }
+    return 0
+}
+
+proc mk::ensure_dir {path} {
+    file mkdir [file dirname $path]
+}
+
+proc mk::run {args} {
+    mk::log_cmd {*}$args
+    set pipe [open "|[list {*}$args] 2>@1" r]
+    set out  {}
+    while {[gets $pipe line] >= 0} {
+        mk::log "  $line"
+        lappend out $line
+    }
+    if {[catch {close $pipe} err]} {
+        error "Command failed: $err"
+    }
+    return $out
+}
+
+proc mk::build_cflags {tc extra_flags} {
+    set flags {}
+    lappend flags {*}[mk::toolchain_get $tc cflags]
+    foreach d [mk::toolchain_get $tc defines] {
+        lappend flags "-D$d"
+    }
+    foreach i [mk::toolchain_get $tc includes] {
+        lappend flags "-I$i"
+    }
+    # Add include paths from deps
+    foreach dep [dict get $::mk::project deps] {
+        set inc [dict get $dep inc_path]
+        set base [dict get $dep path]
+        if {$inc ne ""} {
+            lappend flags "-I[file join $base $inc]"
+        } else {
+            # inc_path blank means root of dep is the include dir
+            lappend flags "-I$base"
+        }
+    }
+    set sr [mk::toolchain_get $tc sysroot]
+    if {$sr ne {}} { lappend flags "--sysroot=$sr" }
+    lappend flags {*}$extra_flags
+    return $flags
+}
+
+proc mk::build_ldflags {tc} {
+    set flags [mk::toolchain_get $tc ldflags]
+    foreach dep [dict get $::mk::project deps] {
+        set libp [dict get $dep lib_path]
+        set libn [dict get $dep lib_name]
+        set base [dict get $dep path]
+        if {$libp ne ""} {
+            lappend flags "-L[file join $base $libp]"
+        }
+        if {$libn ne ""} {
+            lappend flags "-l$libn"
+        }
+    }
+    return $flags
+}
+
+# -----------------------------------------------------------------------------
+# Dependency management
+# -----------------------------------------------------------------------------
+proc mk::deps {} {
+    return [dict get $::mk::project deps]
+}
+
+proc mk::dep_init {dep} {
+    set path [dict get $dep path]
+    set url  [dict get $dep url]
+    set name [dict get $dep name]
+
+    if {$url eq ""} {
+        mk::log "  \[DEP\] $name: no URL, skipping submodule init"
+        return
+    }
+
+    # If path missing or empty, init the submodule
+    if {![file exists $path] || \
+        [llength [glob -nocomplain -directory $path *]] == 0} {
+        mk::log "\[GIT\] Initialising submodule $name..."
+        if {[catch {
+            exec git submodule update --init --recursive $path
+        } err]} {
+            error "Failed to init submodule $name: $err"
+        }
+    }
+}
+
+proc mk::dep_built? {dep} {
+    set path [dict get $dep path]
+    set cmds [dict get $dep build_cmds]
+    # Header-only (no build cmds): just need path to exist
+    if {$cmds eq {}} {
+        return [file exists $path]
+    }
+    # Otherwise check for a sentinel file we write after a successful build
+    return [file exists "$path/.tclmk_built"]
+}
+
+proc mk::dep_build {dep} {
+    set name [dict get $dep name]
+    set path [dict get $dep path]
+    set cmds [dict get $dep build_cmds]
+
+    if {$cmds eq {}} {
+        mk::log "\[DEP\] $name: header-only, nothing to build"
+        return
+    }
+
+    mk::log ""
+    mk::log "=== Building dependency: $name ==="
+
+    set saved_dir [pwd]
+    cd $path
+
+    foreach cmd $cmds {
+        if {$::mk::build_cancelled} {
+            cd $saved_dir
+            error "Build cancelled during dependency $name"
+        }
+        mk::run {*}$cmd
+    }
+
+    # Write sentinel so we know it's been built
+    close [open .tclmk_built w]
+    cd $saved_dir
+    mk::log "=== Done: $name ==="
+}
+
+proc mk::dep_pull {dep} {
+    set name [dict get $dep name]
+    set path [dict get $dep path]
+    mk::log "\[GIT\] Pulling latest for $name..."
+    if {[catch {
+        exec git -C $path pull --ff-only
+    } err]} {
+        error "Pull failed for $name: $err"
+    }
+    # Remove sentinel so it gets rebuilt
+    file delete -force "$path/.tclmk_built"
+    mk::log "\[GIT\] $name up to date — rebuild required"
+}
+
+proc mk::ensure_deps {} {
+    set deps [mk::deps]
+    if {$deps eq {}} return
+    foreach dep $deps {
+        mk::dep_init $dep
+        if {![mk::dep_built? $dep]} {
+            mk::dep_build $dep
+        }
+    }
+}
+
+# -----------------------------------------------------------------------------
+# Target resolution — topological sort
+# -----------------------------------------------------------------------------
+proc mk::tc_targets {tc} {
+    return [dict get $::mk::project toolchains $tc targets]
+}
+
+proc mk::target_get {tc tname key} {
+    return [dict get [mk::tc_targets $tc] $tname $key]
+}
+
+proc mk::default_targets {tc} {
+    set out {}
+    dict for {tname t} [mk::tc_targets $tc] {
+        if {[dict get $t default]} { lappend out $tname }
+    }
+    # If nothing marked default, use binary
+    if {$out eq {}} { set out {binary} }
+    return $out
+}
+
+# Returns ordered list of targets to build, deps first (topo sort)
+proc mk::resolve_targets {tc targets} {
+    set visited {}
+    set ordered {}
+
+    proc _visit {tc tname} {
+        upvar visited visited ordered ordered
+        if {$tname in $visited} return
+        lappend visited $tname
+
+        # Recurse into deps first
+        if {[dict exists [mk::tc_targets $tc] $tname]} {
+            foreach dep [mk::target_get $tc $tname deps] {
+                _visit $tc $dep
+            }
+        }
+        lappend ordered $tname
+    }
+
+    foreach t $targets { _visit $tc $t }
+    return $ordered
+}
+
+# -----------------------------------------------------------------------------
+# Core build: compile + link (the 'binary' target step)
+# -----------------------------------------------------------------------------
+proc mk::build_binary {tc extra_flags} {
+    set sources [dict get $::mk::project sources]
+    if {$sources eq {}} {
+        mk::log "  No sources defined."
+        return
+    }
+
+    set cc     [mk::toolchain_get $tc cc]
+    set cflags [mk::build_cflags $tc $extra_flags]
+    set total  [llength $sources]
+    set done   0
+    set objects {}
+
+    foreach src $sources {
+        if {$::mk::build_cancelled} {
+            mk::log "Build cancelled."
+            return
+        }
+
+        set obj [mk::src_to_obj $tc $src]
+        mk::ensure_dir $obj
+
+        if {[mk::stale? $obj [list $src]]} {
+            mk::log "\[CC\] $src"
+            mk::run $cc {*}$cflags -c $src -o $obj
+        } else {
+            mk::log "\[--\] $src (up to date)"
+        }
+
+        lappend objects $obj
+        incr done
+        mk::progress $done $total
+    }
+
+    # Link
+    set target [mk::link_target $tc]
+    mk::ensure_dir $target
+
+    if {[mk::stale? $target $objects]} {
+        mk::log "\[LD\] $target"
+        mk::run $cc {*}$objects \
+            {*}[mk::build_ldflags $tc] \
+            -o $target
+    } else {
+        mk::log "\[--\] $target (up to date)"
+    }
+}
+
+# -----------------------------------------------------------------------------
+# Run a single named target's commands
+# -----------------------------------------------------------------------------
+proc mk::run_target {tc tname extra_flags} {
+    if {$::mk::build_cancelled} return
+
+    if {$tname eq "binary"} {
+        mk::log ""
+        mk::log "=== \[$tc\] binary ==="
+        mk::build_binary $tc $extra_flags
+        return
+    }
+
+    set cmds [mk::target_get $tc $tname cmds]
+    set desc [mk::target_get $tc $tname desc]
+
+    mk::log ""
+    mk::log "=== \[$tc\] $tname[expr {$desc ne {} ? " — $desc" : ""}] ==="
+
+    if {$cmds eq {}} {
+        mk::log "  (no commands defined for target $tname)"
+        return
+    }
+
+    foreach cmd $cmds {
+        if {$::mk::build_cancelled} {
+            mk::log "Build cancelled."
+            return
+        }
+        mk::run {*}$cmd
+    }
+}
+
+# -----------------------------------------------------------------------------
+# Build a toolchain, running the requested targets in dependency order
+# -----------------------------------------------------------------------------
+proc mk::build_toolchain {tc extra_flags {targets {}}} {
+    # Ensure all submodule deps are initialised and built first
+    mk::ensure_deps
+
+    mk::log ""
+    mk::log "=== Building [string toupper $tc] ==="
+
+    # Default to the toolchain's default targets if none specified
+    if {$targets eq {}} {
+        set targets [mk::default_targets $tc]
+    }
+
+    # Resolve full ordered list respecting deps
+    set ordered [mk::resolve_targets $tc $targets]
+
+    foreach tname $ordered {
+        if {$::mk::build_cancelled} break
+        mk::run_target $tc $tname $extra_flags
+    }
+
+    mk::log ""
+    mk::log "=== Done: $tc ==="
+}
+
+# -----------------------------------------------------------------------------
+# Clean
+# -----------------------------------------------------------------------------
+proc mk::clean_toolchain {tc} {
+    set outdir [mk::toolchain_get $tc outdir]
+    mk::log "Cleaning $tc ($outdir)..."
+    file delete -force $outdir
+    mk::log "Done."
+}
+
+proc mk::do_clean {toolchains} {
+    foreach tc $toolchains {
+        mk::clean_toolchain $tc
+    }
+}
+
+# -----------------------------------------------------------------------------
+# Makefile export
+# -----------------------------------------------------------------------------
+proc mk::gen_makefile {path toolchains} {
+    set f [open $path w]
+
+    puts $f "# Generated by tclmk -- Tcl Make Build Tool"
+    puts $f "# [clock format [clock seconds]]"
+    puts $f ""
+
+    # Per-toolchain variable blocks
+    foreach tc $toolchains {
+        set UC [string toupper [string map {- _} $tc]]
+        puts $f "# --- $tc ---"
+        puts $f "${UC}_CC     = [mk::toolchain_get $tc cc]"
+        puts $f "${UC}_CFLAGS = [mk::toolchain_get $tc cflags]"
+        puts $f "${UC}_LFLAGS = [mk::toolchain_get $tc ldflags]"
+        puts $f "${UC}_OUT    = [mk::link_target $tc]"
+        puts $f ""
+    }
+
+    # all target
+    set all_targets [lmap tc $toolchains { string cat "build-" $tc }]
+    puts $f "all: $all_targets"
+    puts $f ""
+
+    foreach tc $toolchains {
+        set UC      [string toupper [string map {- _} $tc]]
+        set sources [dict get $::mk::project sources]
+        set objects [lmap s $sources { mk::src_to_obj $tc $s }]
+
+        puts $f "build-$tc: [join $objects { }]"
+        puts $f "\t\$(${UC}_CC) [join $objects { }] \$(${UC}_LFLAGS) -o \$(${UC}_OUT)"
+        puts $f ""
+
+        foreach src $sources obj $objects {
+            puts $f "$obj: $src"
+            puts $f "\t\$(${UC}_CC) \$(${UC}_CFLAGS) -c $src -o $obj"
+            puts $f ""
+        }
+
+        puts $f "clean-$tc:"
+        puts $f "\trm -rf [mk::toolchain_get $tc outdir]"
+        puts $f ""
+    }
+
+    set clean_targets [lmap tc $toolchains { string cat "clean-" $tc }]
+    puts $f "clean: $clean_targets"
+    puts $f ""
+    puts $f ".PHONY: all $all_targets clean $clean_targets"
+
+    close $f
+    mk::log "Makefile written to $path"
+}
+
+# -----------------------------------------------------------------------------
+# CLI: parsing
+# -----------------------------------------------------------------------------
+proc mk::parse_args {argv} {
+    set platforms {}    ;# ordered list of {tc targets flags}
+    set current   {}
+    set ctargets  {}
+    set cflags    {}
+
+    foreach arg $argv {
+        switch -- $arg {
+            --nogui    { set ::mk::opt_nogui    1 }
+            --clean    { set ::mk::opt_clean    1 }
+            --export   { set ::mk::opt_export   1 }
+            --list     { set ::mk::opt_list     1 }
+            --deps     { set ::mk::opt_deps     1 }
+            --pull-all { set ::mk::opt_pull_all 1 }
+            --help     { mk::usage; exit 0 }
+            default {
+                if {[string match --project=* $arg]} {
+                    set ::mk::opt_project [string range $arg 10 end]
+                } elseif {[string match --dep=* $arg]} {
+                    lappend ::mk::opt_dep [string range $arg 6 end]
+                } elseif {[string match --pull=* $arg]} {
+                    lappend ::mk::opt_pull [string range $arg 7 end]
+                } else {
+                    # Check for platform:target syntax
+                    set colon [string first : $arg]
+                    if {$colon >= 0} {
+                        set tcname  [string range $arg 0 $colon-1]
+                        set tgtname [string range $arg $colon+1 end]
+                    } else {
+                        set tcname  $arg
+                        set tgtname {}
+                    }
+
+                    if {[mk::platform_exists $tcname]} {
+                        if {$current ne {}} {
+                            lappend platforms [list $current $ctargets $cflags]
+                        }
+                        set current  $tcname
+                        set ctargets [expr {$tgtname ne {} ? [list $tgtname] : {}}]
+                        set cflags   {}
+                    } elseif {$current ne {}} {
+                        lappend cflags $arg
+                    } else {
+                        mk::log "tclmk: unknown option '$arg'"
+                        mk::usage
+                        exit 1
+                    }
+                }
+            }
+        }
+    }
+
+    if {$current ne {}} {
+        lappend platforms [list $current $ctargets $cflags]
+    }
+
+    return $platforms
+}
+
+# -----------------------------------------------------------------------------
+# CLI: usage / platform listing
+# -----------------------------------------------------------------------------
+proc mk::list_platforms {} {
+    if {![dict exists $::mk::project toolchains]} {
+        mk::log "  (no platforms defined)"
+        return
+    }
+    dict for {tc meta} [dict get $::mk::project toolchains] {
+        mk::log "  $tc"
+        mk::log "    Compiler : [dict get $meta cc]"
+        mk::log "    Opt flags: [join [dict get $meta opt_levels] {  }]\
+ (default: [dict get $meta default_olevel])"
+        set dflags [dict keys [dict get $meta debug_flags]]
+        if {$dflags ne {}} {
+            mk::log "    Debug    : [join $dflags {  }]"
+        }
+        mk::log "    Targets  :"
+        dict for {tname t} [dict get $meta targets] {
+            set desc    [dict get $t desc]
+            set deps    [dict get $t deps]
+            set default [dict get $t default]
+            set line    "      $tname"
+            if {$desc ne ""}    { append line " — $desc" }
+            if {$deps ne {}}    { append line " (deps: [join $deps {, }])" }
+            if {$default}       { append line " \[default\]" }
+            mk::log $line
+        }
+        mk::log ""
+    }
+}
+
+proc mk::usage {} {
+    set sep [string repeat - 60]
+
+    mk::log "$sep"
+    mk::log "tclmk -- Tcl Make Build Tool"
+    mk::log ""
+    if {[dict exists $::mk::project name]} {
+        set n [dict get $::mk::project name]
+        set v [expr {[dict exists $::mk::project version] \
+                         ? "v[dict get $::mk::project version]" : ""}]
+        mk::log "Project : $n $v  ($::mk::opt_project)"
+        mk::log ""
+    }
+    mk::log "Syntax  : tclmk \[options\] \[platform \[flags ...\] ...\]"
+    mk::log ""
+    mk::log "Options :"
+    mk::log "  --nogui           Run headless (no GUI)"
+    mk::log "  --clean           Clean build artifacts"
+    mk::log "  --export          Export a Makefile"
+    mk::log "  --list            List platforms and flags"
+    mk::log "  --deps            Rebuild all dependencies"
+    mk::log "  --dep=NAME        Rebuild a specific dependency"
+    mk::log "  --pull=NAME       Pull latest for a dependency and rebuild it"
+    mk::log "  --pull-all        Pull latest for all dependencies and rebuild"
+    mk::log "  --project FILE    Project file (default: build.tclproj)"
+    mk::log "  --help            Show this help"
+    mk::log ""
+    mk::log "Examples:"
+    mk::log "  tclmk"
+    mk::log "  tclmk --nogui linux-gcc -O3 -DRELEASE"
+    mk::log "  tclmk --nogui linux-gcc -O3 dreamcast-kos -O2"
+    mk::log "  tclmk --nogui dreamcast-kos:cdi -O2"
+    mk::log "  tclmk --nogui dreamcast-kos:binary dreamcast-kos:cdi -O2"
+    mk::log "  tclmk --clean linux-gcc"
+    mk::log "  tclmk --export linux-gcc dreamcast-kos"
+    mk::log "  tclmk --nogui --deps"
+    mk::log "  tclmk --nogui --dep=mylib"
+    mk::log "  tclmk --nogui --pull=mylib"
+    mk::log "  tclmk --nogui --pull-all"
+    mk::log ""
+    mk::log "Tip: Run without --nogui to open the graphical build interface."
+    mk::log "$sep"
+    mk::log ""
+    mk::log "Available platforms:"
+    mk::log ""
+    mk::list_platforms
+}
+
+# -----------------------------------------------------------------------------
+# Headless dispatch
+# -----------------------------------------------------------------------------
+proc mk::run_headless {platforms} {
+    set any_dep_op [expr {
+        $::mk::opt_deps ||
+        $::mk::opt_dep  ne {} ||
+        $::mk::opt_pull ne {} ||
+        $::mk::opt_pull_all
+    }]
+
+    if {$platforms eq {} && !$::mk::opt_clean \
+            && !$::mk::opt_export && !$::mk::opt_list \
+            && !$any_dep_op} {
+        mk::usage
+        exit 0
+    }
+
+    if {$::mk::opt_list} {
+        mk::usage
+        exit 0
+    }
+
+    set tcs [lmap p $platforms { lindex $p 0 }]
+
+    if {$::mk::opt_clean} {
+        mk::do_clean [expr {$tcs ne {} ? $tcs \
+            : [dict keys [dict get $::mk::project toolchains]]}]
+        exit 0
+    }
+
+    if {$::mk::opt_export} {
+        mk::gen_makefile Makefile \
+            [expr {$tcs ne {} ? $tcs \
+                : [dict keys [dict get $::mk::project toolchains]]}]
+        exit 0
+    }
+
+    # Dependency operations
+    if {$any_dep_op} {
+        set deps [mk::deps]
+
+        # --pull-all: pull then force-rebuild everything
+        if {$::mk::opt_pull_all} {
+            foreach dep $deps { mk::dep_pull $dep }
+        }
+
+        # --pull=name: pull specific deps
+        foreach name $::mk::opt_pull {
+            set dep [mk::find_dep $name]
+            if {$dep eq {}} {
+                mk::log "tclmk: unknown dependency '$name'"
+            } else {
+                mk::dep_pull $dep
+            }
+        }
+
+        # --deps: force rebuild all
+        if {$::mk::opt_deps} {
+            foreach dep $deps {
+                mk::dep_build $dep
+            }
+            exit 0
+        }
+
+        # --dep=name: force rebuild specific
+        foreach name $::mk::opt_dep {
+            set dep [mk::find_dep $name]
+            if {$dep eq {}} {
+                mk::log "tclmk: unknown dependency '$name'"
+            } else {
+                mk::dep_build $dep
+            }
+        }
+
+        # If no platforms specified, we're done
+        if {$platforms eq {}} { exit 0 }
+    }
+
+    foreach pair $platforms {
+        lassign $pair tc targets flags
+        mk::build_toolchain $tc $flags $targets
+    }
+}
+
+proc mk::find_dep {name} {
+    foreach dep [mk::deps] {
+        if {[dict get $dep name] eq $name} { return $dep }
+    }
+    return {}
+}
+
+# =============================================================================
+# GUI — only loaded when Tk is available and --nogui not set
+# =============================================================================
+proc mk::start_gui {} {
+    package require Tk
+
+    wm title . "tclmk"
+    wm resizable . 1 1
+
+    # Project title in window bar
+    if {[dict exists $::mk::project name]} {
+        set n [dict get $::mk::project name]
+        set v [expr {[dict exists $::mk::project version] \
+                         ? " [dict get $::mk::project version]" : ""}]
+        wm title . "tclmk — $n$v"
+    }
+
+    # -------------------------------------------------------------------------
+    # Layout: notebook fills top, progress + buttons fixed at bottom
+    # -------------------------------------------------------------------------
+    ttk::notebook .nb
+    ttk::frame    .progress
+    ttk::frame    .buttons
+
+    pack .nb       -fill both -expand yes -padx 6 -pady {6 2}
+    pack .progress -fill x    -padx 6     -pady {0 2}
+    pack .buttons  -fill x    -padx 6     -pady {0 6}
+
+    # Radio buttons — only shown if project has deps
+    if {[dict get $::mk::project deps] ne {}} {
+        ttk::frame .mode
+        ttk::label .mode.lbl -text "Build:"
+        ttk::radiobutton .mode.targets -text "Targets" \
+            -variable ::mk::dep_mode -value 0
+        ttk::radiobutton .mode.deps    -text "Dependencies" \
+            -variable ::mk::dep_mode -value 1
+        pack .mode.lbl     -side left -padx {0 8}
+        pack .mode.targets -side left -padx 4
+        pack .mode.deps    -side left -padx 4
+        # Insert between nb and progress
+        pack forget .progress .buttons
+        pack .mode     -fill x -padx 6 -pady {0 2}
+        pack .progress -fill x -padx 6 -pady {0 2}
+        pack .buttons  -fill x -padx 6 -pady {0 6}
+    }
+
+    # Progress bar + status label
+    ttk::progressbar .progress.bar \
+        -variable ::mk::gui_progress \
+        -maximum  100 \
+        -length   1
+    ttk::label .progress.lbl \
+        -textvariable ::mk::gui_status \
+        -anchor w
+    pack .progress.bar -fill x
+    pack .progress.lbl -fill x -pady {2 0}
+
+    set ::mk::gui_progress 0
+    set ::mk::gui_status   "Ready."
+
+    # Buttons
+    ttk::button .buttons.cancel -text "Cancel" \
+        -command mk::gui_cancel \
+        -state disabled
+    ttk::button .buttons.clean  -text "Clean" \
+        -command mk::gui_clean
+    ttk::button .buttons.export -text "Export Makefile" \
+        -command mk::gui_export
+    ttk::button .buttons.build  -text "Build" \
+        -command mk::gui_build
+
+    pack .buttons.cancel -side left
+    pack .buttons.build  -side right
+    pack .buttons.export -side right -padx {0 4}
+    pack .buttons.clean  -side right -padx {0 4}
+
+    # -------------------------------------------------------------------------
+    # Platforms tab (always first)
+    # -------------------------------------------------------------------------
+    .nb add [mk::make_platforms_tab] -text "Platforms"
+
+    # Dependencies tab — only if project has deps
+    if {[dict get $::mk::project deps] ne {}} {
+        .nb add [mk::make_deps_tab] -text "Dependencies"
+    }
+
+    # -------------------------------------------------------------------------
+    # Override log hooks to feed the GUI log widget
+    # -------------------------------------------------------------------------
+    set ::mk::on_log  mk::gui_log
+    set ::mk::on_cmd  mk::gui_log_cmd
+    set ::mk::on_prog mk::gui_set_progress
+
+    # Print CLI hint to build log on startup
+    mk::gui_log "tclmk -- Tcl Make Build Tool"
+    mk::gui_log ""
+    mk::gui_log "You can also run this from the command line without a GUI:"
+    mk::gui_log ""
+    dict for {tc _} [dict get $::mk::project toolchains] {
+        mk::gui_log "  tclmk --nogui $tc -O2 -DRELEASE"
+    }
+    mk::gui_log ""
+    mk::gui_log "Run 'tclmk --list' to see all platforms and flags."
+    mk::gui_log [string repeat \u2500 52]
+    mk::gui_log ""
+}
+
+# -----------------------------------------------------------------------------
+# Platforms tab
+# -----------------------------------------------------------------------------
+proc mk::make_platforms_tab {} {
+    set f [ttk::frame .nb.platforms]
+
+    ttk::labelframe $f.list -text "Build for"
+    pack $f.list -fill x -padx 6 -pady {6 2}
+
+    dict for {tc _} [dict get $::mk::project toolchains] {
+        set ::mk::enabled($tc) 0
+        ttk::checkbutton $f.list.cb_$tc \
+            -text     $tc \
+            -variable ::mk::enabled($tc) \
+            -command  [list mk::platform_toggle $tc]
+        pack $f.list.cb_$tc -anchor w -padx 8 -pady 1
+    }
+
+    ttk::labelframe $f.log -text "Build Log"
+    pack $f.log -fill both -expand yes -padx 6 -pady {2 6}
+
+    text $f.log.txt \
+        -state    disabled \
+        -wrap     none \
+        -height   14 \
+        -font     {TkFixedFont} \
+        -yscrollcommand [list $f.log.sb set] \
+        -xscrollcommand [list $f.log.sbx set]
+    ttk::scrollbar $f.log.sb  -orient vertical   -command [list $f.log.txt yview]
+    ttk::scrollbar $f.log.sbx -orient horizontal -command [list $f.log.txt xview]
+
+    grid $f.log.txt $f.log.sb  -sticky nsew
+    grid $f.log.sbx             -sticky ew
+    grid columnconfigure $f.log 0 -weight 1
+    grid rowconfigure    $f.log 0 -weight 1
+
+    # Keep a reference so gui_log can find it
+    set ::mk::log_widget $f.log.txt
+
+    return $f
+}
+
+# -----------------------------------------------------------------------------
+# Per-platform tab — added when checkbox ticked, removed when unticked
+# -----------------------------------------------------------------------------
+proc mk::platform_toggle {tc} {
+    if {$::mk::enabled($tc)} {
+        .nb add [mk::make_platform_tab $tc] -text $tc
+    } else {
+        catch { .nb forget .nb.ptab_$tc }
+    }
+}
+
+proc mk::make_platform_tab {tc} {
+    set f [ttk::frame .nb.ptab_$tc]
+
+    # Targets
+    set targets [mk::tc_targets $tc]
+    if {[dict size $targets] > 1} {
+        ttk::labelframe $f.tgts -text "Targets"
+        dict for {tname t} $targets {
+            set desc    [dict get $t desc]
+            set default [dict get $t default]
+            set deps    [dict get $t deps]
+            set ::mk::tc_tgt($tc,$tname) $default
+            set label $tname
+            if {$desc ne ""}  { append label " — $desc" }
+            if {$deps ne {}}  { append label " (needs: [join $deps {, }])" }
+            ttk::checkbutton $f.tgts.cb_$tname \
+                -text     $label \
+                -variable ::mk::tc_tgt($tc,$tname)
+            pack $f.tgts.cb_$tname -anchor w -padx 8 -pady 1
+        }
+        pack $f.tgts -fill x -padx 6 -pady {6 2}
+    }
+
+    # Optimization level
+    ttk::labelframe $f.opt -text "Optimization"
+    ttk::label    $f.opt.lbl -text "Level:"
+    ttk::combobox $f.opt.lvl \
+        -textvariable ::mk::tc_opt($tc,olevel) \
+        -values       [mk::toolchain_get $tc opt_levels] \
+        -state        readonly \
+        -width        6
+    set ::mk::tc_opt($tc,olevel) [mk::toolchain_get $tc default_olevel]
+    pack $f.opt.lbl $f.opt.lvl -side left -padx 4 -pady 4
+    pack $f.opt -fill x -padx 6 -pady 2
+
+    # Debug flags
+    set dflags [mk::toolchain_get $tc debug_flags]
+    if {$dflags ne {}} {
+        ttk::labelframe $f.dbg -text "Debug Flags"
+        dict for {flag desc} $dflags {
+            set ::mk::tc_opt($tc,dbg_$flag) 0
+            ttk::checkbutton $f.dbg.cb_$flag \
+                -text     "$desc  ($flag)" \
+                -variable ::mk::tc_opt($tc,dbg_$flag)
+            pack $f.dbg.cb_$flag -anchor w -padx 8 -pady 1
+        }
+        pack $f.dbg -fill x -padx 6 -pady 2
+    }
+
+    # Defines
+    ttk::labelframe $f.def -text "Extra Defines"
+    ttk::entry $f.def.ent -textvariable ::mk::tc_opt($tc,defines) -width 40
+    set ::mk::tc_opt($tc,defines) ""
+    ttk::label $f.def.hint -text "Space-separated, e.g. -DFOO -DBAR=1" \
+        -font {TkSmallCaptionFont}
+    pack $f.def.ent  -fill x -padx 4 -pady {4 0}
+    pack $f.def.hint -anchor w -padx 4
+    pack $f.def -fill x -padx 6 -pady 2
+
+    # Extra CFLAGS
+    ttk::labelframe $f.extra -text "Extra CFLAGS"
+    ttk::entry $f.extra.cf -textvariable ::mk::tc_opt($tc,extra_cflags) -width 40
+    set ::mk::tc_opt($tc,extra_cflags) ""
+    pack $f.extra.cf -fill x -padx 4 -pady 4
+    pack $f.extra -fill x -padx 6 -pady 2
+
+    # Output directory
+    ttk::labelframe $f.out -text "Output Directory"
+    ttk::entry  $f.out.ent -textvariable ::mk::tc_opt($tc,outdir) -width 30
+    ttk::button $f.out.btn -text "\u2026" -width 2 \
+        -command [list mk::browse_outdir $tc]
+    set ::mk::tc_opt($tc,outdir) [mk::toolchain_get $tc outdir]
+    pack $f.out.ent -side left -fill x -expand yes -padx {4 2} -pady 4
+    pack $f.out.btn -side left -pady 4
+    pack $f.out -fill x -padx 6 -pady {2 6}
+
+    return $f
+}
+
+proc mk::browse_outdir {tc} {
+    set d [tk_chooseDirectory -title "Output directory for $tc"]
+    if {$d ne {}} { set ::mk::tc_opt($tc,outdir) $d }
+}
+
+# -----------------------------------------------------------------------------
+# Dependencies tab
+# -----------------------------------------------------------------------------
+proc mk::make_deps_tab {} {
+    set f [ttk::frame .nb.mkdeps]
+
+    ttk::labelframe $f.list -text "Dependencies"
+
+    set row 0
+    foreach dep [dict get $::mk::project deps] {
+        set name   [dict get $dep name]
+        set url    [dict get $dep url]
+        set branch [dict get $dep branch]
+        set path   [dict get $dep path]
+        set cmds   [dict get $dep build_cmds]
+
+        set ::mk::dep_checked($name) 0
+
+        ttk::frame $f.list.row_$name
+        ttk::checkbutton $f.list.row_$name.cb \
+            -text     $name \
+            -variable ::mk::dep_checked($name) \
+            -width    18
+        ttk::label $f.list.row_$name.url \
+            -text     $url \
+            -anchor   w \
+            -foreground gray
+        ttk::label $f.list.row_$name.branch \
+            -text     "@ $branch" \
+            -width    14 \
+            -anchor   w
+        ttk::button $f.list.row_$name.pull \
+            -text    "Pull Newest" \
+            -command [list mk::gui_pull_dep $dep]
+
+        # Status indicator: built / not built / header-only
+        set status [mk::dep_status_label $dep]
+        ttk::label $f.list.row_$name.status \
+            -textvariable ::mk::dep_status($name) \
+            -width 14 \
+            -anchor w
+        set ::mk::dep_status($name) $status
+
+        pack $f.list.row_$name.cb     -side left -padx {4 2}
+        pack $f.list.row_$name.status -side left -padx 2
+        pack $f.list.row_$name.branch -side left -padx 2
+        pack $f.list.row_$name.pull   -side right -padx 4
+        pack $f.list.row_$name.url    -side left -fill x -expand yes -padx 2
+
+        grid $f.list.row_$name -row $row -sticky ew -padx 4 -pady 2
+        incr row
+    }
+
+    grid columnconfigure $f.list 0 -weight 1
+
+    ttk::button $f.selall -text "Select All" \
+        -command mk::gui_deps_select_all
+    ttk::button $f.selnone -text "Select None" \
+        -command mk::gui_deps_select_none
+
+    pack $f.list    -fill x    -padx 8 -pady {8 4}
+    pack $f.selall  -side left -padx {8 2} -pady 4
+    pack $f.selnone -side left -padx 2     -pady 4
+
+    return $f
+}
+
+proc mk::dep_status_label {dep} {
+    set cmds [dict get $dep build_cmds]
+    set path [dict get $dep path]
+    if {![file exists $path]} {
+        return "not initialised"
+    }
+    if {$cmds eq {}} {
+        return "header-only"
+    }
+    if {[file exists "$path/.tclmk_built"]} {
+        return "built"
+    }
+    return "not built"
+}
+
+proc mk::gui_deps_select_all {} {
+    foreach dep [dict get $::mk::project deps] {
+        set ::mk::dep_checked([dict get $dep name]) 1
+    }
+}
+
+proc mk::gui_deps_select_none {} {
+    foreach dep [dict get $::mk::project deps] {
+        set ::mk::dep_checked([dict get $dep name]) 0
+    }
+}
+
+proc mk::gui_pull_dep {dep} {
+    set name [dict get $dep name]
+    mk::gui_build_state 1
+    set ::mk::gui_status "Pulling $name..."
+    after idle [list apply {{dep name} {
+        if {[catch { mk::dep_pull $dep } err]} {
+            mk::gui_log "ERROR: $err"
+            set ::mk::gui_status "Pull failed — see log."
+        } else {
+            set ::mk::dep_status($name) "not built"
+            set ::mk::gui_status "Pulled $name — rebuild to apply."
+        }
+        mk::gui_build_state 0
+    }} $dep $name]
+}
+
+# -----------------------------------------------------------------------------
+# GUI log helpers
+# -----------------------------------------------------------------------------
+proc mk::gui_log {msg} {
+    if {![info exists ::mk::log_widget] || \
+        ![winfo exists $::mk::log_widget]} {
+        puts $msg
+        return
+    }
+    $::mk::log_widget configure -state normal
+    $::mk::log_widget insert end "$msg\n"
+    $::mk::log_widget see end
+    $::mk::log_widget configure -state disabled
+    update idletasks
+}
+
+proc mk::gui_log_cmd {msg} {
+    mk::gui_log "\[CMD\] $msg"
+}
+
+proc mk::gui_set_progress {done total} {
+    if {$total > 0} {
+        set ::mk::gui_progress [expr {int(100.0 * $done / $total)}]
+    }
+    update idletasks
+}
+
+# -----------------------------------------------------------------------------
+# GUI button actions
+# -----------------------------------------------------------------------------
+proc mk::gui_build_state {running} {
+    set ::mk::build_running $running
+    if {$running} {
+        .buttons.build  configure -state disabled
+        .buttons.clean  configure -state disabled
+        .buttons.export configure -state disabled
+        .buttons.cancel configure -state normal
+        set ::mk::build_cancelled 0
+        set ::mk::gui_progress 0
+    } else {
+        .buttons.build  configure -state normal
+        .buttons.clean  configure -state normal
+        .buttons.export configure -state normal
+        .buttons.cancel configure -state disabled
+    }
+}
+
+proc mk::enabled_platforms {} {
+    set out {}
+    dict for {tc _} [dict get $::mk::project toolchains] {
+        if {[info exists ::mk::enabled($tc)] && $::mk::enabled($tc)} {
+            lappend out $tc
+        }
+    }
+    return $out
+}
+
+proc mk::gui_flags_for {tc} {
+    set flags {}
+    lappend flags $::mk::tc_opt($tc,olevel)
+    lappend flags {*}[split $::mk::tc_opt($tc,defines)     { }]
+    lappend flags {*}[split $::mk::tc_opt($tc,extra_cflags) { }]
+
+    # Collect enabled debug flags
+    set dflags [mk::toolchain_get $tc debug_flags]
+    dict for {flag _} $dflags {
+        if {$::mk::tc_opt($tc,dbg_$flag)} {
+            lappend flags $flag
+        }
+    }
+    return [lsearch -all -inline -not $flags {}]
+}
+
+proc mk::gui_build {} {
+    if {$::mk::dep_mode} {
+        mk::gui_build_deps
+        return
+    }
+
+    set tcs [mk::enabled_platforms]
+    if {$tcs eq {}} {
+        tk_messageBox -icon warning -title "tclmk" \
+            -message "No platforms selected."
+        return
+    }
+
+    mk::gui_build_state 1
+    set ::mk::gui_status "Building..."
+    after idle [list mk::gui_build_async $tcs]
+}
+
+proc mk::gui_build_deps {} {
+    # Collect checked deps from the deps tab
+    set selected {}
+    foreach dep [dict get $::mk::project deps] {
+        set name [dict get $dep name]
+        if {[info exists ::mk::dep_checked($name)] && \
+            $::mk::dep_checked($name)} {
+            lappend selected $dep
+        }
+    }
+    if {$selected eq {}} {
+        tk_messageBox -icon warning -title "tclmk" \
+            -message "No dependencies selected."
+        return
+    }
+    mk::gui_build_state 1
+    set ::mk::gui_status "Building dependencies..."
+    after idle [list mk::gui_deps_async $selected]
+}
+
+proc mk::gui_deps_async {deps} {
+    set ok 1
+    foreach dep $deps {
+        if {$::mk::build_cancelled} break
+        if {[catch { mk::dep_build $dep } err]} {
+            mk::gui_log "ERROR: $err"
+            set ok 0
+            break
+        }
+    }
+    if {$::mk::build_cancelled} {
+        set ::mk::gui_status "Cancelled."
+    } elseif {$ok} {
+        set ::mk::gui_status "Dependencies built."
+        set ::mk::gui_progress 100
+    } else {
+        set ::mk::gui_status "Dependency build failed — see log."
+    }
+    mk::gui_build_state 0
+}
+
+proc mk::gui_build_async {tcs} {
+    set ok 1
+    foreach tc $tcs {
+        if {$::mk::build_cancelled} break
+        set flags   [mk::gui_flags_for $tc]
+        set targets [mk::gui_targets_for $tc]
+        if {[catch { mk::build_toolchain $tc $flags $targets } err]} {
+            mk::gui_log "ERROR: $err"
+            set ok 0
+            break
+        }
+    }
+
+    if {$::mk::build_cancelled} {
+        set ::mk::gui_status "Build cancelled."
+    } elseif {$ok} {
+        set ::mk::gui_status "Build complete."
+        set ::mk::gui_progress 100
+    } else {
+        set ::mk::gui_status "Build failed — see log."
+    }
+
+    mk::gui_build_state 0
+}
+
+proc mk::gui_targets_for {tc} {
+    set out {}
+    dict for {tname _} [mk::tc_targets $tc] {
+        if {[info exists ::mk::tc_tgt($tc,$tname)] && \
+            $::mk::tc_tgt($tc,$tname)} {
+            lappend out $tname
+        }
+    }
+    # If nothing checked fall back to defaults
+    if {$out eq {}} { set out [mk::default_targets $tc] }
+    return $out
+}
+
+proc mk::gui_clean {} {
+    set tcs [mk::enabled_platforms]
+    if {$tcs eq {}} {
+        set tcs [dict keys [dict get $::mk::project toolchains]]
+    }
+    mk::gui_build_state 1
+    set ::mk::gui_status "Cleaning..."
+    after idle [list apply {{tcs} {
+        mk::do_clean $tcs
+        set ::mk::gui_status "Clean done."
+        mk::gui_build_state 0
+    }} $tcs]
+}
+
+proc mk::gui_cancel {} {
+    set ::mk::build_cancelled 1
+    .buttons.cancel configure -state disabled
+    set ::mk::gui_status "Cancelling..."
+}
+
+proc mk::gui_export {} {
+    set tcs [mk::enabled_platforms]
+    if {$tcs eq {}} {
+        set tcs [dict keys [dict get $::mk::project toolchains]]
+    }
+    if {$tcs eq {}} {
+        tk_messageBox -icon warning -title "tclmk" \
+            -message "No platforms available to export."
+        return
+    }
+
+    set path [tk_getSaveFile \
+        -title       "Export Makefile" \
+        -initialfile "Makefile" \
+        -filetypes   {{"Makefile" {Makefile}} {"All Files" *}}]
+
+    if {$path eq ""} return
+
+    if {[catch { mk::gen_makefile $path $tcs } err]} {
+        tk_messageBox -icon error -title "tclmk" \
+            -message "Export failed: $err"
+    } else {
+        set ::mk::gui_status "Exported to [file tail $path]"
+    }
+}
+
+# =============================================================================
+# Entry point
+# =============================================================================
+
+# Load project file first (needed for platform_exists during arg parse)
+mk::load_project $::mk::opt_project
+
+# Parse arguments
+set ::mk::parsed_platforms [mk::parse_args $argv]
+
+# Decide: GUI or headless
+set use_gui [expr {
+    !$::mk::opt_nogui &&
+    $::mk::parsed_platforms eq {} &&
+    !$::mk::opt_clean &&
+    !$::mk::opt_export &&
+    !$::mk::opt_list &&
+    ![catch {package require Tk}]
+}]
+
+if {$use_gui} {
+    mk::start_gui
+} else {
+    mk::run_headless $::mk::parsed_platforms
+}

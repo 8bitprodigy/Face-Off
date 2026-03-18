@@ -8,8 +8,9 @@
 
 //#define DEBUG
 #include "defs.h"
-#include "gamestate.h"
 #include "cell_map.h"
+#include "gamestate.h"
+#include "head.h"
 #include "map.h"
 
 
@@ -18,22 +19,24 @@ GameState
 {
     GameMode  game_mode;
 
+    Head     *heads;
     Player   *players;
-    uint      player_count;
-    
     Actor    *actors;
-    uint      actor_count;
-    
     Thing    *things;
-    uint      thing_count;
     
     Map      *map;
+    
+    uint64    frame_num;
+
+    uint      head_count;
+    uint      player_count;
+    uint      actor_count;
+    uint      thing_count;
+    float     delta;
+    
     bool      paused;
     bool      request_exit;
 
-    uint64    frame_num;
-    
-    float     delta;
 } GameState;
 
 /****************************
@@ -44,7 +47,7 @@ GameState_new(GameMode game_mode)
 {
     GameState *game_state = malloc(sizeof(GameState));
     
-    if(!game_state) {
+    if (!game_state) {
         ERR_OUT("Failed to allocate memory for GameState.");
         return NULL;
     }
@@ -236,7 +239,6 @@ GameState_update(GameState *self)
     } while (actor != actors);
     DBG_OUT("");
     //Map_update(self->map, self);
-    self->frame_num++;
 } /* GameState_update */
 
 

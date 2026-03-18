@@ -1,0 +1,56 @@
+project faceoff {
+    version 0.1.0
+    description {Faceball-2000/Midi Maze clone for Linux/DreamCast}
+    license 0BSD
+}
+
+sources {
+    src     src/*.c
+}
+
+toolchain linux {
+    set cc gcc
+    set cxx g++
+    set ar ar
+    set cflags {-Wall -Wextra}
+    set cxxflags {-Wall -Wextra}
+    set defines PLATFORM_LINUX
+    set opt_levels     {-O0 -O1 -O2 -O3 -Os -Oz}
+    set default_olevel -O2
+    set debug_flags [dict create \
+        -g {GDB symbols} \
+        -fsanitize=address AddressSanitizer \
+        -pg {gprof profiling} \
+    ]
+    set outdir build/linux-gcc
+}
+
+toolchain dreamcast {
+    set cc kos-cc
+    set cxx kos-c++
+    set ar kos-ar
+    set cflags {-ml -m4-single-only -Wall}
+    set cxxflags {-ml -m4-single-only -Wall}
+    set ldflags {-lkallisti -lc -lgcc}
+    set defines {PLATFORM_DREAMCAST _arch_dreamcast}
+    set sysroot /opt/toolchains/dc/sh-elf
+    set opt_levels     {-O0 -O1 -O2 -Os}
+    set default_olevel -O2
+    set debug_flags [dict create \
+        -g {GDB stub symbols} \
+        FRAME_POINTERS {KOS frame pointers} \
+        DC_SERIAL_DEBUG {Serial port debug output} \
+    ]
+    set outdir build/dreamcast
+}
+
+dependency kolibri_engine {
+    set path     deps/kolibri_engine
+    set url      https://github.com/8bitprodigy/kolibri_engine
+    set branch   main
+    set build_cmds {{make clean && make}}
+    set inc_path include
+    set lib_path lib
+    set lib_name kolibri
+}
+

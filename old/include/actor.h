@@ -14,7 +14,7 @@ typedef struct GameState GameState;
 typedef struct Map Map;
 
 typedef struct Actor Actor;
-typedef struct Action Action;
+typedef struct Command Command;
 
 
 /* Actor Constructor */
@@ -33,7 +33,7 @@ float    Actor_get_radius(  Actor *actor);
 void Actor_insert(Actor *actor1, Actor *actor2);
 void Actor_remove( Actor *actor);
 
-void Actor_queueAction( Actor *actor, Action *action);
+void Actor_queueAction( Actor *actor, Command *command);
 
 /* Actor Methods */
 void Actor_update( Actor *actor, GameState *game_state);

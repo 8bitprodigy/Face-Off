@@ -3,6 +3,7 @@
 
 #include <raylib.h>
 
+#include "command.h"
 #include "defs.h"
 #include "head.h"
 #include "player.h"
@@ -14,6 +15,7 @@ Head
 	struct Head   *prev;
 	struct Head   *next;
 	Player        *player;
+	Action         actions[22];
     Camera         camera;
 	RenderTexture  context;
 	Vector2        context_pos;
@@ -109,7 +111,24 @@ Head_input(
 	GameState *game_state
 )
 {
+	if (!IsGamePadAvailable(self->controller)) return;
+
+#define HEAD_handleInput( _button, _key ) \
+	if (GET_KEY_OR_BUTTON_PRESSED( \
+		self->controller,  \
+		(_button), \ 
+		(_key)) \
+	) { \
+		Actor_queueCommand( \
+			ACTOR(self->player), \
+			Command_new(self->actions[(_button)-1]) \
+		); \
+	}
+
+	HEAD_handleInput(GAMEPAD_BUTTON_RIGHT_FACE_RIGHT, KEY_RIGHT);
+	HEAD_handleInput(GAMEPAD_BUTTON_RIGHT_FACE_LEFT,  KEY_LEFT);
 	
+#undef HEAD_handleInput	
 } /* Head_input */
 
 

@@ -148,9 +148,9 @@ Actor_remove(Actor *actor)
 
 
 void
-Actor_queueAction(Actor *self, Action *action)
+Actor_queueCommand(Actor *self, Command *command)
 {
-    self->actions = Action_insert(action, self->actions);
+    self->commands = Action_insert(command, self->commands);
 }
 
 
